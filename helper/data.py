@@ -63,6 +63,26 @@ def import2dArray(file_name, file_type="f"):
             array = [list(line.strip().split()) for line in infile]
     return array
 
+def importFirst2dArray(file_name, file_type="f", amount=100):
+    array = []
+    with open(file_name, "r") as infile:
+        counter = 0
+        for line in infile:
+            if file_type == "i":
+                array.append(list(map(int, line.strip().split())))
+            elif file_type == "f":
+                array.append(list(map(float, line.strip().split())))
+            elif file_type == "discrete":
+                to_add = list(line.strip().split())
+                for v in range(len(to_add)):
+                    to_add[v] = int(to_add[v][:-1])
+            else:
+                array.append(list(line.strip().split()))
+            if counter > amount:
+                return array
+            counter += 1
+    return array
+
 def importTabArray(file_name):
     with open(file_name, "r") as infile:
         string_array = [line.split("\t")[:-1] for line in infile]
@@ -101,15 +121,42 @@ def writeArrayDict(dict, name):
         file.write("\n")
     file.close()
 
+
+def writeArrayDict1D(dict, name):
+    file = open(name, "w")
+    for key, value in dict.items():
+        file.write(str(key) + ": ")
+        file.write(str(value) + " ")
+        file.write("\n")
+    file.close()
+
 def readArrayDict(file_name):
     file = open(file_name)
     lines = file.readlines()
     dict = OrderedDict()
     for l in lines:
         l = l.split()
-        name = l[0][:-1]
+        if l[0][len(l[0])-1:] == ":":
+            name = l[0][:-1]
+        else:
+            name = l[0]
         del l[0]
         dict[name] = l
+        print(name)
+    return dict
+
+def readArrayDict1D(file_name):
+    file = open(file_name)
+    lines = file.readlines()
+    dict = OrderedDict()
+    for l in lines:
+        l = l.split()
+        if l[0][len(l[0])-1:] == ":":
+            name = l[0][:-1]
+        else:
+            name = l[0]
+        del l[0]
+        dict[name] = int(l)
         print(name)
     return dict
 
@@ -441,16 +488,22 @@ def convertToTfIDF(freq_arrays_fn):
     writeClassAll("../data/movies/bow/tfidf/class-all", "../data/movies/bow/phrase_names.txt",
                   "../data/movies/bow/names/200.txt", "../data/movies/bow/tfidf/class-all-200")
 
+def writeIndividualClasses(overall_class_fn, names_fn, output_filename):
+    overall_class = import2dArray(overall_class_fn, "f")
+    names = import1dArray(names_fn)
+    for n in range(len(names)):
+        write1dArray(overall_class[n], output_filename + "class-" + names[n])
+        print(names[n])
 
-def plotSpace(space):
-    file_name = "../data/movies/bow/ppmi/class-all"
-    file = open(file_name)
+#writeIndividualClasses("../data/movies/bow/frequency/phrases/class-all-scaled0,1.txt", "../data/movies/bow/phrase_names.txt", "../data/movies/bow/normalized_frequency/")
+#writeIndividualClasses("../data/movies/bow/ppmi/class-all-scaled0,1", "../data/movies/bow/phrase_names.txt", "../data/movies/bow/normalized_ppmi/")
+def plotSpace(fn):
+
     single_values = []
 
-    space = np.asarray(import2dArray(file_name))
+    space = np.asarray(import2dArray(fn))
     counter = 0
     for s in space:
-        s = s[s != 0]
         single_values.extend(s)
 
     # basic plot
@@ -458,12 +511,109 @@ def plotSpace(space):
     sns.plt.show()
     print ("now we here")
 
+#plotSpace("../data/movies/nnet/spaces/films200L1100N0.5TermFrequencyN0.5FT.txt")
+
+def getNamesFromDict(dict_fn, file_name):
+    new_dict = import2dArray(dict_fn, "s")
+    names = []
+    for d in range(len(new_dict)):
+        names.append(new_dict[d][0].strip())
+    write1dArray(names, "../data/movies/cluster/hierarchy_names/" +file_name+".txt")
+
+#getNamesFromDict("../data/movies/cluster/hierarchy_dict/films200L1100N0.50.8.txt", "films200L1100N0.50.8.txt")
 
 def scaleSpace(space, lower_bound, upper_bound, file_name):
     minmax_scale = MinMaxScaler(feature_range=(lower_bound, upper_bound), copy=True)
     space = minmax_scale.fit_transform(space)
     write2dArray(space, file_name)
     return space
+
+import math
+
+def magnitude(v):
+    return math.sqrt(sum(v[i]*v[i] for i in range(len(v))))
+
+def add(u, v):
+    return [ u[i]+v[i] for i in range(len(u)) ]
+
+def sub(u, v):
+    return [ u[i]-v[i] for i in range(len(u)) ]
+
+def dot(u, v):
+    return sum(u[i]*v[i] for i in range(len(u)))
+
+def normalize(v):
+    vmag = magnitude(v)
+    return [ v[i]/vmag  for i in range(len(v)) ]
+
+def scaleSpaceUnitVector(space, file_name):
+    space = np.asarray(space).transpose()
+    print(len(space), len(space[0]))
+    scaled_vector = []
+    for v in space:
+        if np.sum(v) != 0:
+            norm = normalize(v)
+            scaled_vector.append(norm)
+        else:
+            scaled_vector.append(v)
+    space = space.transpose()
+    write2dArray(scaled_vector, file_name)
+
+file_name = "../data/movies/finetune/films200L1100N0.5TermFrequency"
+
+def concatenateArrays(arrays, file_name):
+    new_array = arrays[0]
+    for a in range(1, len(arrays)):
+        new_array = np.concatenate((new_array, arrays[a]), axis=0)
+    write2dArray(new_array, file_name)
+
+
+def getTop10Clusters(file_name, ids):
+    clusters = np.asarray(import2dArray("../data/movies/rank/discrete/" + file_name + "P1.txt", "s")).transpose()
+    cluster_names = import2dArray("../data/movies/cluster/hierarchy_names/" + file_name+"0.8400.txt", "s")
+    for c in range(len(cluster_names)):
+        cluster_names[c] = cluster_names[c][0]
+    to_get = []
+    for i in ids:
+        for v in range(len(clusters[i])):
+            rank = int(clusters[i][v][:-1])
+            if rank <= 3:
+                print(cluster_names[v][6:])
+        print("----------------------")
+
+#getTop10Clusters("films100L2100N0.5", [1644,164,4018,6390])
+
+"""
+
+
+fn = "films200L325N0.5"
+cluster_names_fn = "../data/movies/cluster/names/" + fn + ".txt"
+file_name = fn + "InClusterN0.5FTadagradcategorical_crossentropy100"
+cluster_vectors_fn = "../data/movies/nnet/clusters/" + file_name + ".txt"
+new_v = []
+new_v.append(import1dArray(cluster_names_fn))
+
+fn = "films200L250N0.5"
+cluster_names_fn = "../data/movies/cluster/names/" + fn + ".txt"
+file_name = fn + "InClusterN0.5FTadagradcategorical_crossentropy100"
+cluster_vectors_fn = "../data/movies/nnet/clusters/" + file_name + ".txt"
+
+new_v.append(import1dArray(cluster_names_fn))
+
+fn = "films200L1100N0.5"
+cluster_names_fn = "../data/movies/cluster/names/" + fn + ".txt"
+file_name = fn + "InClusterN0.5FTadagradcategorical_crossentropy100"
+cluster_vectors_fn = "../data/movies/nnet/clusters/" + file_name + ".txt"
+
+new_v.append(import1dArray(cluster_names_fn))
+
+concatenateArrays(new_v, cluster_names_fn+"ALL")
+#space = import2dArray(file_name + ".txt")
+
+#scaleSpaceUnitVector(space, file_name+"uvscaled.txt")
+
+#scaleSpace(space, 0, 1, file_name +"scaled")
+"""
 """
 file = open("../data/movies/bow/ppmi/class-all-normalized--1,1")
 

@@ -97,7 +97,7 @@ def plotClusters(filename):
     ax.set_ylabel(cluster_names[cy])
     def onpick3(event):
         ind = event.ind
-        print 'onpick3 scatter:', names[ind[0]]
+        print('onpick3 scatter:', names[ind[0]])
 
     fig.canvas.mpl_connect('pick_event', onpick3)
 
@@ -116,7 +116,7 @@ def plotSVD(filename):
     y = []
 
     for s in svd_space:
-        print s
+        print(s)
         x.append(s[0])
         y.append(s[1])
 
@@ -127,17 +127,15 @@ def plotSVD(filename):
 
     def onpick3(event):
         ind = event.ind
-        print 'onpick3 scatter:', names[ind[0]]
+        print('onpick3 scatter:', names[ind[0]])
 
     fig.canvas.mpl_connect('pick_event', onpick3)
 
     plt.show()
-"""
 
-plotSVD("films100N0.6H75L1")
-plotSVD("films100N0.6H50L2")
-plotSVD("films100N0.6H25L3")
-"""
+plotSVD("films100")
+plotSVD("films200L1100N0.5")
+plotSVD("films200L1100N0.5TermFrequencyN0.5FT")
 # Get the PCA of top 200 films
 
 # Plot the PCA values on a graph

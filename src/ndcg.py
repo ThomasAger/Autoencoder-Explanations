@@ -1,92 +1,194 @@
 import numpy as np
 import helper.data as dt
 
-
-def dcg_at_k(r, k, method=0):
-    """Score is discounted cumulative gain (dcg)
-    Relevance is positive real values.  Can use binary
-    as the previous methods.
-    Example from
-    http://www.stanford.edu/class/cs276/handouts/EvaluationNew-handout-6-per.pdf
-    >>> r = [3, 2, 3, 0, 0, 1, 2, 2, 3, 0]
-    >>> dcg_at_k(r, 1)
-    3.0
-    >>> dcg_at_k(r, 1, method=1)
-    3.0
-    >>> dcg_at_k(r, 2)
-    5.0
-    >>> dcg_at_k(r, 2, method=1)
-    4.2618595071429155
-    >>> dcg_at_k(r, 10)
-    9.6051177391888114
-    >>> dcg_at_k(r, 11)
-    9.6051177391888114
-    Args:
-        r: Relevance scores (list or numpy) in rank order
-            (first element is the first item)
-        k: Number of results to consider
-        method: If 0 then weights are [1.0, 1.0, 0.6309, 0.5, 0.4307, ...]
-                If 1 then weights are [1.0, 0.6309, 0.5, 0.4307, ...]
-    Returns:
-        Discounted cumulative gain
+def ranking_precision_score(y_true, y_score, k=10):
+    """Precision at rank k
+    Parameters
+    ----------
+    y_true : array-like, shape = [n_samples]
+        Ground truth (true relevance labels).
+    y_score : array-like, shape = [n_samples]
+        Predicted scores.
+    k : int
+        Rank.
+    Returns
+    -------
+    precision @k : float
     """
-    r = np.asfarray(r)[:k]
-    if r.size:
-        if method == 0:
-            return r[0] + np.sum(r[1:] / np.log2(np.arange(2, r.size + 1)))
-        elif method == 1:
-            return np.sum(r / np.log2(np.arange(2, r.size + 2)))
-        else:
-            raise ValueError('method must be 0 or 1.')
-    return 0.
+    unique_y = np.unique(y_true)
 
-def mean_average_precision(query1, query2):
-    avgp1 = np.mean(query1)
-    avgp2 = np.mean(query2)
-    map = np.mean([avgp1, avgp2])
-    return map
+    if len(unique_y) > 2:
+        raise ValueError("Only supported for two relevance levels.")
 
-def ndcg_at_k(r, k, method=0):
-    """Score is normalized discounted cumulative gain (ndcg)
-    Relevance is positive real values.  Can use binary
-    as the previous methods.
-    Example from
-    http://www.stanford.edu/class/cs276/handouts/EvaluationNew-handout-6-per.pdf
-    >>> r = [3, 2, 3, 0, 0, 1, 2, 2, 3, 0]
-    >>> ndcg_at_k(r, 1)
-    1.0
-    >>> r = [2, 1, 2, 0]
-    >>> ndcg_at_k(r, 4)
-    0.9203032077642922
-    >>> ndcg_at_k(r, 4, method=1)
-    0.96519546960144276
-    >>> ndcg_at_k([0], 1)
-    0.0
-    >>> ndcg_at_k([1], 2)
-    1.0
-    Args:
-        r: Relevance scores (list or numpy) in rank order
-            (first element is the first item)
-        k: Number of results to consider
-        method: If 0 then weights are [1.0, 1.0, 0.6309, 0.5, 0.4307, ...]
-                If 1 then weights are [1.0, 0.6309, 0.5, 0.4307, ...]
-    Returns:
-        Normalized discounted cumulative gain
+    pos_label = unique_y[1]
+    n_pos = np.sum(y_true == pos_label)
+
+    order = np.argsort(y_score)[::-1]
+    y_true = np.take(y_true, order[:k])
+    n_relevant = np.sum(y_true == pos_label)
+
+    # Divide by min(n_pos, k) such that the best achievable score is always 1.0.
+    return float(n_relevant) / min(n_pos, k)
+
+
+def average_precision_score(y_true, y_score, k=10):
+    """Average precision at rank k
+    Parameters
+    ----------
+    y_true : array-like, shape = [n_samples]
+        Ground truth (true relevance labels).
+    y_score : array-like, shape = [n_samples]
+        Predicted scores.
+    k : int
+        Rank.
+    Returns
+    -------
+    average precision @k : float
     """
-    dcg_max = dcg_at_k(sorted(r, reverse=True), k, method)
-    if not dcg_max:
-        return 0.
-    return dcg_at_k(r, k, method) / dcg_max
+    unique_y = np.unique(y_true)
 
-def getNDCG(rankings_fn, fn):
-    rankings = np.asarray(dt.import2dArray(rankings_fn, "f"))
+    if len(unique_y) > 2:
+        raise ValueError("Only supported for two relevance levels.")
+
+    pos_label = unique_y[1]
+    n_pos = np.sum(y_true == pos_label)
+
+    order = np.argsort(y_score)[::-1][:min(n_pos, k)]
+    y_true = np.asarray(y_true)[order]
+
+    score = 0
+    for i in range(len(y_true)):
+        if y_true[i] == pos_label:
+            # Compute precision up to document i
+            # i.e, percentage of relevant documents up to document i.
+            prec = 0
+            for j in range(0, i + 1):
+                if y_true[j] == pos_label:
+                    prec += 1.0
+            prec /= (i + 1.0)
+            score += prec
+
+    if n_pos == 0:
+        return 0
+
+    return score / n_pos
+
+
+def dcg_score(y_true, y_score, k=10, gains="exponential"):
+    """Discounted cumulative gain (DCG) at rank k
+    Parameters
+    ----------
+    y_true : array-like, shape = [n_samples]
+        Ground truth (true relevance labels).
+    y_score : array-like, shape = [n_samples]
+        Predicted scores.
+    k : int
+        Rank.
+    gains : str
+        Whether gains should be "exponential" (default) or "linear".
+    Returns
+    -------
+    DCG @k : float
+    """
+    order = np.argsort(y_score)[::-1]
+    y_true = np.take(y_true, order[:k])
+
+    if gains == "exponential":
+        gains = 2 ** y_true - 1
+    elif gains == "linear":
+        gains = y_true
+    else:
+        raise ValueError("Invalid gains option.")
+
+    # highest rank is 1 so +2 instead of +1
+    discounts = np.log2(np.arange(len(y_true)) + 2)
+    return np.sum(gains / discounts)
+
+
+def ndcg_score(y_true, y_score, k=10, gains="exponential"):
+    """Normalized discounted cumulative gain (NDCG) at rank k
+    Parameters
+    ----------
+    y_true : array-like, shape = [n_samples]
+        Ground truth (true relevance labels).
+    y_score : array-like, shape = [n_samples]
+        Predicted scores.
+    k : int
+        Rank.
+    gains : str
+        Whether gains should be "exponential" (default) or "linear".
+    Returns
+    -------
+    NDCG @k : float
+    """
+    best = dcg_score(y_true, y_true, k, gains)
+    actual = dcg_score(y_true, y_score, k, gains)
+    return actual / best
+
+
+# Alternative API.
+
+def dcg_from_ranking(y_true, ranking):
+    """Discounted cumulative gain (DCG) at rank k
+    Parameters
+    ----------
+    y_true : array-like, shape = [n_samples]
+        Ground truth (true relevance labels).
+    ranking : array-like, shape = [k]
+        Document indices, i.e.,
+            ranking[0] is the index of top-ranked document,
+            ranking[1] is the index of second-ranked document,
+            ...
+    k : int
+        Rank.
+    Returns
+    -------
+    DCG @k : float
+    """
+    y_true = np.asarray(y_true)
+    ranking = np.asarray(ranking)
+    rel = y_true[ranking]
+    gains = 2 ** rel - 1
+    discounts = np.log2(np.arange(len(ranking)) + 2)
+    overall = gains / discounts
+    sum = np.sum(overall)
+    return sum
+
+
+def ndcg_from_ranking(y_true, ranking):
+    """Normalized discounted cumulative gain (NDCG) at rank k
+    Parameters
+    ----------
+    y_true : array-like, shape = [n_samples]
+        Ground truth (true relevance labels).
+    ranking : array-like, shape = [k]
+        Document indices, i.e.,
+            ranking[0] is the index of top-ranked document,
+            ranking[1] is the index of second-ranked document,
+            ...
+    k : int
+        Rank.
+    Returns
+    -------
+    NDCG @k : float
+    """
+    k = len(ranking)
+    best_ranking = np.argsort(y_true)[::-1]
+    best = dcg_from_ranking(y_true, best_ranking[:k])
+    dcg = dcg_from_ranking(y_true, ranking)
+    return dcg / best
+
+def getNDCG(rankings_fn,fn):
+    rankings = dt.import2dArray(rankings_fn, "f")
+    ppmi = dt.import2dArray("../data/movies/bow/ppmi/class-all-200")
+    names = dt.import1dArray("../data/movies/bow/names/200.txt")
     ndcg_a = []
     for r in range(len(rankings)):
-        ndcg = ndcg_at_k(rankings[r], len(rankings[r]))
+        sorted_indices = np.argsort(rankings[r])[::-1]
+        ndcg = ndcg_from_ranking(ppmi[r], sorted_indices)
         ndcg_a.append(ndcg)
-        print(rankings[r])
-        print(ndcg_a)
-    dt.write2dArray(ndcg_a, "../data/movies/ndcg/"+fn+".txt")
+        print(ndcg, names[r])
+    dt.write1dArray(ndcg_a, "../data/movies/ndcg/"+fn+".txt")
 
 
 class Gini:
@@ -103,4 +205,4 @@ def main(rankings_fn, ppmi_fn,  fn):
     """
     getNDCG(rankings_fn, fn)
 
-getNDCG("../data/movies/rank/numeric/films100L175N0.5.txt","films100L175N0.5")
+#getNDCG("../data/movies/rank/numeric/films100ALL.txt","films100")

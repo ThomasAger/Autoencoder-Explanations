@@ -50,12 +50,12 @@ def getNextClusterTerm(cluster_terms, terms_to_match, terms_to_ignore, amt):
 
 """
 i = 1644
-movie_vectors_fn = "../data/movies/nnet/spaces/filmsTfidfL1100N0relu.txt"
+movie_vectors_fn = "../data/movies/nnet/spaces/films100L2100N0.8.txt"
 movie_vectors = dt.import2dArray(movie_vectors_fn)
 movie_names_fn = "../data/movies/nnet/spaces/filmNames.txt"
 movie_names = dt.import1dArray(movie_names_fn)
 print("Finding most similar directions for:", movie_names[i])
-indexes = getXMostSimilarIndex(movie_vectors[i], movie_vectors, [], 10)
+indexes = getXMostSimilarIndex(movie_vectors[i], movie_vectors, [], 20)
 
 for ind in indexes:
     print(movie_names[ind])
@@ -64,7 +64,7 @@ file_name = "films100"
 print(file_name)
 movie_vectors_fn = "../data/movies/nnet/spaces/"+file_name+".txt"
 movie_vectors = dt.import2dArray(movie_vectors_fn)
-indexes = getXMostSimilarIndex(movie_vectors[i], movie_vectors, [], 10)
+indexes = getXMostSimilarIndex(movie_vectors[i], movie_vectors, [], 20)
 
 for ind in indexes:
     print(movie_names[ind])

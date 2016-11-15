@@ -45,34 +45,38 @@ def createDiscreteLabels(rankings, percentage_increment):
         for i in range(0, 100, percentage_increment):
             top_indices = sorted_indices[len(rankings[0]) * (i * 0.01):len(rankings[0]) * ((i + percentage_increment) * 0.01)]
             for t in top_indices:
-                label[t] = str(i + percentage_increment) + "%"
+                label[t] = str(i + percentage_increment)
         labels.append(label)
     return labels
 
-def getAllRankings(directions_fn, vectors_fn, cluster_names_fn, vector_names_fn, percent, percentage_increment, by_vector, fn):
+def getAllRankings(directions_fn, vectors_fn, cluster_names_fn, vector_names_fn, percent, percentage_increment, by_vector, fn, discrete=True):
     directions = dt.import2dArray(directions_fn)
     vectors = dt.import2dArray(vectors_fn)
     cluster_names = dt.import1dArray(cluster_names_fn)
     vector_names = dt.import1dArray(vector_names_fn)
     rankings, ranking_names = getRankings(directions, vectors, cluster_names, vector_names)
     rankings = np.asarray(rankings)
-    labels = createLabels(rankings, percent)
-    labels = np.asarray(labels)
-    discrete_labels = createDiscreteLabels(rankings, percentage_increment)
-    discrete_labels = np.asarray(discrete_labels)
+    if discrete:
+        labels = createLabels(rankings, percent)
+        labels = np.asarray(labels)
+        discrete_labels = createDiscreteLabels(rankings, percentage_increment)
+        discrete_labels = np.asarray(discrete_labels)
     if by_vector:
         labels = labels.transpose()
-        discrete_labels = discrete_labels.transpose()
+        if discrete:
+            discrete_labels = discrete_labels.transpose()
         rankings = rankings.transpose()
-    labels_fn = "../data/movies/rank/labels/" + fn + "P" + str(percent) + ".txt"
+        labels_fn = "../data/movies/rank/labels/" + fn + "P" + str(percent) + ".txt"
     rankings_fn = "../data/movies/rank/numeric/" + fn + ".txt"
-    discrete_labels_fn = "../data/movies/rank/discrete/" + fn + "P" + str(percentage_increment) + ".txt"
+    if discrete:
+        discrete_labels_fn = "../data/movies/rank/discrete/" + fn + "P" + str(percentage_increment) + ".txt"
+        dt.write2dArray(labels, labels_fn)
     ranking_names_fn = "../data/movies/rank/names/" + fn + ".txt"
-    dt.write2dArray(labels, labels_fn)
+
     dt.write2dArray(rankings, rankings_fn)
-    dt.write2dArray(discrete_labels, discrete_labels_fn)
+    if discrete:
+        dt.write2dArray(discrete_labels, discrete_labels_fn)
     dt.writeTabArray(ranking_names, ranking_names_fn)
-    return labels_fn, rankings_fn, discrete_labels_fn, ranking_names_fn
 
 
 def getAllPhraseRankings(directions_fn=None, vectors_fn=None, property_names_fn=None, vector_names_fn=None, fn="no filename", percentage_increment=1, scores_fn = None, top_amt=0, discrete=False):
@@ -89,16 +93,17 @@ def getAllPhraseRankings(directions_fn=None, vectors_fn=None, property_names_fn=
     if discrete:
         discrete_labels = createDiscreteLabels(rankings, percentage_increment)
         discrete_labels = np.asarray(discrete_labels)
-
-    dt.write1dArray(property_names, "../data/movies/bow/names/top5kof17k.txt")
-    dt.write2dArray(rankings, "../data/movies/rank/numeric/" + fn + ".txt")
+    for a in range(len(rankings)):
+        rankings[a] = np.around(rankings[a], decimals=4)
+    #dt.write1dArray(property_names, "../data/movies/bow/names/top5kof17k.txt")
+    dt.write2dArray(rankings, "../data/movies/rank/numeric/" + fn + "ALL.txt")
     #dt.write2dArray(discrete_labels, "../data/movies/rank/discrete/" + fn +  ".txt")
 
 class Rankings:
     def __init__(self, directions_fn, vectors_fn, cluster_names_fn, vector_names_fn, fn, percent, percentage_increment, by_vector):
         getAllRankings(directions_fn, vectors_fn, cluster_names_fn, vector_names_fn, percent, percentage_increment, by_vector, fn)
 
-file_name="films100L175N0.52"
+file_name="films100"
 lowest_count = 200
 vector_path = "../data/movies/nnet/spaces/" + file_name + ".txt"
 class_path = "../data/movies/bow/binary/phrases/class-all-200"
@@ -107,10 +112,10 @@ property_names_fn = "../data/movies/bow/names/" + str(lowest_count) + ".txt"
 # Get rankings
 vector_names_fn = "../data/movies/nnet/spaces/filmNames.txt"
 class_names_fn = "../data/movies/bow/names/" + str(lowest_count) + ".txt"
-directions_fn = "../data/movies/svm/directions/" + file_name + str(lowest_count) + ".txt"
-scores_fn = "../data/movies/svm/kappa/"+file_name+"200.txt"
+directions_fn = "../data/movies/svm/directions/" + file_name +"ppmi200.txt"
+scores_fn = "../data/movies/svm/kappa/"+file_name+"ppmi200.txt"
 
-#getAllPhraseRankings(directions_fn, vector_path, property_names_fn, vector_names_fn, file_name, 1, scores_fn, top_amt=5000, discrete=False)
+getAllPhraseRankings(directions_fn, vector_path, property_names_fn, vector_names_fn, file_name, 1, scores_fn, top_amt=0, discrete=False)
 
 """
 def main(low_threshold, high_threshold, percent, discrete_percent, cluster_fn, vector_fn, cluster_names_fn, vector_names_fn, rank_fn, by_vector):

@@ -3,6 +3,8 @@ import helper.data as dt
 import helper.similarity as st
 from sklearn.metrics import cohen_kappa_score
 from sklearn import svm
+import cProfile
+import ndcg
 
 class Cluster:
     kappa_scores = []
@@ -45,6 +47,41 @@ class Cluster:
         for v in range(len(vectors)):
             self.ranks[v][0] = np.dot(self.cluster_direction, vectors[v])
 
+    def rankVectorsNDCG(self, vectors):
+        self.ranks = np.empty(15000)
+        for v in range(len(vectors)):
+            self.ranks[v] = np.dot(self.cluster_direction, vectors[v])
+
+    # Cutoff points for the first and last direction
+    def obtainKappaFirstAndLast(self):
+        # For each discrete rank, obtain the Kappa score compared to the word occ
+        kappas = np.empty(2)
+        c = 0
+        for n in [0, len(self.names) - 1]:
+            clf = svm.LinearSVC()
+            ppmi = np.asarray(dt.import1dArray("../data/movies/bow/binary/phrases/" + self.names[n], "i"))
+            clf.fit(self.ranks, ppmi)
+            y_pred = clf.predict(self.ranks)
+            score = cohen_kappa_score(ppmi, y_pred)
+            kappas[c] = score
+            c += 1
+        return kappas
+
+
+    def obtainNDCGFirstAndLast(self):
+        # For each discrete rank, obtain the Kappa score compared to the word occ
+        ndcgs = np.empty(2)
+        c = 0
+        for n in [0, len(self.names) - 1]:
+            ppmi = np.asarray(dt.import1dArray("../data/movies/bow/ppmi/class-" + self.names[n], "f"))
+            sorted_indices = np.argsort(self.ranks)[::-1]
+            score = ndcg.ndcg_from_ranking(ppmi, sorted_indices)
+            ndcgs[c] = score
+            print("NDCG", self.names[n], score)
+            c += 1
+        return ndcgs
+
+    # Cutoff points
     def obtainKappaOnClusteredDirection(self):
         # For each discrete rank, obtain the Kappa score compared to the word occ
         kappas = np.empty(len(self.names))
@@ -223,7 +260,7 @@ def getHierarchicalClustersMaxScoring(vectors, directions, scores, names, score_
 """
 
 # New method, instead of averaging, compare each individual direction. Start with one cluster and then add more.
-def getHierarchicalClusters(vectors, directions, scores, names, score_limit, similarity_threshold, max_clusters):
+def getHierarchicalClusters(vectors, directions, scores, names, score_limit, similarity_threshold, max_clusters, file_name):
 
     clusters = []
     # Initialize a list of indexes to keep track of which directions have been combined
@@ -234,19 +271,32 @@ def getHierarchicalClusters(vectors, directions, scores, names, score_limit, sim
     c = 0
     # Find the most similar direction and check if its combination has a kappa score loss larger than the score limit
     for d in range(1, len(directions)):
-        print(d, "/", len(directions))
         failed = True
         current_direction = Cluster([scores[d]], [directions[d]], [names[d]])
         if len(clusters) >= max_clusters:
+            print("REACHED MAX CLUSTERS")
             break
+        else:
+            print(len(clusters), "/", max_clusters)
+
+        i = getMostSimilarCluster(current_direction, clusters)
+
+        s = 1 - cosine(clusters[i].getClusterDirection(), current_direction.getClusterDirection())
+
+        if s < similarity_threshold:
+            print("Not similar enough.", s, clusters[i].getNames(), current_direction.getNames())
+            continue
+
         for c in range(len(clusters)):
+            if c == 0:
+                c = i
+
             passed = True
+
             s = 1 - cosine(clusters[c].getClusterDirection(), current_direction.getClusterDirection())
             if s < similarity_threshold:
-                #print(clusters[c].getNames(), current_direction.getNames(), s)
                 continue
-            else:
-                print(clusters[c].getNames(), current_direction.getNames(), s)
+
             # Get the most similar direction to the current key
             new_cluster = Cluster(
                 np.concatenate([clusters[c].getKappaScores(), current_direction.getKappaScores()]),
@@ -254,16 +304,20 @@ def getHierarchicalClusters(vectors, directions, scores, names, score_limit, sim
                 np.concatenate([clusters[c].getNames(), current_direction.getNames()]))
 
             # Use the combined direction to see if the Kappa scores are not decreased an unreasonable amount
-            new_cluster.rankVectors(vectors)
-            cluster_scores = new_cluster.obtainKappaOnClusteredDirection()
+            new_cluster.rankVectorsNDCG(vectors)
+            cluster_scores = new_cluster.obtainNDCGFirstAndLast()
             old_scores = new_cluster.getKappaScores()
+            print(cluster_scores)
 
-            for s in range(len(old_scores)):
+            co = 0
+            # Check the first and last directions
+            for s in [0, len(old_scores)-1]:
                 lowest_score = old_scores[s] * score_limit
-                print(cluster_scores[s], "must be larger than", lowest_score)
-                if cluster_scores[s] < lowest_score:
+                if cluster_scores[co] < lowest_score:
                     passed = False
                     break
+                co += 1
+
             if passed:
                 np.put(clusters, c, new_cluster)
                 print("Success", new_cluster.getNames())
@@ -279,8 +333,8 @@ def getHierarchicalClusters(vectors, directions, scores, names, score_limit, sim
         if clusters[c] is not None:
             output_directions.append(clusters[c].getClusterDirection())
             output_names.append(clusters[c].getNames())
-    dt.write2dArray(output_directions, "../data/movies/cluster/hierarchy_directions/"+file_name+str(score_limit)+".txt")
-    dt.write2dArray(output_names, "../data/movies/cluster/hierarchy_names/" + file_name + str(score_limit)+".txt")
+    dt.write2dArray(output_directions, "../data/movies/cluster/hierarchy_directions/"+file_name+str(score_limit)+str(max_clusters)+".txt")
+    dt.write2dArray(output_names, "../data/movies/cluster/hierarchy_names/" + file_name + str(score_limit)+str(max_clusters)+".txt")
 
 """
 # New method, instead of averaging, compare each individual direction. Start with one cluster and then add more.
@@ -313,7 +367,6 @@ def getHierarchicalClusters(vectors, directions, scores, names, score_limit):
 
         for s in range(len(old_scores)):
             lowest_score = old_scores[s] * score_limit
-            print(cluster_scores[s])
             if cluster_scores[s] < lowest_score:
                 passed = False
                 break
@@ -336,46 +389,38 @@ def getHierarchicalClusters(vectors, directions, scores, names, score_limit):
     dt.write2dArray(output_names, "../data/movies/cluster/hierarchy_dict/" + file_name + str(score_limit)+".txt")
     dt.write2dArray(output_first_names, "../data/movies/cluster/hierarchy_names/" + file_name + str(score_limit)+".txt")
 """
-def initClustering(vector_fn, directions_fn, scores_fn, names_fn, amt_to_start, profiling, binary_fn, similarity_threshold, max_clusters):
-    print("importing")
+def initClustering(vector_fn, directions_fn, scores_fn, names_fn, amt_to_start, profiling, similarity_threshold, max_clusters, score_limit, file_name):
     vectors = dt.import2dArray(vector_fn)
     directions = dt.import2dArray(directions_fn)
     scores = dt.import1dArray(scores_fn, "f")
     names = dt.import1dArray(names_fn)
-    binary = dt.import2dArray(binary_fn)
 
     ind = np.flipud(np.argsort(scores))[:amt_to_start]
 
     top_directions = []
     top_scores = []
     top_names = []
-    top_binary = []
 
     for i in ind:
         top_directions.append(directions[i])
         top_names.append(names[i])
         top_scores.append(scores[i])
-        top_binary.append(binary[i])
 
-    dt.write2dArray(top_binary, "../data/movies/bow/binary/phrases/class-all-500")
-    dt.write1dArray(top_names, "../data/movies/bow/names/500.txt")
-    print("done")
-    score_limit = 0.8
     if profiling:
-        import cProfile
-        cProfile.run('getHierarchicalClusters(vectors, top_directions, top_scores, top_names, score_limit, similarity_threshold, max_clusters)')
+        cProfile.runctx('getHierarchicalClusters(vectors, top_directions, top_scores, top_names, score_limit, similarity_threshold, max_clusters, file_name)', globals(), locals())
     else:
-        getHierarchicalClusters(vectors, top_directions, top_scores, top_names, score_limit, similarity_threshold, max_clusters)
+        getHierarchicalClusters(vectors, top_directions, top_scores, top_names, score_limit, similarity_threshold, max_clusters, file_name)
 
 
-file_name = "films200L1100N0.5"
+file_name = "films100"
 vector_fn = "../data/movies/nnet/spaces/" + file_name + ".txt"
+file_name = file_name + "ppmi"
 directions_fn = "../data/movies/svm/directions/" +file_name+"200.txt"
-scores_fn = "../data/movies/svm/kappa/"+file_name+"200.txt"
+scores_fn = "../data/movies/ndcg/"+file_name+".txt"
 names_fn = "../data/movies/bow/names/200.txt"
-binary_fn = "../data/movies/bow/binary/phrases/class-all-200"
 similarity_threshold = 0.5
 max_clusters = 400
-amount_to_start = 500
+amount_to_start = 1500
+score_limit = 0.8
 
-initClustering(vector_fn, directions_fn, scores_fn, names_fn, amount_to_start, False, binary_fn, similarity_threshold, max_clusters)
+initClustering(vector_fn, directions_fn, scores_fn, names_fn, amount_to_start, False, similarity_threshold, max_clusters, score_limit, file_name)
