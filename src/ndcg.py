@@ -178,17 +178,20 @@ def ndcg_from_ranking(y_true, ranking):
     dcg = dcg_from_ranking(y_true, ranking)
     return dcg / best
 
-def getNDCG(rankings_fn,fn):
+def getNDCG(rankings_fn, fn, data_type, lowest_count):
     rankings = dt.import2dArray(rankings_fn, "f")
-    ppmi = dt.import2dArray("../data/movies/bow/ppmi/class-all-200")
-    names = dt.import1dArray("../data/movies/bow/names/200.txt")
+    ppmi = dt.import2dArray("../data/" + data_type + "/bow/ppmi/class-all-"+str(lowest_count))
+    names = dt.import1dArray("../data/" + data_type + "/bow/names/"+str(lowest_count)+".txt")
     ndcg_a = []
     for r in range(len(rankings)):
         sorted_indices = np.argsort(rankings[r])[::-1]
-        ndcg = ndcg_from_ranking(ppmi[r], sorted_indices)
-        ndcg_a.append(ndcg)
-        print(ndcg, names[r])
-    dt.write1dArray(ndcg_a, "../data/movies/ndcg/"+fn+".txt")
+        try:
+            ndcg = ndcg_from_ranking(ppmi[r], sorted_indices)
+            ndcg_a.append(ndcg)
+            print(ndcg, names[r], r)
+        except IndexError:
+            print(r, "FAILED")
+    dt.write1dArray(ndcg_a, "../data/" + data_type + "/ndcg/"+fn+".txt")
 
 
 class Gini:

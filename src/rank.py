@@ -49,7 +49,7 @@ def createDiscreteLabels(rankings, percentage_increment):
         labels.append(label)
     return labels
 
-def getAllRankings(directions_fn, vectors_fn, cluster_names_fn, vector_names_fn, percent, percentage_increment, by_vector, fn, discrete=True):
+def getAllRankings(directions_fn, vectors_fn, cluster_names_fn, vector_names_fn, percent, percentage_increment, by_vector, fn, discrete=True, data_type="movies"):
     directions = dt.import2dArray(directions_fn)
     vectors = dt.import2dArray(vectors_fn)
     cluster_names = dt.import1dArray(cluster_names_fn)
@@ -66,12 +66,12 @@ def getAllRankings(directions_fn, vectors_fn, cluster_names_fn, vector_names_fn,
         if discrete:
             discrete_labels = discrete_labels.transpose()
         rankings = rankings.transpose()
-        labels_fn = "../data/movies/rank/labels/" + fn + "P" + str(percent) + ".txt"
-    rankings_fn = "../data/movies/rank/numeric/" + fn + ".txt"
+        labels_fn = "../data/"+data_type+"/rank/labels/" + fn + "P" + str(percent) + ".txt"
+    rankings_fn = "../data/"+data_type+"/rank/numeric/" + fn + ".txt"
     if discrete:
-        discrete_labels_fn = "../data/movies/rank/discrete/" + fn + "P" + str(percentage_increment) + ".txt"
+        discrete_labels_fn = "../data/"+data_type+"/rank/discrete/" + fn + "P" + str(percentage_increment) + ".txt"
         dt.write2dArray(labels, labels_fn)
-    ranking_names_fn = "../data/movies/rank/names/" + fn + ".txt"
+    ranking_names_fn = "../data/"+data_type+"/rank/names/" + fn + ".txt"
 
     dt.write2dArray(rankings, rankings_fn)
     if discrete:
@@ -79,7 +79,8 @@ def getAllRankings(directions_fn, vectors_fn, cluster_names_fn, vector_names_fn,
     dt.writeTabArray(ranking_names, ranking_names_fn)
 
 
-def getAllPhraseRankings(directions_fn=None, vectors_fn=None, property_names_fn=None, vector_names_fn=None, fn="no filename", percentage_increment=1, scores_fn = None, top_amt=0, discrete=False):
+def getAllPhraseRankings(directions_fn=None, vectors_fn=None, property_names_fn=None, vector_names_fn=None, fn="no filename",
+                         percentage_increment=1, scores_fn = None, top_amt=0, discrete=False, data_type="movies"):
     directions = dt.import2dArray(directions_fn)
     vectors = dt.import2dArray(vectors_fn)
     property_names = dt.import1dArray(property_names_fn)
@@ -96,12 +97,13 @@ def getAllPhraseRankings(directions_fn=None, vectors_fn=None, property_names_fn=
     for a in range(len(rankings)):
         rankings[a] = np.around(rankings[a], decimals=4)
     #dt.write1dArray(property_names, "../data/movies/bow/names/top5kof17k.txt")
-    dt.write2dArray(rankings, "../data/movies/rank/numeric/" + fn + "ALL.txt")
+    dt.write2dArray(rankings, "../data/" + data_type + "/rank/numeric/" + fn + "ALL.txt")
     #dt.write2dArray(discrete_labels, "../data/movies/rank/discrete/" + fn +  ".txt")
 
 class Rankings:
-    def __init__(self, directions_fn, vectors_fn, cluster_names_fn, vector_names_fn, fn, percent, percentage_increment, by_vector):
-        getAllRankings(directions_fn, vectors_fn, cluster_names_fn, vector_names_fn, percent, percentage_increment, by_vector, fn)
+    def __init__(self, directions_fn, vectors_fn, cluster_names_fn, vector_names_fn, fn, percent, percentage_increment, by_vector, data_type):
+        getAllRankings(directions_fn, vectors_fn, cluster_names_fn, vector_names_fn, percent, percentage_increment,
+                       by_vector, fn, data_type)
 
 file_name="films100"
 lowest_count = 200
@@ -115,7 +117,7 @@ class_names_fn = "../data/movies/bow/names/" + str(lowest_count) + ".txt"
 directions_fn = "../data/movies/svm/directions/" + file_name +"ppmi200.txt"
 scores_fn = "../data/movies/svm/kappa/"+file_name+"ppmi200.txt"
 
-getAllPhraseRankings(directions_fn, vector_path, property_names_fn, vector_names_fn, file_name, 1, scores_fn, top_amt=0, discrete=False)
+#getAllPhraseRankings(directions_fn, vector_path, property_names_fn, vector_names_fn, file_name, 1, scores_fn, top_amt=0, discrete=False)
 
 """
 def main(low_threshold, high_threshold, percent, discrete_percent, cluster_fn, vector_fn, cluster_names_fn, vector_names_fn, rank_fn, by_vector):

@@ -47,6 +47,26 @@ def import1dArray(file_name, file_type="s"):
         else:
             array = [line.strip() for line in infile]
     return array
+def balanceClasses(movie_vectors, class_array):
+    count = 0
+    count2 = 0
+    for i in class_array:
+        if i == 0:
+            count+=1
+        else:
+            count2+=1
+    indexes_to_remove = []
+    amount_to_balance_to = count-count2
+    amount = 0
+    while amount < amount_to_balance_to:
+        index = random.randint(0, len(class_array) - 1)
+        if class_array[index] == 0:
+            indexes_to_remove.append(index)
+            amount+=1
+    movie_vectors = np.delete(movie_vectors, indexes_to_remove, axis=0)
+    class_array = np.delete(class_array, indexes_to_remove)
+
+    return movie_vectors, class_array
 
 def import2dArray(file_name, file_type="f"):
     with open(file_name, "r") as infile:
@@ -104,6 +124,51 @@ def getFns(folder_path):
         if i != "class-all" and i != "nonbinary" and i != "low_keywords" and i != "class-All" and i != "archive" and i != "fns" and i!="fns.txt" and i!="class-all-200":
             file_names.append(i)
     return file_names
+
+def getFolder(folder_path):
+    onlyfiles = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
+    two_d = []
+    for name in onlyfiles:
+        one_d = import1dArray(folder_path + name)
+        two_d.append(one_d)
+    return two_d
+
+def balanceClasses(movie_vectors, class_array):
+    count = 0
+    count2 = 0
+    for i in class_array:
+        if i == 0:
+            count+=1
+        else:
+            count2+=1
+    indexes_to_remove = []
+    amount_to_balance_to = count-count2
+    amount = 0
+    while amount < amount_to_balance_to:
+        index = random.randint(0, len(class_array) - 1)
+        if class_array[index] == 0:
+            indexes_to_remove.append(index)
+            amount+=1
+    movie_vectors = np.delete(movie_vectors, indexes_to_remove, axis=0)
+    class_array = np.delete(class_array, indexes_to_remove)
+
+    return movie_vectors, class_array
+
+def balance2dClasses(movie_vectors, movie_classes, min_occ):
+
+    indexes_to_remove = []
+    for m in range(len(movie_classes)):
+        counter = 0
+        for i in movie_classes[m]:
+            if i > 0:
+                counter+=1
+        if counter < min_occ:
+            indexes_to_remove.append(m)
+
+    movie_vectors = np.delete(movie_vectors, indexes_to_remove, axis=0)
+    movie_classes = np.delete(movie_classes, indexes_to_remove, axis=0)
+    print("deleted", len(indexes_to_remove))
+    return movie_vectors, movie_classes
 
 
 """
@@ -187,8 +252,79 @@ def write2dArray(array, name):
         file.write("\n")
     file.close()
 
+
+def write2dCSV(array, name):
+    file = open(name, "w")
+
+    for i in range(len(array[0])):
+        if i >= len(array[0]) - 1:
+            file.write(str(i) + "\n")
+        else:
+            file.write(str(i) + ",")
+    for i in range(len(array)):
+        for n in range(len(array[i])):
+            if n >= len(array[i])-1:
+                file.write(str(array[i][n]))
+            else:
+                file.write(str(array[i][n]) + ",")
+        file.write("\n")
+    file.close()
+
+
+def writeCSV(features, classes, class_names, file_name, header=True):
+    for c in range(len(class_names)):
+        file = open(file_name + class_names[c] + ".csv", "w")
+        if header:
+            for i in range(len(features[0])):
+                if i >= len(features[0]) - 1:
+                    file.write(str(i) + "," + class_names[c] + "\n")
+                else:
+                    file.write(str(i) + ",")
+        for i in range(len(features)):
+            for n in range(len(features[i])):
+                if n >= len(features[i]) - 1:
+                    if classes[c][i] == 0:
+                        file.write(str(features[i][n]) + ",FALSE")
+                    else:
+                        file.write(str(features[i][n]) + ",TRUE")
+                else:
+                    file.write(str(features[i][n]) + ",")
+            file.write("\n")
+        file.close()
+
+def writeArff(features, classes, class_names, file_name, header=True):
+    for c in range(len(class_names)):
+        file = open(file_name + class_names[c] + ".arff", "w")
+        file.write("@RELATION genres\n")
+        if header:
+            for i in range(len(features[0])):
+                file.write("@ATTRIBUTE " + str(i) + " NUMERIC\n")
+            file.write("@ATTRIBUTE " + class_names[c] + " {0,1}\n")
+        file.write("@DATA\n")
+        for i in range(len(features)):
+            for n in range(len(features[i])):
+                if n >= len(features[i]) - 1:
+                    if classes[c][i] == 0:
+                        file.write(str(features[i][n]) + ",0")
+                    else:
+                        file.write(str(features[i][n]) + ",1")
+                else:
+                    file.write(str(features[i][n]) + ",")
+            file.write("\n")
+        file.close()
+
+
 def write1dArray(array, name):
     file = open(name, "w")
+    for i in range(len(array)):
+        file.write(str(array[i]) + "\n")
+    file.close()
+
+
+
+def write1dCSV(array, name):
+    file = open(name, "w")
+    file.write("0\n")
     for i in range(len(array)):
         file.write(str(array[i]) + "\n")
     file.close()
@@ -387,34 +523,6 @@ def convertToPPMI(freq_arrays_fn, term_names_fn):
         ppmi_arrays.append(ppmi_array)
         write1dArray(ppmi_array, "../data/movies/bow/ppmi/class-" + term_names[t])
     write2dArray(ppmi_arrays, "../data/movies/bow/ppmi/class-all")
-from sklearn.feature_extraction.text import TfidfTransformer
-import scipy.sparse as sp
-def convertPPMI(mat):
-    """
-     Compute the PPMI values for the raw co-occurrence matrix.
-     PPMI values will be written to mat and it will get overwritten.
-     """
-    (nrows, ncols) = mat.shape
-    print("no. of rows =", nrows)
-    print("no. of cols =", ncols)
-    colTotals = mat.sum(axis=0)
-    rowTotals = mat.sum(axis=1).T
-    N = np.sum(rowTotals)
-    rowMat = np.ones((nrows, ncols), dtype=np.float)
-    for i in range(nrows):
-        rowMat[i, :] = 0 \
-            if rowTotals[0,i] == 0 \
-            else rowMat[i, :] * (1.0 / rowTotals[0,i])
-        print(i)
-    colMat = np.ones((nrows, ncols), dtype=np.float)
-    for j in range(ncols):
-        colMat[:,j] = 0 if colTotals[0,j] == 0 else (1.0 / colTotals[0,j])
-        print(j)
-    P = N * mat.toarray() * rowMat * colMat
-    P = np.fmax(np.zeros((nrows,ncols), dtype=np.float64), np.log(P))
-    return P
-
-#write2dArray(convertPPMI( sp.csr_matrix(import2dArray("../data/movies/bow/frequency/phrases/class-all"))), "../data/movies/bow/ppmi/class-all-l")
 
 def getDifference(array1, array2):
     file1 = open(array1)
@@ -581,9 +689,77 @@ def getTop10Clusters(file_name, ids):
                 print(cluster_names[v][6:])
         print("----------------------")
 
+from sklearn import svm
+from sklearn.metrics import cohen_kappa_score
+def obtainKappaOnClusteredDirection(names, ranks):
+    # For each discrete rank, obtain the Kappa score compared to the word occ
+    kappas = np.empty(len(names))
+    for n in range(len(names)):
+        clf = svm.LinearSVC()
+        ppmi = np.asarray(import1dArray("../data/movies/bow/binary/phrases/" + names[n], "i"))
+        clf.fit(ranks, ppmi)
+        y_pred = clf.predict(ranks)
+        score = cohen_kappa_score(ppmi, y_pred)
+        kappas[n] = score
+    return kappas
+
+# Takes as input a folder with a series of files
+def concatenateDirections(folder_name):
+    files = getFns(folder_name)
+    all_directions = []
+    all_names = []
+    all_kappa = []
+    for f in files:
+        file = open(f)
+        lines = file.readlines()
+        all_directions.append(lines[0])
+        all_names.append(f[:5])
+
+# Get the amount of non-zero occurances for each class in a class-all
+def getNonZero(class_names_fn, file_name):
+    class_names = import1dArray(class_names_fn, "s")
+    class_all = np.asarray(import2dArray(file_name)).transpose()
+    for c in range(len(class_all)):
+        print(np.count_nonzero(class_all[c]))
+
+#getNonZero("../data/movies/classify/genres/names.txt", "../data/movies/classify/genres/class-all")
+
+def removeEverythingFromString(string):
+    string = stripPunctuation(string)
+    string = string.lower()
+    string = "".join(string.split())
+    return string
+"""
 #getTop10Clusters("films100L2100N0.5", [1644,164,4018,6390])
 
+
+from sklearn.datasets import dump_svmlight_file
+genre_names = import1dArray("../data/movies/classify/genres/names.txt", "s")
+
+
+genres = np.asarray(import2dArray("../data/movies/classify/genres/class-all", "i")).transpose()
+
+class_all = []
+#for i in range(23):
+    #g = import1dArray("../data/movies/classify/genres/class-" + genre_names[i], "i")
+    #class_all.append(g)
+
+class_all = np.asarray(class_all).transpose()
+
+#write2dArray(class_all, "../data/movies/classify/genres/class-all")
+
+space_name = "films100"
+space = np.asarray(import2dArray("../data/movies/nnet/spaces/"+space_name+".txt"))
+
+writeArff(space, genres, genre_names, "../data/movies/keel/vectors/"+space_name+"genres", header=True)
+
+#np.savetxt( "../data/movies/keel/vectors/"+space_name+"np.csv", space, delimiter=",")
+
+
 """
+
+"""
+
 
 
 fn = "films200L325N0.5"

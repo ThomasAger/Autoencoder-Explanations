@@ -28,7 +28,7 @@ def readPPMI(name):
         frq_a.append(float(line))
     return frq_a
 
-def pavPPMI(cluster_names_fn, ranking_fn, file_name, do_p=False):
+def pavPPMI(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type="movies"):
     ranking = dt.import2dArray(ranking_fn)
     names = dt.import1dArray(cluster_names_fn)
     frq = []
@@ -51,7 +51,7 @@ def pavPPMI(cluster_names_fn, ranking_fn, file_name, do_p=False):
             plot(x, y, y_)
         print(f)
 
-    dt.write2dArray(pav_classes, "../data/movies/finetune/" + file_name + "pavPPMI.txt")
+    dt.write2dArray(pav_classes, "../data/" + data_type + "/finetune/" + file_name + "pavPPMI.txt")
     return pav_classes
 
 def readFreq(name):

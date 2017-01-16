@@ -1,7 +1,7 @@
 
 from sklearn import svm
 import numpy as np
-from sklearn.metrics import cohen_kappa_score, mean_squared_error
+from sklearn.metrics import cohen_kappa_score, mean_squared_error, f1_score, accuracy_score
 import helper.data as dt
 from scipy import  linalg
 import itertools
@@ -254,6 +254,7 @@ class RankSVM(svm.LinearSVC):
 
         return np.mean(super(RankSVM, self).predict(self.score_X_trans) == self.score_y_trans)
 
+
 def runRankSVM(y_test, y_train, x_train, x_test, property_name, file_name, saved_x_trans, saved_test_x_trans):
     rank_svm = RankSVM().fit(x_train, y_train, file_name, property_name, saved_x_trans, saved_test_x_trans)
     direction = rank_svm.direction()
@@ -263,8 +264,8 @@ def runRankSVM(y_test, y_train, x_train, x_test, property_name, file_name, saved
     print('Performance of ranking ', ktau, property_name)
     return 0, [0], ktau, saved_x_trans, saved_test_x_trans
 
-def get_ppmi_score(y_pred, property_name):
-    term_frequency = dt.import1dArray("../data/movies/bow/frequency/phrases/"+property_name)
+def get_ppmi_score(y_pred, property_name, data_type):
+    term_frequency = dt.import1dArray("../data/" + data_type + "/bow/frequency/phrases/"+property_name)
 #    term_frequency = [int(term_frequency[f]) for f in term_frequency]
     total_y = 0
     total_x = 0
@@ -285,28 +286,72 @@ def get_ppmi_score(y_pred, property_name):
     ratio = (100 / (total_y + total_x)) * total_y
     return score, ratio
 
-def runGaussianSVM(y_test, y_train, x_train, x_test, property_name):
-    clf = svm.SVC(kernel='rbf', class_weight='auto')
+def runGaussianSVM(y_test, y_train, x_train, x_test, get_kappa, get_f1):
+    clf = svm.SVC(kernel='rbf', class_weight='balanced')
+    if get_f1:
+        cross_val = cross_val_score(clf, x_train, y_train, scoring="f1", cv=5)
+        f1 = np.average(cross_val)
+    else:
+        f1 = 0
     clf.fit(x_train, y_train)
     direction = clf.dual_coef_.tolist()[0]
     y_pred = clf.predict(x_test)
     y_pred = y_pred.tolist()
-    kappa_score = cohen_kappa_score(y_test, y_pred)
-    #ppmi_score, ppmi_ratio = get_ppmi_score(y_pred, property_name)
-    return kappa_score, direction, 0, 0
+    if get_kappa:
+        kappa_score = cohen_kappa_score(y_test, y_pred)
+    else:
+        kappa_score = 0
 
-def runSVM(y_test, y_train, x_train, x_test, property_name, wasted_variable, wasted_variable2, wasted_variable3):
-    clf = svm.LinearSVC(class_weight='auto')
+    ktau = 0
+    #ppmi_score, ppmi_ratio = get_ppmi_score(y_pred, property_name)
+    return kappa_score, direction, f1, 0, 0
+
+from sklearn.model_selection import cross_val_score
+def runSVM(y_test, y_train, x_train, x_test, property_name, get_kappa, get_f1, data_type):
+    y_train, y_test = train_test_split(dt.import1dArray("../data/" + data_type + "/bow/binary/phrases/" + property_name), test_size=0.3, random_state=0)
+    clf = svm.LinearSVC(class_weight='balanced')
+    if get_f1:
+        cross_val = cross_val_score(clf, x_train, y_train, scoring="f1", cv=5)
+        f1 = np.average(cross_val)
+    else:
+        f1 = 0
     clf.fit(x_train, y_train)
     direction = clf.coef_.tolist()[0]
     y_pred = clf.predict(x_test)
     y_pred = y_pred.tolist()
-    kappa_score = cohen_kappa_score(y_test, y_pred)
+    if get_kappa:
+        kappa_score = cohen_kappa_score(y_test, y_pred)
+    else:
+        kappa_score = 0
+
     ktau = 0
     #ppmi_score, ppmi_ratio = get_ppmi_score(y_pred, property_name)
-    return kappa_score, direction, ktau, 0, 0
+    return kappa_score, direction, f1, 0, 0
+from sklearn.model_selection import cross_val_score
+def runLibSVM(y_test, y_train, x_train, x_test, property_name, get_kappa, get_f1, wasted_variable3):
+    clf = svm.SVC(kernel='linear', class_weight='balanced')
+    if get_f1:
+        cross_val = cross_val_score(clf, x_train, y_train, scoring="f1", cv=5)
+        f1 = np.average(cross_val)
+    else:
+        f1 = 0
+    clf.fit(x_train, y_train)
+    direction = clf.coef_.tolist()[0]
+    y_pred = clf.predict(x_test)
+    y_pred = y_pred.tolist()
+    if get_kappa:
+        kappa_score = cohen_kappa_score(y_test, y_pred)
+    else:
+        kappa_score = 0
 
-def runSVR(y_test, y_train, x_train, x_test, property_name, wasted_variable, wasted_variable2, wasted_variable3):
+    ktau = 0
+    #ppmi_score, ppmi_ratio = get_ppmi_score(y_pred, property_name)
+    return kappa_score, direction, f1, 0, 0
+
+import random
+
+def runSVR(y_test, y_train, x_train, x_test, property_name, vectors, classes, wasted_variable3):
+    x_train, y_train = dt.balanceClasses(x_train, y_train)
     clf = svm.LinearSVR()
     clf.fit(x_train, y_train)
     direction = clf.coef_.tolist()
@@ -316,51 +361,77 @@ def runSVR(y_test, y_train, x_train, x_test, property_name, wasted_variable, was
     ktau = 0
     #ppmi_score, ppmi_ratio = get_ppmi_score(y_pred, property_name)
     return kappa_score, direction, ktau, 0, 0
-
-def runAllSVMs(y_test, y_train, x_train, x_test, property_names, file_name):
-    kappa_scores = []
-    directions = []
-    ktau_scores = []
+import multiprocessing
+def runAllSVMs(y_test, y_train, x_train, x_test, property_names, file_name, svm_type, get_kappa, get_f1, getting_directions, data_type, threads):
+    kappa_scores = [0] * len(property_names)
+    directions = [None] * len(property_names)
+    ktau_scores = [0] * len(property_names)
     saved_x_trans = None
     saved_test_x_trans = None
-    for y in range(len(y_train)):
-        kappa, direction, ktau_score, saved_x_trans, saved_test_x_trans = runSVR(y_test[y], y_train[y], x_train, x_test, property_names[y], file_name,
-                                                                                     saved_x_trans, saved_test_x_trans)
-        kappa_scores.append(kappa)
-        directions.append(direction)
-        ktau_scores.append(ktau_scores)
-        print(y, "Score", kappa,  ktau_score, property_names[y])
+    for y in range(len(property_names), threads):
+        if not getting_directions:
+            if svm_type == "svr":
+                kappa, direction, ktau_score, saved_x_trans, saved_test_x_trans = runSVR(y_test[y], y_train[y], x_train, x_test, property_names[y], 0,
+                                                                                         0, 0)
+            elif svm_type == "svc":
+                kappa, direction, ktau_score, saved_x_trans, saved_test_x_trans = runGaussianSVM(y_test[y], y_train[y], x_train, x_test, get_kappa, get_f1)
+            elif svm_type == "libsvm":
+                kappa, direction, ktau_score, saved_x_trans, saved_test_x_trans = runLibSVM(y_test[y], y_train[y], x_train, x_test, property_names[y], get_kappa,
+                                                                                         get_f1, saved_test_x_trans)
+            else:
+                kappa, direction, ktau_score, saved_x_trans, saved_test_x_trans = runSVM(y_test[y], y_train[y], x_train, x_test, property_names[y], get_kappa,
+                                                                                         get_f1, saved_test_x_trans)
+            kappa_scores[y] = kappa
+            directions[y] = direction
+            ktau_scores[y] = ktau_score
+            print(y, "Score", kappa,  ktau_score, property_names[y])
+        else:
+            pool = multiprocessing.Pool(processes=4)
+            kappa, direction, ktau_score, saved_x_trans, saved_test_x_trans = pool.map(runSVM(y_test, y_train, x_train,
+                                            x_test, property_names[y], get_kappa,get_f1, saved_test_x_trans), range(3))
+            print(kappa)
+
+            kappa, direction, ktau_score, saved_x_trans, saved_test_x_trans = runSVM()
+            kappa_scores[y+t] = kappa
+            directions[y+t] = direction
+            ktau_scores[y+t] = ktau_score
+                print(y, "Score", kappa,  ktau_score, property_names[y])
 
     return kappa_scores, directions, ktau_scores
 
+from sklearn.cross_validation import train_test_split
 
-def getSVMResults(vector_path, class_path, property_names_fn, file_name, training_size=10000,  lowest_count=200, highest_count=21470000):
-    vectors = dt.import2dArray(vector_path)
-    classes = dt.import2dArray(class_path)
+def getSVMResults(vector_path, class_path, property_names_fn, file_name, svm_type, training_size=10000,  lowest_count=200,
+                  highest_count=21470000, get_kappa=True, get_f1=True, single_class=True, data_type="movies",
+                  getting_directions=True, threads=1):
+    y_train = 0
+    y_test = 0
+    if get_f1:
+        vectors = np.asarray(dt.import2dArray(vector_path)).transpose()
+    else:
+        vectors = np.asarray(dt.import2dArray(vector_path))
+    if not getting_directions:
+        classes = np.asarray(dt.import2dArray(class_path))
     property_names = dt.import1dArray(property_names_fn)
 
-    x_train = np.asarray(vectors[:training_size])
-    x_test = np.asarray(vectors[training_size:])
-
-    #property_names, classes = getSampledData(property_names, classes, lowest_count, highest_count)
-
-    classes = np.asarray(classes)
-
-    if len(classes) != len(vectors):
+    if single_class and not getting_directions:
         classes = classes.transpose()
 
-    y_train = np.asarray(classes[:training_size])
-    y_test = np.asarray(classes[training_size:])
+    if not getting_directions:
+        x_train, x_test, y_train, y_test = train_test_split(vectors, classes, test_size=0.3, random_state=0)
+    else:
+        x_train, x_test = train_test_split(vectors,  test_size=0.3, random_state=0)
 
-    y_train = y_train.transpose()
-    y_test = y_test.transpose()
+    if single_class and not getting_directions:
+        y_train = y_train.transpose()
+        y_test = y_test.transpose()
 
-    kappa_scores, directions, ktau_scores = runAllSVMs(y_test, y_train, x_train, x_test, property_names, file_name)
+    kappa_scores, directions, ktau_scores = runAllSVMs(y_test, y_train, x_train, x_test, property_names, file_name, svm_type, get_kappa, get_f1, getting_directions, data_type, threads)
 
-    directions_fn = "../data/movies/svm/directions/" + file_name + str(lowest_count) + ".txt"
-    kappa_fn = "../data/movies/svm/kappa/" + file_name + str(lowest_count) + ".txt"
-    ktau_scores_fn = "../data/movies/svm/ranksvm/" + file_name + str(lowest_count) + ".txt"
-    ppmI_ratios_fn = "../data/movies/svm/ppmi/" + file_name + str(lowest_count) + "ratio.txt"
+    directions_fn = "../data/" + data_type + "/svm/directions/" + file_name + str(lowest_count) + ".txt"
+    kappa_fn = "../data/" + data_type + "/svm/kappa/" + file_name + str(lowest_count) + ".txt"
+    ktau_scores_fn = "../data/" + data_type + "/svm/f1/" + file_name + str(lowest_count) + ".txt"
+    ppmI_ratios_fn = "../data/" + data_type + "/svm/ppmi/" + file_name + str(lowest_count) + "ratio.txt"
 
     dt.write1dArray(kappa_scores, kappa_fn)
     dt.write2dArray(directions, directions_fn)
@@ -376,15 +447,20 @@ def main(vectors_fn, classes_fn, property_names, training_size, file_name, lowes
     SVM(vectors_fn, classes_fn, property_names, lowest_count=lowest_count,
         training_size=training_size, file_name=file_name, largest_count=largest_count)
 
-file_name = "films100"
+file_name = "films100svmndcg0.9200"
 # Get SVM scores
+svm_type = "svm"
 lowest_count = 200
 highest_count = 10000
-vector_path = "../data/movies/nnet/spaces/" + file_name + ".txt"
-class_path = "../data/movies/bow/ppmi/class-all-" + str(lowest_count)
-property_names_fn = "../data/movies/bow/names/" + str(lowest_count) + ".txt"
-file_name = file_name + "ppmi"
-getSVMResults(vector_path, class_path, property_names_fn, file_name, lowest_count=lowest_count, highest_count=highest_count)
+cluster_amt = 200
+split = 0.9
+#vector_path = "../data/movies/nnet/spaces/" + file_name + ".txt"#
+vector_path = "../data/movies/rank/numeric/"+file_name+".txt"
+#class_path = "../data/movies/bow/ppmi/class-all-" + str(lowest_count)
+class_path = "../data/movies/classify/genres/class-all"
+property_names_fn = "../data/movies/classify/genres/names.txt"
+file_name = file_name + "genre"
+#getSVMResults(vector_path, class_path, property_names_fn, file_name, lowest_count=lowest_count, highest_count=highest_count, svm_type=svm_type)
 
 
 """
