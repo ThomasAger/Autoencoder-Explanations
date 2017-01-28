@@ -61,7 +61,7 @@ class Cluster:
         c = 0
         for n in [0, len(self.names) - 1]:
             clf = svm.LinearSVC()
-            ppmi = np.asarray(dt.import1dArray("../data/" + self.data_type + "/bow/binary/phrases/class-" + self.names[n], "i"))
+            ppmi = np.asarray(dt.import1dArray("../data/" + self.data_type + "/bow/binary/phrases/class-trimmed-" + self.names[n], "f"))
             clf.fit(self.ranks, ppmi)
             y_pred = clf.predict(self.ranks)
             score = cohen_kappa_score(ppmi, y_pred)
@@ -75,7 +75,7 @@ class Cluster:
         ndcgs = np.empty(2)
         c = 0
         for n in [0, len(self.names) - 1]:
-            ppmi = np.asarray(dt.import1dArray("../data/" + self.data_type + "/bow/ppmi/class-" + self.names[n], "f"))
+            ppmi = np.asarray(dt.import1dArray("../data/" + self.data_type + "/bow/ppmi/class-trimmed-" + self.names[n], "f"))
             sorted_indices = np.argsort(self.ranks)[::-1]
             score = ndcg.ndcg_from_ranking(ppmi, sorted_indices)
             ndcgs[c] = score
@@ -166,7 +166,7 @@ def getMostSimilarDirection(direction, directions):
     return index
 """ OLD METHOD: SLOW W/AVERAGING"""
 """
-def getHierarchicalClusters(vectors, directions, scores, names, score_limit):
+def getBreakOffClusters(vectors, directions, scores, names, score_limit):
 
     clusters = []
     # Initialize a list of indexes to keep track of which directions have been combined
@@ -228,7 +228,7 @@ def getHierarchicalClusters(vectors, directions, scores, names, score_limit):
 """
 # New method, instead of averaging, compare each individual direction. Start with one cluster and then add more.
 # Add to the parent cluster with the highest score
-def getHierarchicalClustersMaxScoring(vectors, directions, scores, names, score_limit):
+def getBreakOffClustersMaxScoring(vectors, directions, scores, names, score_limit):
 
     clusters = []
     # Initialize a list of indexes to keep track of which directions have been combined
@@ -291,8 +291,8 @@ def getHierarchicalClustersMaxScoring(vectors, directions, scores, names, score_
 """
 
 # New method, instead of averaging, compare each individual direction. Start with one cluster and then add more.
-def getHierarchicalClusters(vectors, directions, scores, names, score_limit, dissimilarity_threshold, max_clusters,
-                            file_name, kappa, similarity_threshold, data_type):
+def getBreakOffClusters(vectors, directions, scores, names, score_limit, dissimilarity_threshold, max_clusters,
+                            file_name, kappa, similarity_threshold, add_all_terms, data_type, largest_clusters):
 
     clusters = []
     # Initialize a list of indexes to keep track of which directions have been combined
@@ -300,7 +300,10 @@ def getHierarchicalClusters(vectors, directions, scores, names, score_limit, dis
     clusters = np.asarray(clusters)
     all_subsets = []
     clustersExist = True
-
+    reached_max = False
+    clusters_to_take = max_clusters
+    if largest_clusters:
+        max_clusters = len(clusters)
     c = 0
     # Find the most similar direction and check if its combination has a kappa score loss larger than the score limit
     failed_array = []
@@ -309,9 +312,12 @@ def getHierarchicalClusters(vectors, directions, scores, names, score_limit, dis
         print(d, "/", len(directions))
         failed = True
         current_direction = Cluster([scores[d]], [directions[d]], [names[d]], data_type)
-        if len(clusters) >= max_clusters:
+        if len(clusters) >= max_clusters and reached_max is False:
             print("REACHED MAX CLUSTERS")
-            break
+            if add_all_terms:
+                reached_max = True
+            else:
+                break
         else:
             print(len(clusters), "/", max_clusters)
 
@@ -360,7 +366,7 @@ def getHierarchicalClusters(vectors, directions, scores, names, score_limit, dis
                 failed = False
                 all_subsets = np.append(all_subsets, new_cluster)
                 break
-        if failed:
+        if failed and not reached_max:
             failed_array.append(s)
             if too_similar is True:
                 print("Skipped", current_direction.getNames()[0], "Too similar to", clusters[c].getNames()[0])
@@ -369,6 +375,10 @@ def getHierarchicalClusters(vectors, directions, scores, names, score_limit, dis
             all_subsets = np.append(all_subsets, current_direction)
             print("Failed", current_direction.getNames())
     dt.write1dArray(failed_array, "../data/temp/failed_array.txt")
+
+    if largest_clusters:
+        dt.sortIndexesByArraySize(clusters)
+    #a.sort(key=len)
 
     output_directions = []
     output_names = []
@@ -384,18 +394,16 @@ def getHierarchicalClusters(vectors, directions, scores, names, score_limit, dis
             all_directions.append(all_subsets[c].getClusterDirection())
             all_names.append(all_subsets[c].getNames())
 
-    dt.write2dArray(output_directions, "../data/" + data_type + "/cluster/hierarchy_directions/"+file_name+str(score_limit)+str(max_clusters)+".txt")
-    dt.write2dArray(output_names, "../data/" + data_type + "/cluster/hierarchy_names/" + file_name + str(score_limit)+str(max_clusters)+".txt")
+    dt.write2dArray(output_directions, "../data/" + data_type + "/cluster/hierarchy_directions/"+file_name+".txt")
+    dt.write2dArray(output_names, "../data/" + data_type + "/cluster/hierarchy_names/" + file_name +".txt")
     dt.write2dArray(all_directions,
-                    "../data/" + data_type + "/cluster/all_directions/" + file_name + str(score_limit) + str(
-                        max_clusters) + ".txt")
-    dt.write2dArray(all_names, "../data/" + data_type + "/cluster/all_names/" + file_name + str(score_limit) + str(
-        max_clusters) + ".txt")
+                    "../data/" + data_type + "/cluster/all_directions/" + file_name + ".txt")
+    dt.write2dArray(all_names, "../data/" + data_type + "/cluster/all_names/" + file_name + ".txt")
 
 """
 # New method, instead of averaging, compare each individual direction. Start with one cluster and then add more.
 # When adding more, choose the most similar rather than checking every Kappa score
-def getHierarchicalClusters(vectors, directions, scores, names, score_limit):
+def getBreakOffClusters(vectors, directions, scores, names, score_limit):
 
     clusters = []
     # Initialize a list of indexes to keep track of which directions have been combined
@@ -446,7 +454,7 @@ def getHierarchicalClusters(vectors, directions, scores, names, score_limit):
     dt.write2dArray(output_first_names, "../data/movies/cluster/hierarchy_names/" + file_name + str(score_limit)+".txt")
 """
 def initClustering(vector_fn, directions_fn, scores_fn, names_fn, amt_to_start, profiling, dissimilarity_threshold,
-                   max_clusters, score_limit, file_name, kappa, similarity_threshold, data_type):
+                   max_clusters, score_limit, file_name, kappa, similarity_threshold, add_all_terms=False, data_type="movies", largest_clusters=False):
     vectors = dt.import2dArray(vector_fn)
     directions = dt.import2dArray(directions_fn)
     scores = dt.import1dArray(scores_fn, "f")
@@ -464,9 +472,10 @@ def initClustering(vector_fn, directions_fn, scores_fn, names_fn, amt_to_start, 
         top_scores.append(scores[i])
 
     if profiling:
-        cProfile.runctx('getHierarchicalClusters(vectors, top_directions, top_scores, top_names, score_limit, similarity_threshold, max_clusters, file_name, kappa)', globals(), locals())
+        cProfile.runctx('getBreakOffClusters(vectors, top_directions, top_scores, top_names, score_limit, similarity_threshold, max_clusters, file_name, kappa)', globals(), locals())
     else:
-        getHierarchicalClusters(vectors, top_directions, top_scores, top_names, score_limit, dissimilarity_threshold, max_clusters, file_name, kappa, similarity_threshold, data_type)
+        getBreakOffClusters(vectors, top_directions, top_scores, top_names, score_limit, dissimilarity_threshold,
+                                max_clusters, file_name, kappa, similarity_threshold, add_all_terms, data_type, largest_clusters)
 
 
 file_name = "films100"

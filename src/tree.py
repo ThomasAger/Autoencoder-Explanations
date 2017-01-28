@@ -10,24 +10,22 @@ from sklearn.cross_validation import train_test_split
 import jsbeautifier
 from sklearn.model_selection import cross_val_score
 
+
 class DecisionTree:
     clf = None
-    def __init__(self, cluster_vectors_fn, cluster_labels_fn,  label_names_fn, cluster_names_fn, filename,
-                 training_data,  max_depth, balance=None, criterion="entropy", save_details=False, data_type="movies"):
+    def __init__(self, features_fn, classes_fn,  class_names_fn, cluster_names_fn, filename,
+                 training_data,  max_depth, balance=None, criterion="entropy", save_details=False, data_type="movies",
+                 csv_fn="../data/temp/no_csv_provided.csv"):
 
-        vectors = np.asarray(dt.import2dArray(cluster_vectors_fn))
+        vectors = np.asarray(dt.import2dArray(features_fn))
 
+        labels = np.asarray(dt.import2dArray(classes_fn, "i"))
 
-        labels = np.asarray(dt.import2dArray(cluster_labels_fn, "i"))
-
-        if len(labels) != len(vectors) and len(labels) < len(vectors):
-            labels = labels.transpose()
-
-        if len(labels) != len(vectors) and len(labels) < len(vectors):
-            vectors = vectors.transpose()
+        vectors = vectors.transpose()
+        labels = labels.transpose()
 
         cluster_names = dt.import1dArray(cluster_names_fn)
-        label_names = dt.import1dArray(label_names_fn)
+        label_names = dt.import1dArray(class_names_fn)
 
         x_train, x_test, y_train, y_test = train_test_split(vectors, labels, test_size=0.1, random_state=0)
 
@@ -107,9 +105,29 @@ class DecisionTree:
                 graph.write_png('../data/' + data_type + '/rules/tree_images/'+label_names[l]+ " " + filename+".png")
                 self.get_code(clf, cluster_names, class_names, label_names[l]+ " " + filename, data_type)
 
+        accuracy_array = np.asarray(accuracy_array)
+        accuracy_average = np.average(accuracy_array)
 
-        dt.write1dArray(accuracy_array, '../data/' + data_type + '/rules/tree_scores/acc'+filename+'.scores')
-        dt.write1dArray(f1_array, '../data/' + data_type + '/rules/tree_scores/f1' + filename + '.scores')
+        f1_array = np.asarray(f1_array)
+        f1_average = np.average(f1_array)
+
+        accuracy_array = np.append(accuracy_array, accuracy_average)
+        f1_array = np.append(f1_array, f1_average)
+
+        file_names = ['ACC '+filename, 'F1 '+filename]
+        scores = [accuracy_array, f1_array]
+
+        dt.write1dArray(accuracy_array, '../data/' + data_type + '/rules/tree_scores/'+file_names[0]+'.scores')
+        dt.write1dArray(f1_array, '../data/' + data_type + '/rules/tree_scores/'+file_names[1]+'.scores')
+
+        if dt.file_exists(csv_fn):
+            dt.write_to_csv(csv_fn, file_names, scores)
+        else:
+            key = []
+            for l in label_names:
+                key.append(l)
+            key.append("AVERAGE")
+            dt.write_csv(csv_fn, file_names, scores, key)
         """
         dt.write2dArray(params, "../data/movies/rules/tree_paramas/" + filename +".txt")
         """
@@ -154,43 +172,46 @@ class DecisionTree:
         file.close()
 
 
+
 def main():
     cluster_to_classify = -1
-    max_depth = None
+    max_depth = 3
     classify = "types"
     data_type = "wines"
-    save_details = False
+    save_details = True
     label_names_fn = "../data/"+data_type+"/classify/"+classify+"/names.txt"
     cluster_labels_fn = "../data/"+data_type+"/classify/"+classify+"/class-All"
-    cluster_amt =200
     threshold = 0.9
     split = 0.1
-    file_name = "wines100svmndcg0.95200"
+    csv_name = "wines100"
+    csv_fn = "../data/"+data_type+"/rules/tree_csv/"+csv_name+".csv"
+    file_name = "ndcg0.9200pavPPMIITsgdmse1000SFT1svm0.9200SFT2svm0.9200"
     criterion = "entropy"
     balance = "balanced"
     cluster_names_fn = "../data/"+data_type+"/cluster/hierarchy_names/"+file_name+".txt"
+    cluster_names_fn = "../data/movies/bow/names/200.txt"
     #cluster_names_fn = "../data/movies/cluster/names/" + file_name + ".txt"
     #cluster_vectors_fn = "../data/movies/rank/numeric/" + file_name + "400.txt"
     #file_name = "L3" + file_name + "L3100N0.5InClusterN0.5FTadagradcategorical_crossentropy100Genres100L3L4"
 
     #vector_fn = "films100svmndcg0.9240pavPPMIN0.5FTRsgdmse1000"
-    #vector_fn = file_name + str(threshold) + str(cluster_amt)
-    vector_fn = file_name + "trimmed"
+    vector_fn = "wines100trimmedsvmkappa0.9200"
     #vector_fn = "films100"
-    #cluster_vectors_fn = "../data/movies/cluster/all_directions/" +file_name + ".txt"
+    #cluster_vectors_fn = "../data/"+data_type+"/cluster/all_directions/" +file_name + ".txt"
     #file_name = file_name + "all_dir"
-    #cluster_vectors_fn = "../data/movies/nnet/clusters/"+vector_fn+".txt"
+    #cluster_vectors_fn = "../data/"+data_type+"/nnet/clusters/"+vector_fn+".txt"
     #file_name = file_name + "nnet_rank"
-    #cluster_vectors_fn = "../data/movies/finetune/"+vector_fn+".txt"
+    #cluster_vectors_fn = "../data/"+data_type+"/finetune/"+vector_fn+".txt"
     #file_name = file_name + "finetune_pavppmi"
-    #cluster_vectors_fn = "../data/movies/nnet/spaces/"+vector_fn+".txt"
+    #cluster_vectors_fn = "../data/"+data_type+"/nnet/spaces/"+vector_fn+".txt"
     #file_name = file_name + "vector"
     cluster_vectors_fn = "../data/"+data_type+"/rank/numeric/"+vector_fn+".txt"
     file_name = file_name + "ranks"
-    file_name = file_name + classify + str(max_depth) + "" +balance + criterion + "firstwords"
+    file_name = vector_fn + classify + str(max_depth)
 
-    clf = DecisionTree(cluster_vectors_fn, cluster_labels_fn, label_names_fn, cluster_names_fn, file_name, 10000,
-                       max_depth, balance=balance, criterion=criterion, save_details=save_details, data_type=data_type)
+    clf = DecisionTree(cluster_vectors_fn, cluster_labels_fn, label_names_fn , cluster_names_fn , file_name, 10000,
+                       max_depth, balance=balance, criterion=criterion, save_details=save_details, data_type=data_type,
+                       csv_fn=csv_fn)
 
     """
     fn = "films100"

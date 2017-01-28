@@ -19,9 +19,9 @@ def plot(x, y, y_):
     plt.title('Isotonic regression')
     plt.show()
 
-def readPPMI(name):
+def readPPMI(name, data_type):
     name = name.split()[0]
-    file = open("../data/movies/bow/ppmi/" + "class-" + name)
+    file = open("../data/"+data_type+"/bow/ppmi/" + "class-trimmed-" + name)
     lines = file.readlines()
     frq_a = []
     for line in lines:
@@ -35,7 +35,7 @@ def pavPPMI(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type="movi
     counter = 0
 
     for name in names:
-        frq.append(readPPMI(name))
+        frq.append(readPPMI(name, data_type))
 
     pav_classes = []
 
@@ -51,7 +51,7 @@ def pavPPMI(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type="movi
             plot(x, y, y_)
         print(f)
 
-    dt.write2dArray(pav_classes, "../data/" + data_type + "/finetune/" + file_name + "pavPPMI.txt")
+    dt.write2dArray(pav_classes, "../data/" + data_type + "/finetune/" + file_name + ".txt")
     return pav_classes
 
 def readFreq(name):

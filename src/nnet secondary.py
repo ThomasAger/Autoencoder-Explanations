@@ -128,7 +128,7 @@ class NeuralNetwork:
 
         total_file_name = "../data/" + data_type + "/nnet/spaces/" + self.file_name
         for l in range(0, len(self.model.layers) - 1):
-            if dropout_noise is not None and dropout_noise > 0.0:
+            if dropout_noise is not None or dropout_noise > 0.0:
                 if l % 2 == 1:
                     continue
             print("Writing", l, "layer")
@@ -142,9 +142,9 @@ class NeuralNetwork:
         for l in range(len(self.model.layers)):
             try:
                 dt.write2dArray(self.model.layers[l].get_weights()[0],
-                                "../data/" + data_type + "/nnet/weights/" + file_name + "L" + str(l) + ".txt")
+                                "../data/" + data_type + "/nnet/weights/L" + str(l) + file_name + ".txt")
                 dt.write1dArray(self.model.layers[l].get_weights()[1],
-                                "../data/" + data_type + "/nnet/bias/" + file_name + "L" +  str(l) + ".txt")
+                                "../data/" + data_type + "/nnet/bias/L" + str(l) + file_name + ".txt")
             except IndexError:
                 print("Layer ", str(l), "Failed")
 
@@ -312,7 +312,7 @@ def main():
     hidden_layer_sizes = [100,100,100,100,100,100]
     file_names = []
 
-    data_type = "movies"
+    data_type = "wines"
 
     for f in range(len(hidden_layer_sizes)):
         #file_names.append("filmsBOWL" + str(f + 1) + "" + str(hidden_layer_sizes[f]))
@@ -354,7 +354,7 @@ def main():
                                hidden_activation=hidden_activation, output_activation=output_activation, learn_rate=learn_rate,
                               file_name=file_name, network_type="da", deep_size=deep_size, activity_reg=activity_reg)
         """
-        file_name = "films100"
+        file_name = "wines100trimmed"
 
         vector_path = "../data/" + data_type + "/nnet/spaces/"+file_name+".txt"
         init_vector_path = "../data/" + data_type + "/nnet/spaces/"+file_name+".txt"
@@ -385,10 +385,12 @@ def main():
 
         #ndcg.getNDCG("../data/" + data_type + "/rank/numeric/"+file_name+"ALL.txt",file_name, data_type, lowest_count)
 
-        #scores_fn = "../data/" + data_type + "/ndcg/"+file_name+".txt"
-        #file_name = file_name + "ndcg"
-        scores_fn = "../data/" + data_type + "/svm/kappa/" + file_name + str(lowest_count)+".txt"
-        file_name = file_name + "kappa"
+        scores_fn = "../data/" + data_type + "/ndcg/"+file_name+".txt"
+        file_name = file_name + "ndcg"
+        kappa = False
+        #scores_fn = "../data/" + data_type + "/svm/kappa/" + file_name + str(lowest_count)+".txt"
+        #file_name = file_name + "kappa"
+        #kappa = True
 
         # Get clusters
         amt_high_directions = hidden_layer_size*2
@@ -405,26 +407,25 @@ def main():
         names_fn = "../data/" + data_type + "/bow/names/"+str(lowest_count)+".txt"
         dissimilarity_threshold = 0.5
         similarity_threshold = 0.9
-        cluster_amt = 300
+        cluster_amt = 200
         amount_to_start = 8000
-        score_limit = 0.8
-        kappa = True
+        score_limit = 0.95
         print(file_name)
-        """
+        add_all_terms = False
+        file_name = file_name + "not all terms" + str(score_limit)
         hierarchy.initClustering(vector_path, directions_fn, scores_fn, names_fn, amount_to_start, False,
                                  dissimilarity_threshold,  cluster_amt, score_limit, file_name, kappa,
-                                 similarity_threshold, data_type )
-        """
-        file_name = file_name  +str(score_limit) + str(cluster_amt)
+                                 similarity_threshold, add_all_terms, data_type )
+
         # Get rankings
         clusters_fn = "../data/" + data_type + "/cluster/hierarchy_directions/" + file_name + ".txt"
         property_names_fn = "../data/" + data_type + "/cluster/hierarchy_names/" + file_name +  ".txt"
         vector_names_fn = "../data/" + data_type + "/nnet/spaces/entitynames.txt"
 
-        """
+
         rank.getAllRankings(clusters_fn, vector_path, property_names_fn, vector_names_fn, 0.2, 1, False, file_name,
                             False, data_type)
-        """
+
         #file_name = "films100previouswork"
         # Get PAV
         ranking_fn = "../data/" + data_type + "/rank/numeric/"+file_name+".txt"
@@ -662,31 +663,28 @@ def main():
     """
     data_type = "wines"
     classification_task = "types"
-    #file_name = "wines100trimmed"
-    #init_vector_path = "../data/" + data_type + "/nnet/spaces/" + file_name + ".txt"
+    file_name = "wines100trimmed"
+    init_vector_path = "../data/" + data_type + "/nnet/spaces/" + file_name + ".txt"
 
-    file_name = "winesppmi"
-    init_vector_path = "../data/wines/bow/ppmi/class-trimmed-all-50"
+    #file_name = "winesppmi"
+    #init_vector_path = "../data/wines/bow/ppmi/class-trimmed-all-50"
 
-    deep_size = [[1000, 500, 250, 100, 50]]
+    deep_size = [100,100,100]
     for d in range(len(deep_size)):
         print(deep_size, init_vector_path)
         loss = "binary_crossentropy"
         output_activation = "sigmoid"
         optimizer_name = "adagrad"
-        hidden_activation = ["relu"]
+        hidden_activation = "tanh"
         classification_path = "../data/" + data_type + "/classify/" + classification_task + "/class-all"
-        learn_rate = [0.01]
+        learn_rate = 0.01
         fine_tune_weights_fn = None
-        epochs = [500]
-        batch_size = [200]
+        epochs = 500
+        batch_size = 200
         class_outputs = True
-        dropout_noise = [0.3]
+        dropout_noise = 0.3
         is_identity = False
         identity_swap = False
-        from_ae = False
-        past_model_weights_fn = None
-        past_model_bias_fn = None
         randomize_finetune_weights = False
         hidden_layer_size = 100
         output_size = 10
@@ -701,7 +699,7 @@ def main():
         else:
             file_name = file_name + "SFT" + str(d)
         print("!!!!!!!!!!!!!!!", deep_size)
-        csv_name = file_name
+
         SDA = NeuralNetwork(noise=0, fine_tune_weights_fn=fine_tune_weights_fn, optimizer_name=optimizer_name,
                 network_type="ft", past_model_bias_fn=past_model_bias_fn, deep_size=deep_size, finetune_activation=finetune_activation,
                 randomize_finetune_weights=randomize_finetune_weights, amount_of_finetune=amount_of_finetune,
@@ -713,7 +711,7 @@ def main():
                 file_name=file_name, from_ae=from_ae, data_type=data_type)
         new_file_names = []
         if dropout_noise is not None and dropout_noise > 0.0:
-            for j in range(0, len(deep_size)*2, 2):
+            for j in range(0, len(deep_size)*2 + 1, 2):
                 new_fn = file_name + "L" + str(j)
                 new_file_names.append(new_fn)
         else:
@@ -722,167 +720,145 @@ def main():
                 new_file_names.append(new_fn)
 
         for j in range(len(new_file_names)):
+            #file_name = "wines100trimmed"
+            #file_name = "films100rankE200DS[100, 100, 100]L3300L1svmndcg0.9200pavPPMIN0.5FTITsgdmse2000L1rankE100DS[100, 100]L0"
             file_name = new_file_names[j]
-
-            """ Begin Filename """
-
-            is_identity = True
-            breakoff = False
-            kappa = False
+            past_model_weights_fn = ["../data/" + data_type + "/nnet/weights/" + file_name + ".txt"]
+            past_model_bias_fn = ["../data/" + data_type + "/nnet/bias/"+ file_name + ".txt"]
+            # Get SVM scores
 
             if data_type is "wines" or "placetypes":
                 lowest_count = 50
             else:
                 lowest_count = 200
-
-            file_name = file_name + str(lowest_count)
-
-
-            if kappa is False:
-                file_name = file_name + "ndcg"
-            else:
-                file_name = file_name + "kappa"
-
-            if breakoff:
-                file_name = file_name + str(score_limit) + str(cluster_amt)
-            else:
-                file_name = file_name + "SimilarityClustering"
-
-
-            if is_identity:
-                file_name = file_name + "IT"
-
-            epochs = 3000
-            file_name = file_name + str(epochs)
-
-            """ Begin Parameters """
-
-            """ SVM """
-            svm_type = "svm"
             highest_count = 10000
-            vector_path = "../data/" + data_type + "/nnet/spaces/"+new_file_names[j]+".txt"
-            bow_path = "../data/" + data_type + "/bow/binary/phrases/class-all-" + str(lowest_count)
+            vector_path = "../data/" + data_type + "/nnet/spaces/"+file_name+".txt"
+            class_path = "../data/" + data_type + "/bow/binary/phrases/class-all-" + str(lowest_count)
             property_names_fn = "../data/" + data_type + "/bow/names/" + str(lowest_count) + ".txt"
-            directions_fn = "../data/" + data_type + "/svm/directions/" + file_name + ".txt"
+            svm_type = "svm"
             threads = 4
+            file_name = file_name + svm_type
+            svm.getSVMResults(vector_path, class_path, property_names_fn, file_name, lowest_count=lowest_count,
+                  highest_count=highest_count, svm_type=svm_type, data_type=data_type, get_kappa=True,
+                  get_f1=False, getting_directions=True, threads=4)
 
-
-            """ DIRECTION RANKINGS """
+            directions_fn = "../data/" + data_type + "/svm/directions/" + file_name + str(lowest_count) + ".txt"
             # Get rankings
             vector_names_fn = "../data/" + data_type + "/nnet/spaces/entitynames.txt"
             class_names_fn = "../data/" + data_type + "/bow/names/" + str(lowest_count) + ".txt"
+            directions_fn = "../data/" + data_type + "/svm/directions/" + file_name + str(lowest_count) + ".txt"
+
+            """
+            scores_fn = "../data/" + data_type + "/svm/kappa/" + file_name + str(lowest_count) + ".txt"
+            kappa = True
+            if d == 0:
+                file_name = file_name + "kappa"
+            """
+
+            rank.getAllPhraseRankings(directions_fn, vector_path, class_names_fn, vector_names_fn, file_name,
+                                  data_type=data_type)
+            ndcg.getNDCG("../data/" + data_type + "/rank/numeric/" + file_name + "ALL.txt", file_name,
+                         data_type=data_type, lowest_count=lowest_count)
+            scores_fn = "../data/" + data_type + "/ndcg/" + file_name + ".txt"
+            kappa = False
+            if d == 0:
+                file_name = file_name + "ndcg"
 
 
-            """ CLUSTERING """
-            # Choosing the score-type
-            if kappa is False:
-                scores_fn = "../data/" + data_type + "/ndcg/" + file_name + ".txt"
-            else:
-                scores_fn = "../data/" + data_type + "/svm/kappa/" + file_name + str(lowest_count) + ".txt"
-            names_fn = "../data/" + data_type + "/bow/names/" + str(lowest_count) + ".txt"
+            names_fn = "../data/" + data_type + "/bow/names/"+str(lowest_count)+".txt"
+            similarity_threshold = 0.5
+            cluster_amt = deep_size[j] * 2
+            amount_to_start = 8000
+            score_limit = 0.9
+            dissimilarity_threshold = 0.9
 
-            if breakoff:
-                similarity_threshold = 0.5
-                cluster_amt = deep_size[j] * 2
-                amount_to_start = 8000
-                score_limit = 0.9
-                dissimilarity_threshold = 0.9
-                add_all_terms = False
-                clusters_fn = "../data/" + data_type + "/cluster/hierarchy_directions/" + file_name + ".txt"
-                cluster_names_fn = "../data/" + data_type + "/cluster/hierarchy_names/" + file_name + ".txt"
-            else:
-                high_threshold = 0.5
-                low_threshold = 0.1
-                amt_of_clusters = hidden_layer_size * 2
-                clusters_fn = "../data/" + data_type + "/cluster/clusters/" + file_name + ".txt"
-                cluster_names_fn = "../data/" + data_type + "/cluster/names/" + file_name + ".txt"
 
-            """ CLUSTER RANKING """
+            file_name = file_name + str(score_limit) + str(cluster_amt)
+
+
+            hierarchy.initClustering(vector_path, directions_fn, scores_fn, names_fn, amount_to_start, False,
+                             similarity_threshold,  cluster_amt, score_limit, file_name, kappa, dissimilarity_threshold, data_type=data_type)
+
+
+
+            # Get rankings
+            clusters_fn = "../data/" + data_type + "/cluster/hierarchy_directions/" + file_name + ".txt"
+            property_names_fn = "../data/" + data_type + "/cluster/hierarchy_names/" + file_name + ".txt"
             vector_names_fn = "../data/" + data_type + "/nnet/spaces/entitynames.txt"
 
-            # Decision tree
+            rank.getAllRankings(clusters_fn, vector_path, property_names_fn , vector_names_fn, 0.2, 1, False, file_name, False, data_type=data_type)
+
+
+            # Get PAV
             ranking_fn = "../data/" + data_type + "/rank/numeric/" + file_name + ".txt"
             label_names_fn = "../data/" + data_type + "/classify/" + classification_task + "/names.txt"
 
-            """ FINETUNING """
-            fine_tune_weights_fn = [clusters_fn]
+            tree.DecisionTree(ranking_fn, classification_path, label_names_fn, property_names_fn, file_name, 10000,
+                              3, balance="balanced", criterion="entropy", save_details=False,
+                              data_type=data_type)
 
+            tree.DecisionTree(ranking_fn, classification_path, label_names_fn, property_names_fn, file_name, 10000,
+                                  None, balance="balanced", criterion="entropy", save_details=False,
+                                  data_type=data_type)
+
+            if d == 0:
+                file_name = file_name + "pavPPMI"
+
+            fto.pavPPMI(property_names_fn, ranking_fn, file_name, data_type=data_type)
+            discrete_labels_fn = "../data/" + data_type + "/rank/discrete/" + file_name + "P1.txt"
+
+            # Use PAV as class vectors
+            fine_tune_weights_fn = [clusters_fn]
+            epochs = 1000
             batch_size = 200
             learn_rate = 0.001
+            is_identity = True
             identity_swap = False
             randomize_finetune_weights = False
-            from_ae = True
+            # from_ae = False
             finetune_size = cluster_amt
+            fn = file_name
 
+            # Running Finetune on original space
             class_path = "../data/" + data_type + "/finetune/" + file_name + ".txt"
+            if d == 0:
+                file_name = file_name + "IT"
+            print(file_name)
+
             loss = "mse"
             optimizer_name = "sgd"
+            hidden_activation = "tanh"
             finetune_activation = "linear"
-
             hidden_layer_size = deep_size[j]
+            if d == 0:
+                file_name = file_name + optimizer_name + loss + str(epochs)
+            from_ae = True
+            past_model_weights_fn = ["../data/" + data_type + "/nnet/weights/L" + new_file_names[j] + ".txt"]
+            past_model_bias_fn = ["../data/" + data_type + "/nnet/bias/L" + new_file_names[j] + ".txt"]
 
-            past_model_weights_fn = ["../data/" + data_type + "/nnet/weights/" + new_file_names[j] + ".txt"]
-            past_model_bias_fn = ["../data/" + data_type + "/nnet/bias/" + new_file_names[j] + ".txt"]
-
+            print(file_name)
             amount_of_finetune = 1
 
-            """ DECISION TREES FOR NNET RANKINGS """
-            nnet_ranking_fn = "../data/" + data_type + "/nnet/clusters/" + file_name + ".txt"
-
-
-            """ Begin Methods """
-            svm.getSVMResults(vector_path, bow_path, property_names_fn, file_name, lowest_count=lowest_count,
-              highest_count=highest_count, data_type=data_type, get_kappa=True,
-              get_f1=False, svm_type=svm_type, getting_directions=True, threads=4)
-
-            if not kappa:
-                rank.getAllPhraseRankings(directions_fn, vector_path, class_names_fn, vector_names_fn, file_name,
-                              data_type=data_type)
-                ndcg.getNDCG("../data/" + data_type + "/rank/numeric/" + file_name + "ALL.txt", file_name,
-                         data_type=data_type, lowest_count=lowest_count)
-
-
-            if breakoff:
-                hierarchy.initClustering(vector_path, directions_fn, scores_fn, names_fn, amount_to_start, False,
-                     similarity_threshold,  cluster_amt, score_limit, file_name, kappa, dissimilarity_threshold,
-                             add_all_terms=add_all_terms, data_type=data_type)
-            else:
-                cluster.getClusters(directions_fn, scores_fn, class_names_fn, False,  0, 0, file_name, amt_of_clusters,
-                                    high_threshold, low_threshold, data_type)
-
-            rank.getAllRankings(clusters_fn, vector_path, cluster_names_fn , vector_names_fn, 0.2, 1, False, file_name, False, data_type=data_type)
-
-            tree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name, 10000,
-                      3, balance="balanced", criterion="entropy", save_details=False,
-                      data_type=data_type, csv_name=csv_name)
-
-            tree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name, 10000,
-                                  None, balance="balanced", criterion="entropy", save_details=False,
-                              data_type=data_type, csv_name=csv_name)
-
-            fto.pavPPMI(cluster_names_fn, ranking_fn, file_name, data_type=data_type)
-
             SDA = NeuralNetwork(noise=0, fine_tune_weights_fn=fine_tune_weights_fn, optimizer_name=optimizer_name,
-                        network_type="ft", past_model_bias_fn=past_model_bias_fn,
-                        randomize_finetune_weights=randomize_finetune_weights,
-                        vector_path=init_vector_path, hidden_layer_size=hidden_layer_size, class_path=class_path,
-                        identity_swap=identity_swap, amount_of_finetune=amount_of_finetune,
-                        hidden_activation=hidden_activation, output_activation=output_activation, epochs=epochs,
-                        learn_rate=learn_rate, is_identity=is_identity, finetune_activation=finetune_activation,
-                        batch_size=batch_size, past_model_weights_fn=past_model_weights_fn, loss=loss,
-                        file_name=file_name, from_ae=from_ae, finetune_size=finetune_size, data_type=data_type)
+                                network_type="ft", past_model_bias_fn=past_model_bias_fn,
+                                randomize_finetune_weights=randomize_finetune_weights,
+                                vector_path=init_vector_path, hidden_layer_size=hidden_layer_size, class_path=class_path,
+                                identity_swap=identity_swap, amount_of_finetune=amount_of_finetune,
+                                hidden_activation=hidden_activation, output_activation=output_activation, epochs=epochs,
+                                learn_rate=learn_rate, is_identity=is_identity, finetune_activation=finetune_activation,
+                                batch_size=batch_size, past_model_weights_fn=past_model_weights_fn, loss=loss,
+                                file_name=file_name, from_ae=from_ae, finetune_size=finetune_size, data_type=data_type)
+            new_file_names[j-1] = file_name
 
-            new_file_names[j] = file_name
+            ranking_fn = "../data/" + data_type + "/nnet/clusters/" + file_name + ".txt"
 
-            tree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name, 10000,
+            tree.DecisionTree(ranking_fn, classification_path, label_names_fn, property_names_fn, file_name, 10000,
                               3, balance="balanced", criterion="entropy", save_details=False,
-                              data_type=data_type, csv_name=csv_name)
+                              data_type=data_type)
 
-            tree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name, 10000,
+            tree.DecisionTree(ranking_fn, classification_path, label_names_fn, property_names_fn, file_name, 10000,
                               None, balance="balanced", criterion="entropy", save_details=False,
-                              data_type=data_type, csv_name=csv_name)
-
-            init_vector_path = vector_path
+                              data_type=data_type)
 
         """
         file_name ="films100rankE200DS[100, 100, 100]L3300L1svmndcg0.9200pavPPMIN0.5FTITsgdmse2000L1"

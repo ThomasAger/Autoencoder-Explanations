@@ -1,0 +1,22 @@
+WORK PC
+Movies 
+1. finetune L1 rankings of L1 input network
+2. Write SVM for multi-processing
+3. Use finetuned L1 rankings of L1 input as input to new classification task with 1 layer
+4. Get and finetune L1 rankings of L2 input network
+
+LAPTOP
+Placetypes
+0. Convert classification task format
+1. Check cluster rankings for optimal parameters ( on original space ) 
+2. Test classification parameters
+3. Run sequential fine-tuning (with optimal cluster/classification parameters)
+
+HOME PC
+Wines
+0. Convert classification task format
+1. Check cluster rankings for optimal parameters
+2. Test classification parameters
+3. Test process for sequential fine-tuning (with optimal cluster/classification parameters)
+
+ Dancing around the edge of a mirror.

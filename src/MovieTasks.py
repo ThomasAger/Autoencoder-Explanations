@@ -200,27 +200,25 @@ def writeClassesFromNames(folder_name, file_names, output_folder):
         class_all.append(binary_class)
     dt.write2dArray(class_all, output_folder + "class-all")
 
-def trimRankings(rankings_fn, available_indexes_fn):
+def trimRankings(rankings_fn, available_indexes_fn, names):
     available_indexes = dt.import1dArray(available_indexes_fn)
     rankings = np.asarray(dt.import2dArray(rankings_fn))
-
+    names = dt.import1dArray(names)
     trimmed_rankings = []
 
-    for r in rankings:
-        trimmed_rankings.append(r.take(available_indexes))
+    for r in range(len(rankings)):
+        trimmed = rankings[r].take(available_indexes)
+        trimmed_rankings.append(trimmed)
+    for a in range(len(trimmed_rankings)):
+        dt.write1dArray(trimmed_rankings[a], "../data/wines/bow/frequency/phrases/class-trimmed-" + names[a])
 
-    dt.write2dArray(trimmed_rankings, rankings_fn[:-4] + "trimmed.txt")
+    dt.write2dArray(trimmed_rankings, "../data/wines/bow/frequency/phrases/class-trimmed-" + rankings_fn[-6:])
 
 
 output_folder = "../Data/wines/classify/types/"
 folder_name = "../data/raw/previous work/wineclasses/"
 file_names = "../data/wines/nnet/spaces/entitynames.txt"
+phrase_names = "../data/wines/bow/names/50.txt"
 #writeClassesFromNames(folder_name, file_names, output_folder)
 
-trimRankings("../data/wines/rank/numeric/wines100svmkappa0.9200.txt", "../data/wines/classify/types/available_indexes.txt")
-
-trimRankings("../data/wines/rank/numeric/wines100svmndcg0.9200.txt", "../data/wines/classify/types/available_indexes.txt")
-
-trimRankings("../data/wines/rank/numeric/wines100svmndcg0.95200.txt", "../data/wines/classify/types/available_indexes.txt")
-
-trimRankings("../data/wines/rank/numeric/wines100svmndcg0.98200.txt", "../data/wines/classify/types/available_indexes.txt")
+trimRankings("../data/wines/bow/frequency/phrases/class-all-50", "../data/wines/classify/types/available_indexes.txt", phrase_names)

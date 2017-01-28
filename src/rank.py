@@ -18,8 +18,8 @@ def getRankings(cluster_directions, vectors, cluster_names, vector_names):
         sorted_ranking_names = dt.sortByReverseArray(cluster_ranking_names, cluster_ranking)
         ranking_names.append(sorted_ranking_names)
         rankings.append(cluster_ranking)
-        print("Cluster:", cluster_names[d], "Movies:", sorted_ranking_names[0], sorted_rankings[0],
-              sorted_ranking_names[1], sorted_rankings[1], sorted_ranking_names[2], sorted_rankings[2])
+        print("Cluster:", cluster_names[d], "Movies:",
+              sorted_ranking_names[0], sorted_rankings[0],   sorted_ranking_names[1], sorted_rankings[1], sorted_ranking_names[2], sorted_rankings[2])
     return rankings, ranking_names
 
 
@@ -104,20 +104,23 @@ class Rankings:
     def __init__(self, directions_fn, vectors_fn, cluster_names_fn, vector_names_fn, fn, percent, percentage_increment, by_vector, data_type):
         getAllRankings(directions_fn, vectors_fn, cluster_names_fn, vector_names_fn, percent, percentage_increment,
                        by_vector, fn, data_type)
-
-file_name="films100"
-lowest_count = 200
-vector_path = "../data/movies/nnet/spaces/" + file_name + ".txt"
-class_path = "../data/movies/bow/binary/phrases/class-all-200"
-property_names_fn = "../data/movies/bow/names/" + str(lowest_count) + ".txt"
+data_type = "wines"
+file_name="wines100trimmed"
+lowest_count = 50
+class_names = "class-trimmed-all-" + str(lowest_count)
+vector_path = "../data/" + data_type + "/nnet/spaces/" + file_name + ".txt"
+class_path = "../data/" + data_type + "/bow/binary/phrases/" + class_names
+property_names_fn = "../data/" + data_type + "/bow/names/" + str(lowest_count) + ".txt"
 
 # Get rankings
-vector_names_fn = "../data/movies/nnet/spaces/filmNames.txt"
-class_names_fn = "../data/movies/bow/names/" + str(lowest_count) + ".txt"
-directions_fn = "../data/movies/svm/directions/" + file_name +"ppmi200.txt"
-scores_fn = "../data/movies/svm/kappa/"+file_name+"ppmi200.txt"
+vector_names_fn = "../data/" + data_type + "/nnet/spaces/entitynames.txt"
+class_names_fn = "../data/" + data_type + "/bow/names/" + str(lowest_count) + ".txt"
+directions_fn = "../data/" + data_type + "/svm/directions/" + file_name +"ppmi200.txt"
+vector_names_fn =  "../data/" + data_type + "/cluster/all_names/" +file_name+"svmndcg0.9200.txt"
+directions_fn = "../data/" + data_type + "/cluster/all_directions/" +file_name+"svmndcg0.9200.txt"
+scores_fn = "../data/" + data_type + "/ndcg/"+file_name+"ppmi200.txt"
 
-#getAllPhraseRankings(directions_fn, vector_path, property_names_fn, vector_names_fn, file_name, 1, scores_fn, top_amt=0, discrete=False)
+#getAllPhraseRankings(directions_fn, vector_path, property_names_fn, vector_names_fn, file_name, 1, scores_fn, top_amt=0, discrete=False, data_type=data_type)
 
 """
 def main(low_threshold, high_threshold, percent, discrete_percent, cluster_fn, vector_fn, cluster_names_fn, vector_names_fn, rank_fn, by_vector):

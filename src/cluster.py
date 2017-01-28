@@ -477,7 +477,7 @@ def nameClustersRemoveOutliersWeightDistance(cluster_directions):
     return words
 
 # Splitting into high and low directions based on threshold
-def splitDirections(directions_fn, scores_fn, names_fn, is_gini, amt_high_directions, amt_low_directions):
+def splitDirections(directions_fn, scores_fn, names_fn, is_gini, amt_high_directions, amt_low_directions, high_threshold, low_threshold):
     directions = dt.import2dArray(directions_fn)
     scores = dt.import1dArray(scores_fn)
     names = dt.import1dArray(names_fn)
@@ -490,8 +490,21 @@ def splitDirections(directions_fn, scores_fn, names_fn, is_gini, amt_high_direct
     if is_gini is False:
         scores = np.flipud(scores)
 
-    hi = scores[:amt_high_directions]
-    li = scores[amt_high_directions:amt_low_directions+amt_high_directions]
+    if amt_high_directions > 0 and amt_low_directions > 0:
+        hi = scores[:amt_high_directions]
+        li = scores[amt_high_directions:amt_low_directions+amt_high_directions]
+    elif high_threshold > 0 and low_threshold > 0:
+        hi = []
+        li = []
+        for s in scores:
+            if s >= high_threshold:
+                hi.append(s)
+            elif s >= low_threshold:
+                hi.append(s)
+    else:
+        print("no thresholds or direction amounts")
+        hi = [None]
+        li = [None]
 
     high_direction_names = []
     low_direction_names = []
@@ -499,10 +512,10 @@ def splitDirections(directions_fn, scores_fn, names_fn, is_gini, amt_high_direct
     low_directions = []
     for h in hi:
         high_directions.append(directions[h])
-        high_direction_names.append(names[h][6:])
+        high_direction_names.append(names[h])
     for l in li:
         low_directions.append(directions[l])
-        low_direction_names.append(names[l][6:])
+        low_direction_names.append(names[l])
 
     return high_direction_names, low_direction_names, high_directions, low_directions
 
@@ -566,13 +579,14 @@ def createTermClusters(hv_directions, lv_directions, hv_names, lv_names, amt_of_
 
 
 
-def getClusters(directions_fn, scores_fn, names_fn, is_gini, amt_high_directions, amt_low_directions, filename, amt_of_clusters):
+def getClusters(directions_fn, scores_fn, names_fn, is_gini, amt_high_directions, amt_low_directions, filename,
+                amt_of_clusters, high_threshold, low_threshold, data_type):
 
 
     hdn, ldn, hd, ld = splitDirections(directions_fn,
                                             scores_fn,
                                             names_fn, is_gini,
-                                       amt_high_directions, amt_low_directions)
+                                       amt_high_directions, amt_low_directions, high_threshold, low_threshold)
 
     cluster_center_directions, least_similar_cluster_names, cluster_name_dict, least_similar_clusters = createTermClusters(hd, ld, hdn, ldn, amt_of_clusters)
 
@@ -581,11 +595,11 @@ def getClusters(directions_fn, scores_fn, names_fn, is_gini, amt_high_directions
     #if is_gini:
     #    additional_text = "gini"
 
-    names_fn = "../data/movies/cluster/names/" + filename +  ".txt"
-    clusters_fn = "../data/movies/cluster/clusters/" + filename +  ".txt"
-    dict_fn = "../data/movies/cluster/dict/" + filename + ".txt"
-    #word_vector_names_fn = "../data/movies/cluster/word_vector_names/" + filename + ".txt"
-    cluster_center_fn = "../data/movies/cluster/directions/" + filename + ".txt"
+    names_fn = "../data/" + data_type + "/cluster/names/" + filename +  ".txt"
+    clusters_fn = "../data/" + data_type + "/cluster/clusters/" + filename +  ".txt"
+    dict_fn = "../data/" + data_type + "/cluster/dict/" + filename + ".txt"
+    #word_vector_names_fn = "../data/" + data_type + "/cluster/word_vector_names/" + filename + ".txt"
+    cluster_center_fn = "../data/" + data_type + "/cluster/directions/" + filename + ".txt"
 
     dt.write1dArray(least_similar_cluster_names, names_fn)
     dt.write2dArray(least_similar_clusters, clusters_fn)

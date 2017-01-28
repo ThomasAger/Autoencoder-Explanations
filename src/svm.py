@@ -308,7 +308,8 @@ def runGaussianSVM(y_test, y_train, x_train, x_test, get_kappa, get_f1):
 
 from sklearn.model_selection import cross_val_score
 def runSVM(y_test, y_train, x_train, x_test, property_name, get_kappa, get_f1, data_type):
-    y_train, y_test = train_test_split(dt.import1dArray("../data/" + data_type + "/bow/binary/phrases/" + property_name), test_size=0.3, random_state=0)
+    y = dt.import1dArray("../data/" + data_type + "/bow/binary/phrases/class-trimmed-" + property_name)
+    y_train, y_test = train_test_split(y, test_size=0.3, random_state=0)
     clf = svm.LinearSVC(class_weight='balanced')
     if get_f1:
         cross_val = cross_val_score(clf, x_train, y_train, scoring="f1", cv=5)
@@ -326,7 +327,7 @@ def runSVM(y_test, y_train, x_train, x_test, property_name, get_kappa, get_f1, d
 
     ktau = 0
     #ppmi_score, ppmi_ratio = get_ppmi_score(y_pred, property_name)
-    return kappa_score, direction, f1, 0, 0
+    return kappa_score, f1, direction,  0, 0
 from sklearn.model_selection import cross_val_score
 def runLibSVM(y_test, y_train, x_train, x_test, property_name, get_kappa, get_f1, wasted_variable3):
     clf = svm.SVC(kernel='linear', class_weight='balanced')
@@ -365,39 +366,30 @@ import multiprocessing
 def runAllSVMs(y_test, y_train, x_train, x_test, property_names, file_name, svm_type, get_kappa, get_f1, getting_directions, data_type, threads):
     kappa_scores = [0] * len(property_names)
     directions = [None] * len(property_names)
-    ktau_scores = [0] * len(property_names)
+    f1_scores = [0] * len(property_names)
     saved_x_trans = None
     saved_test_x_trans = None
-    for y in range(len(property_names), threads):
-        if not getting_directions:
-            if svm_type == "svr":
-                kappa, direction, ktau_score, saved_x_trans, saved_test_x_trans = runSVR(y_test[y], y_train[y], x_train, x_test, property_names[y], 0,
-                                                                                         0, 0)
-            elif svm_type == "svc":
-                kappa, direction, ktau_score, saved_x_trans, saved_test_x_trans = runGaussianSVM(y_test[y], y_train[y], x_train, x_test, get_kappa, get_f1)
-            elif svm_type == "libsvm":
-                kappa, direction, ktau_score, saved_x_trans, saved_test_x_trans = runLibSVM(y_test[y], y_train[y], x_train, x_test, property_names[y], get_kappa,
-                                                                                         get_f1, saved_test_x_trans)
-            else:
-                kappa, direction, ktau_score, saved_x_trans, saved_test_x_trans = runSVM(y_test[y], y_train[y], x_train, x_test, property_names[y], get_kappa,
-                                                                                         get_f1, saved_test_x_trans)
-            kappa_scores[y] = kappa
-            directions[y] = direction
-            ktau_scores[y] = ktau_score
-            print(y, "Score", kappa,  ktau_score, property_names[y])
-        else:
-            pool = multiprocessing.Pool(processes=4)
-            kappa, direction, ktau_score, saved_x_trans, saved_test_x_trans = pool.map(runSVM(y_test, y_train, x_train,
-                                            x_test, property_names[y], get_kappa,get_f1, saved_test_x_trans), range(3))
-            print(kappa)
+    for y in range(0, len(property_names)):
+        """
+        pool = multiprocessing.Pool(processes=4)
+        kappa = pool.map(runSVM(y_test, y_train, x_train,
+                                        x_test, property_names[y], get_kappa,get_f1, data_type), range(threads))
 
-            kappa, direction, ktau_score, saved_x_trans, saved_test_x_trans = runSVM()
-            kappa_scores[y+t] = kappa
-            directions[y+t] = direction
-            ktau_scores[y+t] = ktau_score
-                print(y, "Score", kappa,  ktau_score, property_names[y])
+        for t in range(len(kappa)):
+            kappa_scores[y+t] = kappa[t][0]
+            directions[y+t] = kappa[t][1]
+            ktau_scores[y+t] = kappa[t][2]
+            print(y, "Score", kappa[t][0],  kappa[t][1], property_names[y])
+        """
+        kappa, f1, direction,  unused_variable, unused_variable_2 = runSVM(y_test, y_train, x_train,  x_test,
+                                                                    property_names[y], get_kappa, get_f1, data_type)
 
-    return kappa_scores, directions, ktau_scores
+        kappa_scores[y] = kappa
+        directions[y] = direction
+        f1_scores[y] = f1
+        print(y, "Score", kappa, f1, property_names[y])
+
+    return kappa_scores, directions, f1_scores
 
 from sklearn.cross_validation import train_test_split
 
@@ -426,12 +418,13 @@ def getSVMResults(vector_path, class_path, property_names_fn, file_name, svm_typ
         y_train = y_train.transpose()
         y_test = y_test.transpose()
 
-    kappa_scores, directions, ktau_scores = runAllSVMs(y_test, y_train, x_train, x_test, property_names, file_name, svm_type, get_kappa, get_f1, getting_directions, data_type, threads)
+    kappa_scores, directions, ktau_scores = runAllSVMs(y_test, y_train, x_train, x_test, property_names, file_name,
+                                                       svm_type, get_kappa, get_f1, getting_directions, data_type, threads)
 
-    directions_fn = "../data/" + data_type + "/svm/directions/" + file_name + str(lowest_count) + ".txt"
-    kappa_fn = "../data/" + data_type + "/svm/kappa/" + file_name + str(lowest_count) + ".txt"
-    ktau_scores_fn = "../data/" + data_type + "/svm/f1/" + file_name + str(lowest_count) + ".txt"
-    ppmI_ratios_fn = "../data/" + data_type + "/svm/ppmi/" + file_name + str(lowest_count) + "ratio.txt"
+    directions_fn = "../data/" + data_type + "/svm/directions/" + file_name + ".txt"
+    kappa_fn = "../data/" + data_type + "/svm/kappa/" + file_name + ".txt"
+    ktau_scores_fn = "../data/" + data_type + "/svm/f1/" + file_name + ".txt"
+    ppmI_ratios_fn = "../data/" + data_type + "/svm/ppmi/" + file_name + "ratio.txt"
 
     dt.write1dArray(kappa_scores, kappa_fn)
     dt.write2dArray(directions, directions_fn)

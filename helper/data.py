@@ -251,7 +251,30 @@ def write2dArray(array, name):
             file.write(str(array[i][n]) + " ")
         file.write("\n")
     file.close()
+def sortIndexesByArraySize(array):
+    array_of_lens = []
+    for i in range(len(array)):
+        array_of_lens.append(len(array[i]))
+    indexes = [i[0] for i in sorted(enumerate(array_of_lens), key=lambda x: x[1])]
+    return indexes
 
+import pandas as pd
+
+def file_exists(fn):
+    return os.path.exists(fn)
+
+def write_to_csv(csv_fn, col_names, cols_to_add):
+    df = pd.read_csv(csv_fn, index_col=0)
+    for c in range(len(cols_to_add)):
+        df[col_names[c]] = cols_to_add[c]
+    df.to_csv(csv_fn)
+
+def write_csv(csv_fn, col_names, cols_to_add, key):
+    d = {}
+    for c in range(len(cols_to_add)):
+        d[col_names[c]] = cols_to_add[c]
+    df = pd.DataFrame(d, index=key)
+    df.to_csv(csv_fn)
 
 def write2dCSV(array, name):
     file = open(name, "w")
