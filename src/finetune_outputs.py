@@ -28,7 +28,15 @@ def readPPMI(name, data_type):
         frq_a.append(float(line))
     return frq_a
 
-def pavPPMI(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type="movies"):
+def pavPPMI(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type="movies", rewrite_files=False):
+    pavPPMI_fn = "../data/" + data_type + "/finetune/" + file_name + ".txt"
+    all_fns = [pavPPMI_fn]
+    if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
+        print("Skipping task", pavPPMI.__name__)
+        return
+    else:
+        print("Running task", pavPPMI.__name__)
+
     ranking = dt.import2dArray(ranking_fn)
     names = dt.import1dArray(cluster_names_fn)
     frq = []
@@ -51,7 +59,7 @@ def pavPPMI(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type="movi
             plot(x, y, y_)
         print(f)
 
-    dt.write2dArray(pav_classes, "../data/" + data_type + "/finetune/" + file_name + ".txt")
+    dt.write2dArray(pav_classes, pavPPMI_fn)
     return pav_classes
 
 def readFreq(name):

@@ -292,7 +292,20 @@ def getBreakOffClustersMaxScoring(vectors, directions, scores, names, score_limi
 
 # New method, instead of averaging, compare each individual direction. Start with one cluster and then add more.
 def getBreakOffClusters(vectors, directions, scores, names, score_limit, dissimilarity_threshold, max_clusters,
-                            file_name, kappa, similarity_threshold, add_all_terms, data_type, largest_clusters):
+                            file_name, kappa, similarity_threshold, add_all_terms, data_type, largest_clusters,
+                 rewrite_files=False):
+
+
+    output_directions_fn =  "../data/" + data_type + "/cluster/hierarchy_directions/"+file_name+".txt"
+    output_names_fn = "../data/" + data_type + "/cluster/hierarchy_names/" + file_name +".txt"
+    all_directions_fn = "../data/" + data_type + "/cluster/all_directions/" + file_name + ".txt"
+    all_names_fn = "../data/" + data_type + "/cluster/all_names/" + file_name + ".txt"
+    all_fns = [output_directions_fn, output_names_fn, all_directions_fn, all_names_fn]
+    if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
+        print("Skipping task", getBreakOffClusters.__name__)
+        return
+    else:
+        print("Running task", getBreakOffClusters.__name__)
 
     clusters = []
     # Initialize a list of indexes to keep track of which directions have been combined
@@ -393,12 +406,10 @@ def getBreakOffClusters(vectors, directions, scores, names, score_limit, dissimi
         if all_subsets[c] is not None:
             all_directions.append(all_subsets[c].getClusterDirection())
             all_names.append(all_subsets[c].getNames())
-
-    dt.write2dArray(output_directions, "../data/" + data_type + "/cluster/hierarchy_directions/"+file_name+".txt")
-    dt.write2dArray(output_names, "../data/" + data_type + "/cluster/hierarchy_names/" + file_name +".txt")
-    dt.write2dArray(all_directions,
-                    "../data/" + data_type + "/cluster/all_directions/" + file_name + ".txt")
-    dt.write2dArray(all_names, "../data/" + data_type + "/cluster/all_names/" + file_name + ".txt")
+    dt.write2dArray(output_directions, output_directions_fn)
+    dt.write2dArray(output_names, output_names_fn)
+    dt.write2dArray(all_directions, all_directions_fn)
+    dt.write2dArray(all_names, all_names_fn)
 
 """
 # New method, instead of averaging, compare each individual direction. Start with one cluster and then add more.
@@ -454,7 +465,9 @@ def getBreakOffClusters(vectors, directions, scores, names, score_limit):
     dt.write2dArray(output_first_names, "../data/movies/cluster/hierarchy_names/" + file_name + str(score_limit)+".txt")
 """
 def initClustering(vector_fn, directions_fn, scores_fn, names_fn, amt_to_start, profiling, dissimilarity_threshold,
-                   max_clusters, score_limit, file_name, kappa, similarity_threshold, add_all_terms=False, data_type="movies", largest_clusters=False):
+                   max_clusters, score_limit, file_name, kappa, similarity_threshold, add_all_terms=False,
+                   data_type="movies", largest_clusters=False,
+                 rewrite_files=False):
     vectors = dt.import2dArray(vector_fn)
     directions = dt.import2dArray(directions_fn)
     scores = dt.import1dArray(scores_fn, "f")
@@ -475,7 +488,8 @@ def initClustering(vector_fn, directions_fn, scores_fn, names_fn, amt_to_start, 
         cProfile.runctx('getBreakOffClusters(vectors, top_directions, top_scores, top_names, score_limit, similarity_threshold, max_clusters, file_name, kappa)', globals(), locals())
     else:
         getBreakOffClusters(vectors, top_directions, top_scores, top_names, score_limit, dissimilarity_threshold,
-                                max_clusters, file_name, kappa, similarity_threshold, add_all_terms, data_type, largest_clusters)
+                                max_clusters, file_name, kappa, similarity_threshold, add_all_terms, data_type,
+                            largest_clusters, rewrite_files=False)
 
 
 file_name = "films100"

@@ -49,7 +49,23 @@ def createDiscreteLabels(rankings, percentage_increment):
         labels.append(label)
     return labels
 
-def getAllRankings(directions_fn, vectors_fn, cluster_names_fn, vector_names_fn, percent, percentage_increment, by_vector, fn, discrete=True, data_type="movies"):
+def getAllRankings(directions_fn, vectors_fn, cluster_names_fn, vector_names_fn, percent, percentage_increment, by_vector, fn, discrete=True, data_type="movies",
+                 rewrite_files=False):
+
+    labels_fn = "../data/"+data_type+"/rank/labels/" + fn + ".txt"
+    rankings_fn = "../data/"+data_type+"/rank/numeric/" + fn + ".txt"
+    ranking_names_fn = "../data/"+data_type+"/rank/names/" + fn + ".txt"
+    discrete_labels_fn = "../data/"+data_type+"/rank/discrete/" + fn + ".txt"
+
+    all_fns = [labels_fn, rankings_fn, ranking_names_fn, discrete_labels_fn]
+    if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
+        for f in all_fns:
+            print(f, "Already exists")
+        print("Skipping task", "getAllRankings")
+        return
+    else:
+        print("Running task", "getAllRankings")
+
     directions = dt.import2dArray(directions_fn)
     vectors = dt.import2dArray(vectors_fn)
     cluster_names = dt.import1dArray(cluster_names_fn)
@@ -66,12 +82,8 @@ def getAllRankings(directions_fn, vectors_fn, cluster_names_fn, vector_names_fn,
         if discrete:
             discrete_labels = discrete_labels.transpose()
         rankings = rankings.transpose()
-        labels_fn = "../data/"+data_type+"/rank/labels/" + fn + "P" + str(percent) + ".txt"
-    rankings_fn = "../data/"+data_type+"/rank/numeric/" + fn + ".txt"
     if discrete:
-        discrete_labels_fn = "../data/"+data_type+"/rank/discrete/" + fn + "P" + str(percentage_increment) + ".txt"
         dt.write2dArray(labels, labels_fn)
-    ranking_names_fn = "../data/"+data_type+"/rank/names/" + fn + ".txt"
 
     dt.write2dArray(rankings, rankings_fn)
     if discrete:
@@ -80,7 +92,17 @@ def getAllRankings(directions_fn, vectors_fn, cluster_names_fn, vector_names_fn,
 
 
 def getAllPhraseRankings(directions_fn=None, vectors_fn=None, property_names_fn=None, vector_names_fn=None, fn="no filename",
-                         percentage_increment=1, scores_fn = None, top_amt=0, discrete=False, data_type="movies"):
+                         percentage_increment=1, scores_fn = None, top_amt=0, discrete=False, data_type="movies",
+                 rewrite_files=False):
+    rankings_fn_all = "../data/" + data_type + "/rank/numeric/" + fn + "ALL.txt"
+
+    all_fns = [rankings_fn_all]
+    if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
+        print("Skipping task", "getAllPhraseRankings")
+        return
+    else:
+        print("Running task", "getAllPhraseRankings")
+
     directions = dt.import2dArray(directions_fn)
     vectors = dt.import2dArray(vectors_fn)
     property_names = dt.import1dArray(property_names_fn)
@@ -97,7 +119,8 @@ def getAllPhraseRankings(directions_fn=None, vectors_fn=None, property_names_fn=
     for a in range(len(rankings)):
         rankings[a] = np.around(rankings[a], decimals=4)
     #dt.write1dArray(property_names, "../data/movies/bow/names/top5kof17k.txt")
-    dt.write2dArray(rankings, "../data/" + data_type + "/rank/numeric/" + fn + "ALL.txt")
+
+    dt.write2dArray(rankings, rankings_fn_all)
     #dt.write2dArray(discrete_labels, "../data/movies/rank/discrete/" + fn +  ".txt")
 
 class Rankings:

@@ -9,13 +9,14 @@ from sklearn.grid_search import GridSearchCV
 from sklearn.cross_validation import train_test_split
 import jsbeautifier
 from sklearn.model_selection import cross_val_score
-
+from sklearn.model_selection import cross_val_predict
+from sklearn.model_selection import KFold
 
 class DecisionTree:
     clf = None
     def __init__(self, features_fn, classes_fn,  class_names_fn, cluster_names_fn, filename,
-                 training_data,  max_depth, balance=None, criterion="entropy", save_details=False, data_type="movies",
-                 csv_fn="../data/temp/no_csv_provided.csv"):
+                 training_data,  max_depth=None, balance=None, criterion="entropy", save_details=False, data_type="movies",cv_splits=5,
+                 csv_fn="../data/temp/no_csv_provided.csv", cross_validation=False, rewrite_files=False):
 
         vectors = np.asarray(dt.import2dArray(features_fn))
 
@@ -26,8 +27,27 @@ class DecisionTree:
 
         cluster_names = dt.import1dArray(cluster_names_fn)
         label_names = dt.import1dArray(class_names_fn)
+        all_fns = []
+        if save_details:
+            dot_file_fn = '../data/' + data_type + '/rules/tree_data/' + label_names[0] + " " + filename + '.txt'
+            graph_fn = '../data/' + data_type + '/rules/tree_data/' + label_names[0] + " " + filename + '.txt'
+            graph_png_fn = '../data/' + data_type + '/rules/tree_images/' + label_names[0] + " " + filename + ".png"
+            all_fns.append(dot_file_fn)
+            all_fns.append(graph_fn)
+            all_fns.append(graph_png_fn)
+        file_names = ['ACC ' + filename, 'F1 ' + filename]
+        acc_fn = '../data/' + data_type + '/rules/tree_scores/' + file_names[0] + '.scores'
+        f1_fn = '../data/' + data_type + '/rules/tree_scores/' + file_names[1] + '.scores'
+        all_fns.append(acc_fn)
+        all_fns.append(f1_fn)
 
-        x_train, x_test, y_train, y_test = train_test_split(vectors, labels, test_size=0.1, random_state=0)
+        if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
+            print("Skipping task", "DecisionTree")
+            return
+        else:
+            print("Running task", "DecisionTree")
+
+        x_train, x_test, y_train, y_test = train_test_split(vectors, labels, test_size=0.3, random_state=0)
 
         filename += str(max_depth)
         for l in range(len(cluster_names)):
@@ -45,7 +65,7 @@ class DecisionTree:
         y_test = y_test.transpose()
 
         for l in range(len(y_train)):
-
+            c_x_train = x_train
             c_y_train = y_train[l]
             c_y_test = y_test[l]
             """
@@ -70,28 +90,43 @@ class DecisionTree:
             dt.writeArrayDict1D(best_parameters,"../data/movies/rules/tree_params/" + filename + str(l) +".txt")
             params.append(best_parameters)
             """
-            clf = tree.DecisionTreeClassifier( max_depth=max_depth, criterion=criterion, class_weight=balance)
-            cv_score = cross_val_score(clf, x_train, c_y_train, scoring="f1", cv=5)
-            #print(cv_score)
-            #average_score = np.average(cv_score)
-            #print(average_score)
             #balanced_x_train, y_train = dt.balanceClasses(x_train, y_train)
-            clf = clf.fit(x_train, c_y_train)
-            y_pred = clf.predict(x_test)
 
-            f1 = f1_score(c_y_test, y_pred)
-            accuracy = accuracy_score(c_y_test, y_pred)
+            clf = tree.DecisionTreeClassifier( max_depth=max_depth, criterion=criterion, class_weight=balance)
+
+            # Select training data with cross validation
+            if cross_validation:
+                kf = KFold(n_splits=cv_splits, shuffle=False, random_state=None)
+                predicted_labels = cross_val_score(clf, c_x_train, c_y_train, cv=kf, scoring="f1", verbose=1)
+                print("Cross val score", predicted_labels)
+                index = np.argmax(predicted_labels, 0)
+                counter = 0
+                for train, test in kf.split(c_x_train):
+                    if counter == index:
+                        c_x_train = c_x_train[train]
+                        c_y_train = c_y_train[train]
+                        break
+                    else:
+                        counter += 1
+            clf = clf.fit(c_x_train, c_y_train)
+            predicted_test = clf.predict(x_test)
+            f1 = f1_score(c_y_test, predicted_test, average="macro")
+            accuracy = accuracy_score(c_y_test, predicted_test)
             f1_array.append(f1)
             accuracy_array.append(accuracy)
             scores = [[label_names[l], "f1", f1, "accuracy", accuracy]]
             print(scores)
             class_names = [ label_names[l], "NOT "+label_names[l]]
 
+
+
             # Export a tree for each label predicted by the clf
             if save_details:
-                tree.export_graphviz(clf, feature_names=cluster_names, class_names=class_names, out_file='../data/' + data_type + '/rules/tree_data/'+label_names[l]+ " " + filename+'.txt', max_depth=max_depth)
-
-                rewrite_dot_file = dt.import1dArray('../data/' + data_type + '/rules/tree_data/'+label_names[l]+ " " + filename+'.txt')
+                dot_file_fn = '../data/' + data_type + '/rules/tree_data/' + label_names[l] + " " + filename + '.txt'
+                graph_fn = '../data/' + data_type + '/rules/tree_data/' + label_names[l] + " " + filename + '.txt'
+                graph_png_fn = '../data/' + data_type + '/rules/tree_images/' + label_names[l] + " " + filename + ".png"
+                tree.export_graphviz(clf, feature_names=cluster_names, class_names=class_names, out_file=dot_file_fn, max_depth=max_depth)
+                rewrite_dot_file = dt.import1dArray(dot_file_fn)
                 new_dot_file = []
                 for s in rewrite_dot_file:
                     new_string = s
@@ -99,10 +134,10 @@ class DecisionTree:
                         index = s.index("value")
                         new_string = s[:index] + '"] ;'
                     new_dot_file.append(new_string)
-                dt.write1dArray(new_dot_file, '../data/' + data_type + '/rules/tree_data/'+label_names[l]+ " " + filename+'.txt')
+                dt.write1dArray(new_dot_file, dot_file_fn)
 
-                graph = pydot.graph_from_dot_file('../data/' + data_type + '/rules/tree_data/'+label_names[l]+ " " + filename+'.txt')
-                graph.write_png('../data/' + data_type + '/rules/tree_images/'+label_names[l]+ " " + filename+".png")
+                graph = pydot.graph_from_dot_file(graph_fn)
+                graph.write_png(graph_png_fn)
                 self.get_code(clf, cluster_names, class_names, label_names[l]+ " " + filename, data_type)
 
         accuracy_array = np.asarray(accuracy_array)
@@ -114,15 +149,17 @@ class DecisionTree:
         accuracy_array = np.append(accuracy_array, accuracy_average)
         f1_array = np.append(f1_array, f1_average)
 
-        file_names = ['ACC '+filename, 'F1 '+filename]
+
         scores = [accuracy_array, f1_array]
 
-        dt.write1dArray(accuracy_array, '../data/' + data_type + '/rules/tree_scores/'+file_names[0]+'.scores')
-        dt.write1dArray(f1_array, '../data/' + data_type + '/rules/tree_scores/'+file_names[1]+'.scores')
+        dt.write1dArray(accuracy_array, acc_fn)
+        dt.write1dArray(f1_array, f1_fn)
 
         if dt.file_exists(csv_fn):
+            print("File exists, writing to csv")
             dt.write_to_csv(csv_fn, file_names, scores)
         else:
+            print("File does not exist, recreating csv")
             key = []
             for l in label_names:
                 key.append(l)
@@ -175,16 +212,15 @@ class DecisionTree:
 
 def main():
     cluster_to_classify = -1
-    max_depth = 3
+    max_depth = None
     classify = "types"
     data_type = "wines"
+    cross_val = True
     save_details = True
     label_names_fn = "../data/"+data_type+"/classify/"+classify+"/names.txt"
     cluster_labels_fn = "../data/"+data_type+"/classify/"+classify+"/class-All"
     threshold = 0.9
     split = 0.1
-    csv_name = "wines100"
-    csv_fn = "../data/"+data_type+"/rules/tree_csv/"+csv_name+".csv"
     file_name = "ndcg0.9200pavPPMIITsgdmse1000SFT1svm0.9200SFT2svm0.9200"
     criterion = "entropy"
     balance = "balanced"
@@ -196,6 +232,8 @@ def main():
 
     #vector_fn = "films100svmndcg0.9240pavPPMIN0.5FTRsgdmse1000"
     vector_fn = "wines100trimmedsvmkappa0.9200"
+    csv_name = vector_fn#"wines100trimmedsvmkappa0.9200"
+    csv_fn = "../data/"+data_type+"/rules/tree_csv/"+csv_name+".csv"
     #vector_fn = "films100"
     #cluster_vectors_fn = "../data/"+data_type+"/cluster/all_directions/" +file_name + ".txt"
     #file_name = file_name + "all_dir"
@@ -211,7 +249,7 @@ def main():
 
     clf = DecisionTree(cluster_vectors_fn, cluster_labels_fn, label_names_fn , cluster_names_fn , file_name, 10000,
                        max_depth, balance=balance, criterion=criterion, save_details=save_details, data_type=data_type,
-                       csv_fn=csv_fn)
+                       csv_fn=csv_fn, cross_validation=cross_val)
 
     """
     fn = "films100"

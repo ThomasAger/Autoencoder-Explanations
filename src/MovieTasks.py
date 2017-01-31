@@ -185,8 +185,8 @@ def writeClassesFromNames(folder_name, file_names, output_folder):
         else:
             print(name, "FAIL")
     dt.write1dArray(available_indexes, output_folder + "available_indexes.txt")
-    dt.write1dArray(available_class_names, output_folder + "available_wines.txt")
-
+    dt.write1dArray(available_class_names, output_folder + "available_entities.txt")
+    print("Wrote available indexes and entities")
     class_all = []
     for c in range(len(names)):
         binary_class = []
@@ -199,6 +199,18 @@ def writeClassesFromNames(folder_name, file_names, output_folder):
         dt.write1dArray(binary_class, output_folder + "class-"+str(c)+"")
         class_all.append(binary_class)
     dt.write2dArray(class_all, output_folder + "class-all")
+    print("Wrote class-all")
+
+
+def writeFromMultiClass():
+    # Get the available indexes and entities
+
+    # Initialize 2d array index with the length of the classes
+    # For each line in the file
+    # Split into two
+    # Assign a 1 to the associated index
+
+
 
 def trimRankings(rankings_fn, available_indexes_fn, names):
     available_indexes = dt.import1dArray(available_indexes_fn)
@@ -219,6 +231,6 @@ output_folder = "../Data/wines/classify/types/"
 folder_name = "../data/raw/previous work/wineclasses/"
 file_names = "../data/wines/nnet/spaces/entitynames.txt"
 phrase_names = "../data/wines/bow/names/50.txt"
-#writeClassesFromNames(folder_name, file_names, output_folder)
+writeClassesFromNames(folder_name, file_names, output_folder)
 
-trimRankings("../data/wines/bow/frequency/phrases/class-all-50", "../data/wines/classify/types/available_indexes.txt", phrase_names)
+#trimRankings("../data/wines/bow/frequency/phrases/class-all-50", "../data/wines/classify/types/available_indexes.txt", phrase_names)

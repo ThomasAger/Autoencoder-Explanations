@@ -243,6 +243,15 @@ def convertToFloat(string_array):
         temp_floats.append(float_strings)
     return temp_floats
 
+def allFnsAlreadyExist(all_fns):
+    all_exist = 0
+    for f in range(len(all_fns)):
+        if file_exists(all_fns[f]):
+            print(all_fns[f], "Already exists")
+            all_exist += 1
+    if all_exist == len(all_fns):
+        return True
+    return False
 
 def write2dArray(array, name):
     file = open(name, "w")

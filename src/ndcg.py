@@ -178,7 +178,15 @@ def ndcg_from_ranking(y_true, ranking):
     dcg = dcg_from_ranking(y_true, ranking)
     return dcg / best
 
-def getNDCG(rankings_fn, fn, data_type, lowest_count):
+def getNDCG(rankings_fn, fn, data_type, lowest_count, rewrite_files=False):
+    ndcg_fn = "../data/" + data_type + "/ndcg/"+fn+".txt"
+    all_fns = [ndcg_fn]
+    if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
+        print("Skipping task", getNDCG.__name__)
+        return
+    else:
+        print("Running task", getNDCG.__name__)
+
     rankings = dt.import2dArray(rankings_fn, "f")
     ppmi = dt.import2dArray("../data/" + data_type + "/bow/ppmi/class-all-"+str(lowest_count))
     names = dt.import1dArray("../data/" + data_type + "/bow/names/"+str(lowest_count)+".txt")
@@ -191,7 +199,7 @@ def getNDCG(rankings_fn, fn, data_type, lowest_count):
             print(ndcg, names[r], r)
         except IndexError:
             print(r, "FAILED")
-    dt.write1dArray(ndcg_a, "../data/" + data_type + "/ndcg/"+fn+".txt")
+    dt.write1dArray(ndcg_a, ndcg_fn)
 
 
 class Gini:

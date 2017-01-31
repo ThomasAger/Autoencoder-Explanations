@@ -1,80 +1,34 @@
-from __future__ import print_function
-from hyperopt import Trials, STATUS_OK, tpe
-from hyperas import optim
-from hyperas.distributions import choice, uniform, conditional
-from keras.datasets import mnist
-from keras.utils import np_utils
 from keras.models import Sequential
-from keras.layers.core import Dense, Dropout, Activation
-
-def data():
-    '''
-    Data providing function:
-
-    This function is separated from model() so that hyperopt
-    won't reload data for each evaluation run.
-    '''
-    (X_train, y_train), (X_test, y_test) = mnist.load_data()
-    X_train = X_train.reshape(60000, 784)
-    X_test = X_test.reshape(10000, 784)
-    X_train = X_train.astype('float32')
-    X_test = X_test.astype('float32')
-    X_train /= 255
-    X_test /= 255
-    nb_classes = 10
-    Y_train = np_utils.to_categorical(y_train, nb_classes)
-    Y_test = np_utils.to_categorical(y_test, nb_classes)
-    return X_train, Y_train, X_test, Y_test
+from keras.layers import Dense
+from keras.wrappers.scikit_learn import KerasClassifier
+from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import cross_val_score
+import numpy
 
 
-def model(X_train, Y_train, X_test, Y_test):
-    '''
-    Model providing function:
-
-    Create Keras model with double curly brackets dropped-in as needed.
-    Return value has to be a valid python dictionary with two customary keys:
-        - loss: Specify a numeric evaluation metric to be minimized
-        - status: Just use STATUS_OK and see hyperopt documentation if not feasible
-    The last one is optional, though recommended, namely:
-        - model: specify the model just created so that we can later use it again.
-    '''
+# Function to create model, required for KerasClassifier
+def create_model():
+    # create model
     model = Sequential()
-    model.add(Dense(512, input_shape=(784,)))
-    model.add(Activation('relu'))
-    model.add(Dropout({{uniform(0, 1)}}))
-    model.add(Dense({{choice([256, 512, 1024])}}))
-    model.add(Activation({{choice(['relu', 'sigmoid'])}}))
-    model.add(Dropout({{uniform(0, 1)}}))
+    model.add(Dense(12, input_dim=8, init='uniform', activation='relu'))
+    model.add(Dense(8, init='uniform', activation='relu'))
+    model.add(Dense(1, init='uniform', activation='sigmoid'))
+    # Compile model
+    model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+    return model
 
-    # If we choose 'four', add an additional fourth layer
-    if conditional({{choice(['three', 'four'])}}) == 'four':
-        model.add(Dense(100))
-        # We can also choose between complete sets of layers
-        model.add({{choice([Dropout(0.5), Activation('linear')])}})
-        model.add(Activation('relu'))
 
-    model.add(Dense(10))
-    model.add(Activation('softmax'))
-
-    model.compile(loss='categorical_crossentropy', metrics=['accuracy'],
-                  optimizer={{choice(['rmsprop', 'adam', 'sgd'])}})
-
-    model.fit(X_train, Y_train,
-              batch_size={{choice([64, 128])}},
-              nb_epoch=1,
-              show_accuracy=True,
-              verbose=2,
-              validation_data=(X_test, Y_test))
-    score, acc = model.evaluate(X_test, Y_test, verbose=0)
-    print('Test accuracy:', acc)
-    return {'loss': -acc, 'status': STATUS_OK, 'model': model}
-
-if __name__ == '__main__':
-    best_run, best_model = optim.minimize(model=model,
-                                          data=data,
-                                          algo=tpe.suggest,
-                                          max_evals=5,
-                                          trials=Trials())
-    X_train, Y_train, X_test, Y_test = data()
-    print("Evalutation of best performing model:")
-    print(best_model.evaluate(X_test, Y_test))
+# fix random seed for reproducibility
+seed = 7
+numpy.random.seed(seed)
+# load pima indians dataset
+dataset = numpy.loadtxt("pima-indians-diabetes.csv", delimiter=",")
+# split into input (X) and output (Y) variables
+X = dataset[:, 0:8]
+Y = dataset[:, 8]
+# create model
+model = KerasClassifier(build_fn=create_model, nb_epoch=150, batch_size=10, verbose=0)
+# evaluate using 10-fold cross validation
+kfold = StratifiedKFold(n_splits=10, shuffle=True, random_state=seed)
+results = cross_val_score(model, X, Y, cv=kfold)
+print(results.mean())

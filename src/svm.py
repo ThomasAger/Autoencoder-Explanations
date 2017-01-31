@@ -308,18 +308,21 @@ def runGaussianSVM(y_test, y_train, x_train, x_test, get_kappa, get_f1):
 
 from sklearn.model_selection import cross_val_score
 def runSVM(y_test, y_train, x_train, x_test, property_name, get_kappa, get_f1, data_type):
-    y = dt.import1dArray("../data/" + data_type + "/bow/binary/phrases/class-trimmed-" + property_name)
+    y = dt.import1dArray("../data/" + data_type + "/classify/types/" + property_name)
     y_train, y_test = train_test_split(y, test_size=0.3, random_state=0)
     clf = svm.LinearSVC(class_weight='balanced')
+    """
     if get_f1:
         cross_val = cross_val_score(clf, x_train, y_train, scoring="f1", cv=5)
         f1 = np.average(cross_val)
     else:
         f1 = 0
+    """
     clf.fit(x_train, y_train)
     direction = clf.coef_.tolist()[0]
     y_pred = clf.predict(x_test)
     y_pred = y_pred.tolist()
+    f1 = f1_score(y_test, y_pred, average="macro")
     if get_kappa:
         kappa_score = cohen_kappa_score(y_test, y_pred)
     else:
@@ -395,7 +398,19 @@ from sklearn.cross_validation import train_test_split
 
 def getSVMResults(vector_path, class_path, property_names_fn, file_name, svm_type, training_size=10000,  lowest_count=200,
                   highest_count=21470000, get_kappa=True, get_f1=True, single_class=True, data_type="movies",
-                  getting_directions=True, threads=1):
+                  getting_directions=True, threads=1,
+                 rewrite_files=False):
+    directions_fn = "../data/" + data_type + "/svm/directions/" + file_name + ".txt"
+    kappa_fn = "../data/" + data_type + "/svm/kappa/" + file_name + ".txt"
+    ktau_scores_fn = "../data/" + data_type + "/svm/f1/" + file_name + ".txt"
+
+    all_fns = [directions_fn, kappa_fn, ktau_scores_fn]
+    if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
+        print("Skipping task", "getSVMResults")
+        return
+    else:
+        print("Running task", "getSVMResults")
+
     y_train = 0
     y_test = 0
     if get_f1:
@@ -421,10 +436,7 @@ def getSVMResults(vector_path, class_path, property_names_fn, file_name, svm_typ
     kappa_scores, directions, ktau_scores = runAllSVMs(y_test, y_train, x_train, x_test, property_names, file_name,
                                                        svm_type, get_kappa, get_f1, getting_directions, data_type, threads)
 
-    directions_fn = "../data/" + data_type + "/svm/directions/" + file_name + ".txt"
-    kappa_fn = "../data/" + data_type + "/svm/kappa/" + file_name + ".txt"
-    ktau_scores_fn = "../data/" + data_type + "/svm/f1/" + file_name + ".txt"
-    ppmI_ratios_fn = "../data/" + data_type + "/svm/ppmi/" + file_name + "ratio.txt"
+
 
     dt.write1dArray(kappa_scores, kappa_fn)
     dt.write2dArray(directions, directions_fn)
@@ -439,21 +451,21 @@ class SVM:
 def main(vectors_fn, classes_fn, property_names, training_size, file_name, lowest_count, largest_count):
     SVM(vectors_fn, classes_fn, property_names, lowest_count=lowest_count,
         training_size=training_size, file_name=file_name, largest_count=largest_count)
-
-file_name = "films100svmndcg0.9200"
+data_type = "wines"
+file_name = "winesppmirankE500DS[1000, 500, 250, 100, 50]L0DN0.3reluSFT0L050ndcgSimilarityClusteringIT3000"
+class_name = "types"
 # Get SVM scores
 svm_type = "svm"
 lowest_count = 200
 highest_count = 10000
 cluster_amt = 200
 split = 0.9
-#vector_path = "../data/movies/nnet/spaces/" + file_name + ".txt"#
-vector_path = "../data/movies/rank/numeric/"+file_name+".txt"
-#class_path = "../data/movies/bow/ppmi/class-all-" + str(lowest_count)
-class_path = "../data/movies/classify/genres/class-all"
-property_names_fn = "../data/movies/classify/genres/names.txt"
+vector_path = "../data/" + data_type + "/rank/numeric/"+file_name+".txt"
+class_path = "../data/" + data_type + "/classify/"+class_name+"/class-all"
+property_names_fn = "../data/" + data_type + "/classify/"+class_name+"/names.txt"
 file_name = file_name + "genre"
-#getSVMResults(vector_path, class_path, property_names_fn, file_name, lowest_count=lowest_count, highest_count=highest_count, svm_type=svm_type)
+getSVMResults(vector_path, class_path, property_names_fn, file_name, lowest_count=lowest_count, data_type=data_type,
+              get_kappa=False, get_f1=True, highest_count=highest_count, svm_type=svm_type, rewrite_files=True)
 
 
 """

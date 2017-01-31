@@ -580,8 +580,19 @@ def createTermClusters(hv_directions, lv_directions, hv_names, lv_names, amt_of_
 
 
 def getClusters(directions_fn, scores_fn, names_fn, is_gini, amt_high_directions, amt_low_directions, filename,
-                amt_of_clusters, high_threshold, low_threshold, data_type):
+                amt_of_clusters, high_threshold, low_threshold, data_type, rewrite_files=False):
 
+    names_fn = "../data/" + data_type + "/cluster/names/" + filename + ".txt"
+    clusters_fn = "../data/" + data_type + "/cluster/clusters/" + filename + ".txt"
+    dict_fn = "../data/" + data_type + "/cluster/dict/" + filename + ".txt"
+    cluster_center_fn = "../data/" + data_type + "/cluster/directions/" + filename + ".txt"
+
+    all_fns = [names_fn, clusters_fn, dict_fn, cluster_center_fn]
+    if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
+        print("Skipping task", getClusters.__name__)
+        return
+    else:
+        print("Running task", getClusters.__name__)
 
     hdn, ldn, hd, ld = splitDirections(directions_fn,
                                             scores_fn,
@@ -595,11 +606,6 @@ def getClusters(directions_fn, scores_fn, names_fn, is_gini, amt_high_directions
     #if is_gini:
     #    additional_text = "gini"
 
-    names_fn = "../data/" + data_type + "/cluster/names/" + filename +  ".txt"
-    clusters_fn = "../data/" + data_type + "/cluster/clusters/" + filename +  ".txt"
-    dict_fn = "../data/" + data_type + "/cluster/dict/" + filename + ".txt"
-    #word_vector_names_fn = "../data/" + data_type + "/cluster/word_vector_names/" + filename + ".txt"
-    cluster_center_fn = "../data/" + data_type + "/cluster/directions/" + filename + ".txt"
 
     dt.write1dArray(least_similar_cluster_names, names_fn)
     dt.write2dArray(least_similar_clusters, clusters_fn)
@@ -611,6 +617,8 @@ def getClusters(directions_fn, scores_fn, names_fn, is_gini, amt_high_directions
 class Cluster:
     def __init__(self,  directions_fn, scores_fn, names_fn, is_gini, low_threshold, high_threshold, filename):
         getClusters(directions_fn, scores_fn, names_fn, is_gini, low_threshold, high_threshold, filename)
+#getClusters(0, 0, 0, 0, 0, 0, 0,0,0,0,0)
+
 """
 file_name ="films100L250.txt"
 cluster_directions = "../data/movies/cluster/dict/"+file_name
