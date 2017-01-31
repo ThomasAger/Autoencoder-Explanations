@@ -131,27 +131,16 @@ class NeuralNetwork:
         else:
             self.optimizer = SGD(lr=learn_rate, momentum=0.0, decay=0.0, nesterov=False)
 
-        entity_vectors, entity_classes = None, None
-
-        if network_type == "ft":
-            entity_vectors = np.asarray(dt.import2dArray(self.vector_path))
-            print("Imported vectors", len(entity_vectors), len(entity_vectors[0]))
-            entity_classes = np.asarray(dt.import2dArray(self.class_path))
-            print("Imported classes", len(entity_classes), len(entity_classes[0]))
-            if len(entity_classes) != len(entity_vectors):
-                entity_classes = entity_classes.transpose()
-                print("Transposed classes, now in form", len(entity_classes), len(entity_classes[0]))
-            if len(entity_vectors) != len(entity_classes):
-                entity_vectors = entity_vectors.transpose()
-                print("Transposed vectors, now in form", len(entity_vectors), len(entity_vectors[0]))
-        elif network_type == "da":
-            entity_vectors = np.asarray(dt.import2dArray(self.vector_path))
-            if len(entity_vectors) != 15000:
-                entity_vectors = entity_vectors.transpose()
-            if self.class_path is None:
-                entity_classes = entity_vectors
-            else:
-                entity_classes = np.asarray(dt.import2dArray(self.class_path))
+        entity_vectors = np.asarray(dt.import2dArray(self.vector_path))
+        print("Imported vectors", len(entity_vectors), len(entity_vectors[0]))
+        entity_classes = np.asarray(dt.import2dArray(self.class_path))
+        print("Imported classes", len(entity_classes), len(entity_classes[0]))
+        if len(entity_classes) != len(entity_vectors):
+            entity_classes = entity_classes.transpose()
+            print("Transposed classes, now in form", len(entity_classes), len(entity_classes[0]))
+        if len(entity_vectors) != len(entity_classes):
+            entity_vectors = entity_vectors.transpose()
+            print("Transposed vectors, now in form", len(entity_vectors), len(entity_vectors[0]))
 
         self.input_size = len(entity_vectors[0])
         self.output_size = len(entity_classes[0])
@@ -192,7 +181,6 @@ class NeuralNetwork:
             self.fine_tune_weights = []
             self.fine_tune_weights.append(r.transpose())
             self.fine_tune_weights.append(np.empty(shape=len(r), dtype="float64"))
-
 
         models = []
         x_train = []
@@ -344,29 +332,6 @@ class NeuralNetwork:
         model.compile(loss=self.loss, optimizer=self.optimizer)
 
         return model
-
-
-    def denoisingAutoencoder(self, noise, deep_size):
-        if self.dropout_noise is None:
-            self.model.add(GaussianNoise(noise, input_shape=(self.input_size,)))
-        else:
-            self.model.add(Dropout(self.dropout_noise[0], input_shape=(self.input_size,)))
-        if deep_size is not None:
-            self.model.add(Dense(output_dim=deep_size, input_dim=self.hidden_layer_size, init=self.layer_init,
-                                 activation=self.hidden_activation, W_regularizer=l2(self.reg), activity_regularizer=activity_l2(self.activity_reg)))
-        self.model.add(Dense(output_dim=self.hidden_layer_size, input_dim=self.input_size, init=self.layer_init,
-                             activation=self.hidden_activation, W_regularizer=l2(self.reg)))
-        self.model.add(Dense(output_dim=self.output_size, init=self.layer_init, activation=self.output_activation, W_regularizer=l2(self.reg)))
-        self.model.compile(loss=self.loss, optimizer=self.optimizer)
-        return self.model
-
-
-    def getEndSpace(self):
-        return self.end_space
-
-    def getEncoder(self):
-        return self.model.layers[1]
-
 
 
 def main():
