@@ -16,7 +16,7 @@ class DecisionTree:
     clf = None
     def __init__(self, features_fn, classes_fn,  class_names_fn, cluster_names_fn, filename,
                  training_data,  max_depth=None, balance=None, criterion="entropy", save_details=False, data_type="movies",cv_splits=5,
-                 csv_fn="../data/temp/no_csv_provided.csv", cross_validation=False, rewrite_files=False):
+                 csv_fn="../data/temp/no_csv_provided.csv", rewrite_files=False):
 
         vectors = np.asarray(dt.import2dArray(features_fn))
 
@@ -95,7 +95,7 @@ class DecisionTree:
             clf = tree.DecisionTreeClassifier( max_depth=max_depth, criterion=criterion, class_weight=balance)
 
             # Select training data with cross validation
-            if cross_validation:
+            if cv_splits > 1:
                 kf = KFold(n_splits=cv_splits, shuffle=False, random_state=None)
                 predicted_labels = cross_val_score(clf, c_x_train, c_y_train, cv=kf, scoring="f1", verbose=1)
                 print("Cross val score", predicted_labels)

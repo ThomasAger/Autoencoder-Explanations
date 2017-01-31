@@ -464,8 +464,7 @@ vector_path = "../data/" + data_type + "/rank/numeric/"+file_name+".txt"
 class_path = "../data/" + data_type + "/classify/"+class_name+"/class-all"
 property_names_fn = "../data/" + data_type + "/classify/"+class_name+"/names.txt"
 file_name = file_name + "genre"
-getSVMResults(vector_path, class_path, property_names_fn, file_name, lowest_count=lowest_count, data_type=data_type,
-              get_kappa=False, get_f1=True, highest_count=highest_count, svm_type=svm_type, rewrite_files=True)
+#getSVMResults(vector_path, class_path, property_names_fn, file_name, lowest_count=lowest_count, data_type=data_type, get_kappa=False, get_f1=True, highest_count=highest_count, svm_type=svm_type, rewrite_files=True)
 
 
 """
