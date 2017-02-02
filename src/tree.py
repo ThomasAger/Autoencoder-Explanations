@@ -22,16 +22,20 @@ class DecisionTree:
 
         labels = np.asarray(dt.import2dArray(classes_fn, "i"))
 
-        vectors = vectors.transpose()
-        labels = labels.transpose()
+        print("vectors", len(vectors), len(vectors[0]))
+        print("labels", len(labels), len(labels[0]))
 
+        vectors = vectors.transpose()
+        print("vectors transposed")
+
+        print("vectors", len(vectors), len(vectors[0]))
         cluster_names = dt.import1dArray(cluster_names_fn)
         label_names = dt.import1dArray(class_names_fn)
         all_fns = []
         if save_details:
-            dot_file_fn = '../data/' + data_type + '/rules/tree_data/' + label_names[0] + " " + filename + '.txt'
-            graph_fn = '../data/' + data_type + '/rules/tree_data/' + label_names[0] + " " + filename + '.txt'
-            graph_png_fn = '../data/' + data_type + '/rules/tree_images/' + label_names[0] + " " + filename + ".png"
+            dot_file_fn = '../data/' + data_type + '/rules/tree_data/' + label_names[0] + " " + filename + "CV" + str(0) + '.txt'
+            graph_fn = '../data/' + data_type + '/rules/tree_data/' + label_names[0] + " " + filename + "CV" + str(0) + '.txt'
+            graph_png_fn = '../data/' + data_type + '/rules/tree_images/' + label_names[0] + " " + filename + "CV" + str(0) + '.png'
             all_fns.append(dot_file_fn)
             all_fns.append(graph_fn)
             all_fns.append(graph_png_fn)
@@ -63,7 +67,9 @@ class DecisionTree:
 
         y_train = y_train.transpose()
         y_test = y_test.transpose()
-
+        labels = labels.transpose()
+        print("labels transposed")
+        print("labels", len(labels), len(labels[0]))
         for l in range(len(y_train)):
             c_x_train = x_train
             c_y_train = y_train[l]
@@ -92,53 +98,68 @@ class DecisionTree:
             """
             #balanced_x_train, y_train = dt.balanceClasses(x_train, y_train)
 
-            clf = tree.DecisionTreeClassifier( max_depth=max_depth, criterion=criterion, class_weight=balance)
+
 
             # Select training data with cross validation
+
+
+            ac_y_test = []
+            ac_y_train = []
+            ac_x_train = []
+            ac_x_test = []
+            cv_f1 = []
+            cv_acc = []
             if cv_splits > 1:
                 kf = KFold(n_splits=cv_splits, shuffle=False, random_state=None)
-                predicted_labels = cross_val_score(clf, c_x_train, c_y_train, cv=kf, scoring="f1", verbose=1)
-                print("Cross val score", predicted_labels)
-                index = np.argmax(predicted_labels, 0)
-                counter = 0
                 for train, test in kf.split(c_x_train):
-                    if counter == index:
-                        c_x_train = c_x_train[train]
-                        c_y_train = c_y_train[train]
-                        break
-                    else:
-                        counter += 1
-            clf = clf.fit(c_x_train, c_y_train)
-            predicted_test = clf.predict(x_test)
-            f1 = f1_score(c_y_test, predicted_test, average="macro")
-            accuracy = accuracy_score(c_y_test, predicted_test)
-            f1_array.append(f1)
-            accuracy_array.append(accuracy)
-            scores = [[label_names[l], "f1", f1, "accuracy", accuracy]]
-            print(scores)
-            class_names = [ label_names[l], "NOT "+label_names[l]]
+                    ac_y_test.append(labels[l][test])
+                    ac_y_train.append(labels[l][train])
+                    ac_x_train.append(vectors[train])
+                    ac_x_test.append(vectors[test])
+            else:
+                ac_y_test.append(y_test)
+                ac_y_train.append(y_train)
+                ac_x_train.append(x_train)
+                ac_x_test.append(x_test)
 
+            predictions = []
 
+            for splits in range(len(ac_y_test)):
+                clf = tree.DecisionTreeClassifier(max_depth=max_depth, criterion=criterion, class_weight=balance)
+                clf.fit(ac_x_train[splits], ac_y_train[splits])
+                predictions.append(clf.predict(ac_x_test[splits]))
 
-            # Export a tree for each label predicted by the clf
-            if save_details:
-                dot_file_fn = '../data/' + data_type + '/rules/tree_data/' + label_names[l] + " " + filename + '.txt'
-                graph_fn = '../data/' + data_type + '/rules/tree_data/' + label_names[l] + " " + filename + '.txt'
-                graph_png_fn = '../data/' + data_type + '/rules/tree_images/' + label_names[l] + " " + filename + ".png"
-                tree.export_graphviz(clf, feature_names=cluster_names, class_names=class_names, out_file=dot_file_fn, max_depth=max_depth)
-                rewrite_dot_file = dt.import1dArray(dot_file_fn)
-                new_dot_file = []
-                for s in rewrite_dot_file:
-                    new_string = s
-                    if "->" not in s and "digraph" not in s and "node" not in s and "(...)" not in s and "}" not in s:
-                        index = s.index("value")
-                        new_string = s[:index] + '"] ;'
-                    new_dot_file.append(new_string)
-                dt.write1dArray(new_dot_file, dot_file_fn)
+            for i in range(len(predictions)):
+                filename = filename + ""
+                f1 = f1_score(ac_y_test[i], predictions[i], average="macro")
+                accuracy = accuracy_score(ac_y_test[i], predictions[i])
+                cv_f1.append(f1)
+                cv_acc.append(accuracy)
+                scores = [[label_names[l], "f1", f1, "accuracy", accuracy]]
+                print(scores)
+                class_names = [label_names[l], "NOT " + label_names[l]]
 
-                graph = pydot.graph_from_dot_file(graph_fn)
-                graph.write_png(graph_png_fn)
-                self.get_code(clf, cluster_names, class_names, label_names[l]+ " " + filename, data_type)
+                # Export a tree for each label predicted by the clf
+                if save_details:
+                    dot_file_fn = '../data/' + data_type + '/rules/tree_data/' + label_names[l] + " " + filename + "CV" + str(i) + '.txt'
+                    graph_fn = '../data/' + data_type + '/rules/tree_data/' + label_names[l] + " " + filename + "CV" + str(i) + '.txt'
+                    graph_png_fn = '../data/' + data_type + '/rules/tree_images/' + label_names[l] + " " + filename + "CV" + str(i) + '.png'
+                    tree.export_graphviz(clf, feature_names=cluster_names, class_names=class_names, out_file=dot_file_fn,
+                                         max_depth=max_depth)
+                    rewrite_dot_file = dt.import1dArray(dot_file_fn)
+                    new_dot_file = []
+                    for s in rewrite_dot_file:
+                        new_string = s
+                        if "->" not in s and "digraph" not in s and "node" not in s and "(...)" not in s and "}" not in s:
+                            index = s.index("value")
+                            new_string = s[:index] + '"] ;'
+                        new_dot_file.append(new_string)
+                    dt.write1dArray(new_dot_file, dot_file_fn)
+                    graph = pydot.graph_from_dot_file(graph_fn)
+                    graph.write_png(graph_png_fn)
+                    self.get_code(clf, cluster_names, class_names, label_names[l] + " " + filename, data_type)
+            f1_array.append(np.average(np.asarray(cv_f1)))
+            accuracy_array.append(np.average(np.asarray(cv_acc)))
 
         accuracy_array = np.asarray(accuracy_array)
         accuracy_average = np.average(accuracy_array)
@@ -212,9 +233,10 @@ class DecisionTree:
 
 def main():
     cluster_to_classify = -1
-    max_depth = None
+    max_depth = 4
     classify = "types"
     data_type = "wines"
+    cv_split = 5
     cross_val = True
     save_details = True
     label_names_fn = "../data/"+data_type+"/classify/"+classify+"/names.txt"
@@ -249,7 +271,7 @@ def main():
 
     clf = DecisionTree(cluster_vectors_fn, cluster_labels_fn, label_names_fn , cluster_names_fn , file_name, 10000,
                        max_depth, balance=balance, criterion=criterion, save_details=save_details, data_type=data_type,
-                       csv_fn=csv_fn, cross_validation=cross_val)
+                       csv_fn=csv_fn)
 
     """
     fn = "films100"

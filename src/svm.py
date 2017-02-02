@@ -308,7 +308,7 @@ def runGaussianSVM(y_test, y_train, x_train, x_test, get_kappa, get_f1):
 
 from sklearn.model_selection import cross_val_score
 def runSVM(y_test, y_train, x_train, x_test, property_name, get_kappa, get_f1, data_type):
-    y = dt.import1dArray("../data/" + data_type + "/classify/types/" + property_name)
+    y = dt.import1dArray("../data/" + data_type + "/bow/binary/phrases/class-" + property_name)
     y_train, y_test = train_test_split(y, test_size=0.3, random_state=0)
     clf = svm.LinearSVC(class_weight='balanced')
     """

@@ -37,10 +37,6 @@ from sklearn.model_selection import KFold
 
 class NeuralNetwork:
 
-    # The shared model
-    end_space = None
-    model = None
-
     # Shared variables
     training_data = None
     class_path = None
@@ -59,7 +55,7 @@ class NeuralNetwork:
     reg = 0.0
     activity_reg = 0.0
     finetune_size = 0
-    class_outputs = False
+    save_outputs = False
     amount_of_hidden = 0
     identity_swap = None
     deep_size = None
@@ -72,28 +68,28 @@ class NeuralNetwork:
     finetune_weights = None
     past_weights = None
 
-    def __init__(self, training_data=10000, class_path=None, network_type="ft",  randomize_finetune_weights=False, dropout_noise = None, amount_of_hidden=0,
+    def __init__(self, training_data=10000, class_path=None, get_scores=False,  randomize_finetune_weights=False, dropout_noise = None, amount_of_hidden=0,
                  epochs=1,  learn_rate=0.01, loss="mse", batch_size=1, past_model_bias_fn=None, identity_swap=False, reg=0.0, amount_of_finetune=1, output_size=25,
                  hidden_activation="tanh", layer_init="glorot_uniform", output_activation="tanh", deep_size = None, corrupt_finetune_weights = False, cross_val=False,
                    hidden_layer_size=100, file_name="unspecified_filename", vector_path=None, is_identity=False, activity_reg=0.0, finetune_size=0, data_type="movies",
-                 optimizer_name="rmsprop", noise=0.0, fine_tune_weights_fn=None, past_model_weights_fn=None, from_ae=True, class_outputs=False,
-                 rewrite_files=False, cv_splits=1, tuning_parameters=False):
+                 optimizer_name="rmsprop", noise=0.0, fine_tune_weights_fn=None, past_model_weights_fn=None, from_ae=True, save_outputs=False,
+                 rewrite_files=False, cv_splits=1, tuning_parameters=False, split_to_use=-1):
 
-        total_file_name = "../data/" + data_type + "/nnet/spaces/" + file_name
+        total_file_name = "../data/" + data_type + "/nnet/spaces/" + file_name + "S0"
         space_fn = total_file_name + "L0.txt"
-        weights_fn = "../data/" + data_type + "/nnet/weights/" + file_name + "L0.txt"
-        bias_fn = "../data/" + data_type + "/nnet/bias/" + file_name + "L0.txt"
+        weights_fn = "../data/" + data_type + "/nnet/weights/" + file_name + "S0L0.txt"
+        bias_fn = "../data/" + data_type + "/nnet/bias/" + file_name + "S0L0.txt"
         rank_fn = "../data/" + data_type + "/nnet/clusters/" + file_name + ".txt"
-        score_fn = "../data/" + data_type + "/nnet/scores/" + file_name + ".txt"
+        f1_fn = "../data/" + data_type + "/nnet/scores/F1 " + file_name + ".txt"
+        acc_fn = "../data/" + data_type + "/nnet/scores/ACC " + file_name + ".txt"
 
-        all_fns = [space_fn, weights_fn, bias_fn, rank_fn, score_fn]
+        all_fns = [space_fn, weights_fn, bias_fn, rank_fn, f1_fn, acc_fn]
         if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
             print("Skipping task", "nnet")
             return
         else:
             print("Running task", "nnet")
 
-        self.model = Sequential()
         self.training_data = training_data
         self.class_path = class_path
         self.learn_rate = learn_rate
@@ -108,7 +104,7 @@ class NeuralNetwork:
         self.vector_path = vector_path
         self.dropout_noise = dropout_noise
         self.finetune_size = finetune_size
-        self.class_outputs = class_outputs
+        self.get_scores = get_scores
         self.reg = reg
         self.activity_reg = activity_reg
         self.activity_reg = activity_reg
@@ -135,38 +131,38 @@ class NeuralNetwork:
         print("Imported vectors", len(entity_vectors), len(entity_vectors[0]))
         entity_classes = np.asarray(dt.import2dArray(self.class_path))
         print("Imported classes", len(entity_classes), len(entity_classes[0]))
+        """
         if len(entity_classes) != len(entity_vectors):
             entity_classes = entity_classes.transpose()
             print("Transposed classes, now in form", len(entity_classes), len(entity_classes[0]))
+        """
         if len(entity_vectors) != len(entity_classes):
             entity_vectors = entity_vectors.transpose()
             print("Transposed vectors, now in form", len(entity_vectors), len(entity_vectors[0]))
 
         self.input_size = len(entity_vectors[0])
         self.output_size = len(entity_classes[0])
-        
 
-        self.past_weights = []
-
-        if from_ae:
-            past_model_weights = []
-            for p in past_model_weights_fn:
-                past_model_weights.append(np.asarray(dt.import2dArray(p), dtype="float64"))
-            past_model_bias = []
-            for p in past_model_bias_fn:
-                past_model_bias.append(np.asarray(dt.import1dArray(p, "f"), dtype="float64"))
-
-            for p in range(len(past_model_weights)):
-                past_model_weights[p] = np.around(past_model_weights[p], decimals=6)
-                past_model_bias[p] = np.around(past_model_bias[p], decimals=6)
-
-            for p in range(len(past_model_weights)):
-                self.past_weights.append([])
-                self.past_weights[p].append(past_model_weights[p])
-                self.past_weights[p].append(past_model_bias[p])
-
-        weights = []
         if fine_tune_weights_fn is not None:
+            model_builder = self.fineTuneNetwork
+            weights = []
+            if from_ae:
+                self.past_weights = []
+                past_model_weights = []
+                for p in past_model_weights_fn:
+                    past_model_weights.append(np.asarray(dt.import2dArray(p), dtype="float64"))
+                past_model_bias = []
+                for p in past_model_bias_fn:
+                    past_model_bias.append(np.asarray(dt.import1dArray(p, "f"), dtype="float64"))
+
+                for p in range(len(past_model_weights)):
+                    past_model_weights[p] = np.around(past_model_weights[p], decimals=6)
+                    past_model_bias[p] = np.around(past_model_bias[p], decimals=6)
+
+                for p in range(len(past_model_weights)):
+                    self.past_weights.append([])
+                    self.past_weights[p].append(past_model_weights[p])
+                    self.past_weights[p].append(past_model_bias[p])
             for f in fine_tune_weights_fn:
                 weights.extend(dt.import2dArray(f))
 
@@ -181,83 +177,155 @@ class NeuralNetwork:
             self.fine_tune_weights = []
             self.fine_tune_weights.append(r.transpose())
             self.fine_tune_weights.append(np.empty(shape=len(r), dtype="float64"))
+        else:
+            model_builder = self.classifierNetwork
 
         models = []
         x_train = []
         y_train = []
         x_test = []
         y_test = []
+
+        for i in range(cv_splits):
+            models.append(model_builder())
+
+        f1_scores = []
+        accuracy_scores = []
+        f1_averages = []
+        accuracy_averages = []
         if cv_splits > 1:
             k_fold = KFold(n_splits=cv_splits, shuffle=False, random_state=None)
+            c = 0
             for train, test in k_fold.split(entity_vectors):
-                x_train.append(entity_vectors[train])
-                y_train.append(entity_classes[train])
-                x_test.append(entity_vectors[test])
-                y_test.append(entity_classes[test])
-                models.append(self.fineTuneNetwork().fit(entity_vectors[train], entity_classes[train], nb_epoch=self.epochs,
-                            batch_size=self.batch_size, verbose=1))
-
-            print("HUH?")
+                if split_to_use == c and split_to_use > -1:
+                    x_train.append(entity_vectors[train])
+                    y_train.append(entity_classes[train])
+                    x_test.append(entity_vectors[test])
+                    y_test.append(entity_classes[test])
+                    models[c].fit(entity_vectors[train], entity_classes[train], nb_epoch=self.epochs,
+                                  batch_size=self.batch_size, verbose=1)
+                elif split_to_use == -1:
+                    x_train.append(entity_vectors[train])
+                    y_train.append(entity_classes[train])
+                    x_test.append(entity_vectors[test])
+                    y_test.append(entity_classes[test])
+                    models[c].fit(entity_vectors[train], entity_classes[train], nb_epoch=self.epochs,
+                                  batch_size=self.batch_size, verbose=1)
+                c += 1
         else:
-            x_train, x_test, y_train, y_test = train_test_split(entity_vectors, entity_classes, test_size=0.33,
-                                                                random_state=0)
-            models.append(self.fineTuneNetwork().fit(x_train, y_train, nb_epoch=self.epochs,  batch_size=self.batch_size, verbose=1))
+            x_tr, x_te, y_tr, y_te = train_test_split(entity_vectors, entity_classes, test_size=0.33, random_state=0)
+            x_train.append(x_tr)
+            x_test.append(x_te)
+            y_train.append(y_tr)
+            y_test.append(y_te)
+            models[0].fit(x_train, y_train, nb_epoch=self.epochs, batch_size=self.batch_size, verbose=1)
+
+        original_fn = file_name
         for m in range(len(models)):
-            if cv_splits > 1:
-                file_name = file_name + "S" + str(m)
+            file_name = original_fn + "S" + str(m)
+            if get_scores:
 
+                y_pred = models[m].predict(x_test[m])
+                y_pred[y_pred >= 0.5] = 1
+                y_pred[y_pred < 0.5] = 0
+                f1_array = []
+                accuracy_array = []
+                for y in range(len(y_pred[m])):
+                    accuracy_array.append(accuracy_score(y_test[m][y], y_pred[y]))
+                    f1_array.append(f1_score(y_test[m][y], y_pred[y]))
+                cv_f1_fn = "../data/" + data_type + "/nnet/scores/F1 " + file_name + ".txt"
+                cv_acc_fn = "../data/" + data_type + "/nnet/scores/ACC " + file_name + ".txt"
+                dt.write1dArray(f1_array, cv_f1_fn)
+                dt.write1dArray(accuracy_array, cv_acc_fn)
+                f1_scores.append(f1_array)
+                accuracy_scores.append(accuracy_array)
+                f1_average = np.average(f1_array)
+                accuracy_average = np.average(accuracy_array)
+                f1_averages.append(f1_average)
+                accuracy_averages.append(accuracy_average)
+                print("Average F1", f1_average, "Acc", accuracy_average)
 
-
-
-
-
-            if network_type == "ft":
-                if class_outputs:
-                    scores = []
-                    y_pred = self.model.predict(x_test)
-                    y_pred[y_pred >= 0.5] = 1
-                    y_pred[y_pred < 0.5] = 0
-                    f1 = f1_score(y_test, y_pred, average="macro")
-
-                    accuracy_array = []
-                    for y in range(len(y_pred)):
-                        accuracy_array.append(accuracy_score(y_test[y], y_pred[y]))
-                    accuracy = np.mean(accuracy_array)
-
-                    scores.append(f1)
-                    scores.append(accuracy)
-                    dt.write1dArray(scores, score_fn)
-                    print(scores)
-                self.output_clusters = self.model.predict(entity_vectors)
+            if save_outputs:
+                self.output_clusters = models[m].predict(entity_vectors)
                 dt.write2dArray(self.output_clusters.transpose(), rank_fn)
 
 
-            for l in range(0, len(self.model.layers) - 1):
+            for l in range(0, len(models[m].layers) - 1):
                 if dropout_noise is not None and dropout_noise > 0.0:
                     if l % 2 == 1:
                         continue
                 print("Writing", l, "layer")
                 truncated_model = Sequential()
                 for a in range(l+1):
-                    truncated_model.add(self.model.layers[a])
+                    truncated_model.add(models[m].layers[a])
                 truncated_model.compile(loss=self.loss, optimizer="sgd")
                 self.end_space = truncated_model.predict(entity_vectors)
+                total_file_name = "../data/" + data_type + "/nnet/spaces/" + file_name
                 dt.write2dArray(self.end_space, total_file_name + "L" + str(l) + ".txt")
 
-
-
-            for l in range(len(self.model.layers)):
+            for l in range(len(models[m].layers)):
                 try:
-                    dt.write2dArray(self.model.layers[l].get_weights()[0],
+                    dt.write2dArray(models[m].layers[l].get_weights()[0],
                                     "../data/" + data_type + "/nnet/weights/" + file_name + "L" + str(l) + ".txt")
-                    dt.write1dArray(self.model.layers[l].get_weights()[1],
+                    dt.write1dArray(models[m].layers[l].get_weights()[1],
                                     "../data/" + data_type + "/nnet/bias/" + file_name + "L" +  str(l) + ".txt")
                 except IndexError:
                     print("Layer ", str(l), "Failed")
 
+        if cv_splits > 1:
+            class_f1_averages = []
+            class_accuracy_averages = []
+            f1_scores = np.asarray(f1_scores).transpose()
+            accuracy_scores = np.asarray(accuracy_scores).transpose()
 
+            for c in range(len(f1_scores)):
+                class_f1_averages.append(np.average(f1_scores[c]))
+                class_accuracy_averages.append(np.average(accuracy_scores[c]))
+
+            f1_fn = "../data/" + data_type + "/nnet/scores/F1 " + file_name + ".txt"
+            acc_fn = "../data/" + data_type + "/nnet/scores/ACC " + file_name + ".txt"
+            dt.write1dArray(class_f1_averages, f1_fn)
+            dt.write1dArray(class_accuracy_averages, acc_fn)
+            overall_f1_average = np.average(f1_averages)
+            overall_accuracy_average = np.average(accuracy_averages)
+
+            print("Overall average F1", overall_f1_average, "Overall average accuracy", overall_accuracy_average)
+
+    def classifierNetwork(self):
+        print("CLASSIFIER")
+        model = Sequential()
+        print(self.input_size, self.hidden_layer_size, self.finetune_size, self.output_size)
+
+        print(0, "Deep layer", self.input_size, self.deep_size[0], self.hidden_activation)
+        model.add(Dense(output_dim=self.deep_size[0], input_dim=self.input_size, init=self.layer_init,
+                        activation=self.hidden_activation, W_regularizer=l2(self.reg)))
+
+        if self.dropout_noise is not None:
+            print("Dropout layer")
+            model.add(Dropout(self.dropout_noise))
+
+        for a in range(1, len(self.deep_size)):
+            print(a, "Deep layer", self.deep_size[a - 1], self.deep_size[a], self.hidden_activation)
+            model.add(Dense(output_dim=self.deep_size[a], input_dim=self.deep_size[a - 1], init=self.layer_init,
+                            activation=self.hidden_activation, W_regularizer=l2(self.reg)))
+            if self.dropout_noise is not None:
+                print("Dropout layer")
+                model.add(Dropout(self.dropout_noise))
+
+        print("Class outputs", self.deep_size[len(self.deep_size) - 1], self.output_size,
+              self.output_activation)
+        model.add(
+            Dense(output_dim=self.output_size, input_dim=self.deep_size[len(self.deep_size) - 1],
+                  activation=self.output_activation,
+                  init=self.layer_init))
+
+        print("Compiling")
+        model.compile(loss=self.loss, optimizer=self.optimizer)
+
+        return model
 
     def fineTuneNetwork(self):
+        print("FINETUNER")
         model = Sequential()
         print(self.input_size, self.hidden_layer_size, self.finetune_size, self.output_size)
 
@@ -271,21 +339,6 @@ class NeuralNetwork:
                                      activation=self.hidden_activation,
                                      init="identity"))
 
-        if self.deep_size is not None:
-            print(0, "Deep layer", self.input_size, self.deep_size[0], self.hidden_activation)
-            model.add(Dense(output_dim=self.deep_size[0], input_dim=self.input_size, init=self.layer_init,
-                                 activation=self.hidden_activation, W_regularizer=l2(self.reg)))
-            if self.dropout_noise is not None:
-                print("Dropout layer")
-                model.add(Dropout(self.dropout_noise))
-
-            for a in range(1, len(self.deep_size)):
-                print(a, "Deep layer", self.deep_size[a-1], self.deep_size[a], self.hidden_activation)
-                model.add(Dense(output_dim=self.deep_size[a], input_dim=self.deep_size[a-1], init=self.layer_init,
-                                 activation=self.hidden_activation, W_regularizer=l2(self.reg)))
-                if self.dropout_noise is not None:
-                    print("Dropout layer")
-                    model.add(Dropout(self.dropout_noise))
 
         if self.from_ae:
             for p in range(len(self.past_weights)):
@@ -311,23 +364,17 @@ class NeuralNetwork:
             print("Corrupt finetune weights", self.hidden_layer_size, self.finetune_size, "linear")
             model.add(Dense(output_dim=self.finetune_size, input_dim=self.hidden_layer_size, activation="linear",
                                  weights=self.fine_tune_weights))
-        elif self.deep_size is None:
+        else:
             print("Fine tune weights", self.hidden_layer_size, len(self.fine_tune_weights[0][0]), "linear")
             model.add(Dense(output_dim=len(self.fine_tune_weights[0][0]), input_dim=self.hidden_layer_size, activation="linear",
                                  weights=self.fine_tune_weights))
-        if self.class_outputs:
-
+        if self.get_scores:
             if self.randomize_finetune_weights or self.corrupt_finetune_weights or len(self.fine_tune_weights_fn) > 0:
                 print("Class outputs", self.finetune_size, self.output_size, self.output_activation)
                 model.add(
                     Dense(output_dim=self.output_size, input_dim=self.finetune_size, activation=self.output_activation,
                           init=self.layer_init))
-            else:
-                print("Class outputs", self.deep_size[len(self.deep_size)-1], self.output_size, self.output_activation)
-                model.add(
-                    Dense(output_dim=self.output_size, input_dim=self.deep_size[len(self.deep_size)-1],
-                          activation=self.output_activation,
-                          init=self.layer_init))
+
         print("Compiling")
         model.compile(loss=self.loss, optimizer=self.optimizer)
 
@@ -339,11 +386,15 @@ def main():
     classification_task = "types"
     #file_name = "wines100trimmed"
     #init_vector_path = "../data/" + data_type + "/nnet/spaces/" + file_name + ".txt"
-
+    lowest_count = 0
     file_name = "winesppmi"
-    init_vector_path = "../data/wines/bow/ppmi/class-trimmed-all-50"
+    if data_type == "wines" or data_type == "placetypes":
+        lowest_count = 50
+    else:
+        lowest_count = 200
+    init_vector_path = "../data/"+data_type+"/bow/ppmi/class-all"
 
-    deep_size = [1000, 500, 250, 100, 50]
+    deep_size = [200, 100, 50]
     for d in range(len(deep_size)):
         print(deep_size, init_vector_path)
         loss = "binary_crossentropy"
@@ -353,10 +404,10 @@ def main():
         classification_path = "../data/" + data_type + "/classify/" + classification_task + "/class-all"
         learn_rate = 0.01
         fine_tune_weights_fn = None
-        epochs = 10
+        epochs = 200
         amount_of_finetune = 0
         batch_size = 200
-        class_outputs = True
+        save_outputs = True
         dropout_noise = 0.3
         is_identity = False
         identity_swap = False
@@ -369,8 +420,8 @@ def main():
         output_size = 10
         randomize_finetune_weights = False
         corrupt_finetune_weights = False
-        fine_tune_weights_fn = []
-        rewrite_files = True
+        rewrite_files = False
+        get_scores = True
         #init_vector_path = "../data/" + data_type + "/movies/bow/binary/phrases/class-all"
         if d == 0:
             file_name = file_name + "rank" + "E" + str(epochs) + "DS" + str(deep_size) + "DN" +\
@@ -383,17 +434,17 @@ def main():
         csv_name = "../data/"+data_type+"/rules/tree_csv/"+file_name+".csv"
 
         SDA = NeuralNetwork(noise=0, fine_tune_weights_fn=fine_tune_weights_fn, optimizer_name=optimizer_name,
-                network_type="ft", past_model_bias_fn=past_model_bias_fn, deep_size=deep_size,
+                get_scores=get_scores, past_model_bias_fn=past_model_bias_fn, deep_size=deep_size,
                 randomize_finetune_weights=randomize_finetune_weights, amount_of_finetune=amount_of_finetune,
                 vector_path=init_vector_path, hidden_layer_size=hidden_layer_size, class_path=classification_path,
-                identity_swap=identity_swap, dropout_noise=dropout_noise, class_outputs=class_outputs,
+                identity_swap=identity_swap, dropout_noise=dropout_noise, save_outputs=save_outputs,
                 hidden_activation=hidden_activation, output_activation=output_activation, epochs=epochs,
                 learn_rate=learn_rate, is_identity=is_identity, output_size=output_size,
                 batch_size=batch_size, past_model_weights_fn=past_model_weights_fn, loss=loss, cv_splits=cv_splits,
                 file_name=file_name, from_ae=from_ae, data_type=data_type, rewrite_files=rewrite_files)
+        original_fn = file_name
         for splits in range(cv_splits):
-            if cv_splits > 1:
-                file_name = file_name + "S" + str(splits)
+            file_name = original_fn + "S" + str(splits)
             new_file_names = []
             if dropout_noise is not None and dropout_noise > 0.0:
                 for j in range(0, len(deep_size)*2, 2):
@@ -413,11 +464,6 @@ def main():
                 breakoff = True
                 kappa = False
 
-                if data_type is "wines" or "placetypes":
-                    lowest_count = 50
-                else:
-                    lowest_count = 200
-
                 file_name = file_name + str(lowest_count)
 
 
@@ -427,6 +473,8 @@ def main():
                     file_name = file_name + "kappa"
 
                 if breakoff:
+                    score_limit = 0.8
+                    cluster_amt = deep_size[j] * 2
                     file_name = file_name + str(score_limit) + str(cluster_amt)
                 else:
                     file_name = file_name + "SimilarityClustering"
@@ -466,9 +514,7 @@ def main():
 
                 if breakoff:
                     similarity_threshold = 0.5
-                    cluster_amt = deep_size[j] * 2
                     amount_to_start = 8000
-                    score_limit = 0.9
                     dissimilarity_threshold = 0.9
                     add_all_terms = False
                     clusters_fn = "../data/" + data_type + "/cluster/hierarchy_directions/" + file_name + ".txt"
@@ -550,12 +596,12 @@ def main():
                 file_name = file_name + "FT"
 
                 SDA = NeuralNetwork(noise=0, fine_tune_weights_fn=fine_tune_weights_fn, optimizer_name=optimizer_name,
-                            network_type="ft", past_model_bias_fn=past_model_bias_fn,
+                            get_scores=get_scores, past_model_bias_fn=past_model_bias_fn,
                             randomize_finetune_weights=randomize_finetune_weights,
                             vector_path=init_vector_path, hidden_layer_size=hidden_layer_size, class_path=class_path,
                             identity_swap=identity_swap, amount_of_finetune=amount_of_finetune,
                             hidden_activation=hidden_activation, output_activation=output_activation, epochs=epochs,
-                            learn_rate=learn_rate, is_identity=is_identity, 
+                            learn_rate=learn_rate, is_identity=is_identity, split_to_use=splits,
                             batch_size=batch_size, past_model_weights_fn=past_model_weights_fn, loss=loss, rewrite_files=rewrite_files,
                             file_name=file_name, from_ae=from_ae, finetune_size=finetune_size, data_type=data_type)
 

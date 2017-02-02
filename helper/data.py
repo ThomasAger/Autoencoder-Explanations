@@ -249,6 +249,8 @@ def allFnsAlreadyExist(all_fns):
         if file_exists(all_fns[f]):
             print(all_fns[f], "Already exists")
             all_exist += 1
+        else:
+            print(all_fns[f], "Doesn't exist")
     if all_exist == len(all_fns):
         return True
     return False
