@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.collections import LineCollection
-import helper.data as dt
+import data as dt
 from sklearn.linear_model import LinearRegression
 from sklearn.isotonic import IsotonicRegression
 from sklearn.utils import check_random_state
@@ -19,16 +19,17 @@ def plot(x, y, y_):
     plt.title('Isotonic regression')
     plt.show()
 
-def readPPMI(name, data_type):
+def readPPMI(name, data_type, lowest_amt, highest_amt, classification):
     name = name.split()[0]
-    file = open("../data/"+data_type+"/bow/ppmi/" + "class-trimmed-" + name)
+    file = open("../data/"+data_type+"/bow/ppmi/" + "class-" + name + "-" + str(lowest_amt) + "-" + str(highest_amt) + "-" + classification)
     lines = file.readlines()
     frq_a = []
     for line in lines:
         frq_a.append(float(line))
     return frq_a
 
-def pavPPMI(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type="movies", rewrite_files=False):
+def pavPPMI(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type="movies", rewrite_files=False,
+            classification="genres", lowest_amt=0, highest_amt=2147000000):
     pavPPMI_fn = "../data/" + data_type + "/finetune/" + file_name + ".txt"
     all_fns = [pavPPMI_fn]
     if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
@@ -43,7 +44,7 @@ def pavPPMI(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type="movi
     counter = 0
 
     for name in names:
-        frq.append(readPPMI(name, data_type))
+        frq.append(readPPMI(name, data_type, lowest_amt, highest_amt, classification))
 
     pav_classes = []
 
@@ -62,8 +63,8 @@ def pavPPMI(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type="movi
     dt.write2dArray(pav_classes, pavPPMI_fn)
     return pav_classes
 
-def readFreq(name):
-    file = open("../data/movies/bow/frequency/phrases/" + "class-" + name)
+def readFreq(name, classification, lowest_amt, highest_amt):
+    file = open("../data/movies/bow/frequency/phrases/" + "class-" + name + "-" + str(lowest_amt) + "-" + str(highest_amt) + "-"+classification)
     lines = file.readlines()
     frq_a = []
     for line in lines:
@@ -217,7 +218,7 @@ ranking_fn = "../data/movies/rank/numeric/" + file_name + ".txt"
 #pavTermFrequency(ranking_fn, cluster_names_fn, file_name, False)
 #binaryClusterTerm(cluster_names_fn, file_name)
 #binaryInCluster(cluster_names_fn, file_name)
-PPMI(cluster_names_fn, file_name)
+#PPMI(cluster_names_fn, file_name)
 #maxNonZero(cluster_names_fn, file_name)
 #maxAll(cluster_names_fn, file_name)
 #randomAll(cluster_names_fn, file_name)

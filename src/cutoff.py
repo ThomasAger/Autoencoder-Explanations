@@ -1,5 +1,5 @@
 import numpy as np
-import helper.data as dt
+import data as dt
 from sklearn.metrics import cohen_kappa_score
 from numpy.linalg import norm
 import webapi

@@ -1,5 +1,5 @@
 import numpy as np
-import helper.data as dt
+import data as dt
 
 def getGini(discrete_labels, ppmi):
     x = []

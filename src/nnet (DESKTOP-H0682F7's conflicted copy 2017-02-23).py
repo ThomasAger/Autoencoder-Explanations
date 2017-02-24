@@ -199,7 +199,7 @@ class NeuralNetwork:
             y_test.append(entity_classes[test])
             x_dev.append(entity_vectors[train[:int(len(train) * 0.2)]])
             y_dev.append(entity_classes[train[:int(len(train) * 0.2)]])
-            models[c].fit(entity_vectors[train[int(len(train) * 0.2):]], entity_classes[train[int(len(train) * 0.2):]], nb_epoch=self.epochs,
+            models[0].fit(entity_vectors[train], entity_classes[train], nb_epoch=self.epochs,
                           batch_size=self.batch_size, verbose=1)
             c += 1
             if cv_splits == 1:
@@ -512,7 +512,7 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
                 """ DIRECTION RANKINGS """
                 # Get rankings
                 vector_names_fn = "../data/" + data_type + "/nnet/spaces/entitynames.txt"
-                class_names_fn = property_names_fn
+                class_names_fn = "../data/" + data_type + "/bow/names/" + str(lowest_amt) + ".txt"
 
 
                 """ CLUSTERING """
@@ -521,7 +521,7 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
                     scores_fn = "../data/" + data_type + "/ndcg/" + file_name + ".txt"
                 else:
                     scores_fn = "../data/" + data_type + "/svm/kappa/" + file_name + ".txt"
-                names_fn = property_names_fn
+                names_fn = "../data/" + data_type + "/bow/names/" + str(lowest_amt) + ".txt"
 
                 if breakoff:
                     similarity_threshold = 0.5
@@ -579,13 +579,11 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
                     rank.getAllPhraseRankings(directions_fn, vector_path, class_names_fn, vector_names_fn, file_name,
                                   data_type=data_type, rewrite_files=rewrite_files)
                     ndcg.getNDCG("../data/" + data_type + "/rank/numeric/" + file_name + "ALL.txt", file_name,
-                             data_type=data_type, lowest_count=lowest_amt, rewrite_files=rewrite_files,
-                                 highest_count=highest_count, classification=classification_task)
+                             data_type=data_type, lowest_count=lowest_amt, rewrite_files=rewrite_files)
                 if breakoff:
                     hierarchy.initClustering(vector_path, directions_fn, scores_fn, names_fn, amount_to_start, False,
                          similarity_threshold,  cluster_amt, score_limit, file_name, kappa, dissimilarity_threshold,
-                                 add_all_terms=add_all_terms, data_type=data_type, rewrite_files=rewrite_files,
-                                             lowest_amt=lowest_amt, highest_amt=highest_count, classification=classification_task)
+                                 add_all_terms=add_all_terms, data_type=data_type, rewrite_files=rewrite_files)
                 else:
                     cluster.getClusters(directions_fn, scores_fn, names_fn, False,  0, 0, file_name, cluster_amt,
                                         high_threshold, low_threshold, data_type, rewrite_files=rewrite_files)
@@ -603,7 +601,7 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
                                   cv_splits=cv_splits, split_to_use=splits, development=development)
 
                 fto.pavPPMI(cluster_names_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=rewrite_files,
-                            classification=classification, lowest_amt=lowest_amt, highest_amt=highest_count)
+                            classification=classification, lowest_amt=lowest_amt)
 
                 file_name = file_name + "FT"
                 SDA = NeuralNetwork(noise=0, fine_tune_weights_fn=fine_tune_weights_fn, optimizer_name=optimizer_name,
@@ -619,13 +617,12 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
                 new_file_names[j] = file_name
 
                 tree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name + str(3), 10000,
-                          max_depth=3, balance="balanced", criterion="entropy", save_details=True, cv_splits=cv_splits, split_to_use=splits,
-                          data_type=data_type, csv_fn=csv_name, rewrite_files=True, development=development)
+                                  3, balance="balanced", criterion="entropy", save_details=True,  cv_splits=cv_splits, split_to_use=splits,
+                                  data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files, development=development)
 
                 tree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name + "None", 10000,
-                                      max_depth=None, balance="balanced", criterion="entropy", save_details=False,
-                                  data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
-                                  cv_splits=cv_splits, split_to_use=splits, development=development)
+                                  None, balance="balanced", criterion="entropy", save_details=False,  cv_splits=cv_splits, split_to_use=splits,
+                                  data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files, development=development)
                 if len(new_file_names) > 1:
                     init_vector_path = vector_path
 
@@ -634,69 +631,72 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
             file_name = new_file_names[0]
             init_vector_path = "../data/" + data_type + "/nnet/spaces/" + file_name + "S0L0.txt"
             deep_size = deep_size[d+1:]
+highest_amt = 10
 
-"""
+""""
 data_type = "wines"
 classification_task = "types"
 file_name = "wines ppmi"
 lowest_amt = 50
-highest_amt = 10
+direction_count = 50
 loss="binary_crossentropy"
 """
-"""
+
 data_type = "movies"
 classification_task = "genres"
 file_name = "movies ppmi"
 lowest_amt = 100
-highest_amt = 10
+direction_count = 10
 loss="binary_crossentropy"
-"""
 
+"""
 data_type = "placetypes"
 classification_task = "geonames"
 file_name = "placetypes ppmi"
 lowest_amt = 50
-highest_amt = 10
+direction_count = 10
 loss="binary_crossentropy"
-
-
+"""
+"""
 hidden_activation = "tanh"
-dropout_noise = 0.5
+dropout_noise = 0.0
 output_activation = "sigmoid"
-cutoff_start = 0.2
+cutoff_start = 0.0
 size = 200
 deep_size = [100,100,100]
 ep=200
-init_vector_path = "../data/"+data_type+"/nnet/spaces/places100-geonames.txt"
+init_vector_path = "../data/"+data_type+"/nnet/spaces/places100.txt"
 """
+
+
 hidden_activation = "relu"
 dropout_noise = 0.5
 output_activation = "sigmoid"
 cutoff_start = 0.2
-deep_size = [400,300,200,100]
+deep_size = [1000,800,600,400,200]
 init_vector_path = "../data/"+data_type+"/bow/ppmi/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+classification_task
 ep =200
-"""
+
 is_identity = True
 amount_of_finetune = 1
 
 breakoff = True
-score_limit = 0.8
+score_limit = 0.9
 cluster_multiplier = 2
 epochs=3000
 learn_rate=0.001
 kappa = False
-development = False
+development = True
 
 
 cross_val = 1
 
 rewrite_files = False
 
-threads=50
+threads=500
 
 if  __name__ =='__main__':main(data_type, classification_task, file_name, init_vector_path, hidden_activation,
                                is_identity, amount_of_finetune, breakoff, kappa, score_limit, rewrite_files,
                                cluster_multiplier, threads, dropout_noise, learn_rate, epochs, cross_val, ep,
-                               output_activation, cutoff_start, deep_size, classification_task, highest_amt,
+                               output_activation, cutoff_start, deep_size, classification_task, direction_count,
                                lowest_amt, loss, development)

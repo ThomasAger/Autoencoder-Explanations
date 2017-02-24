@@ -142,7 +142,7 @@ def balanceClasses(movie_vectors, class_array):
         else:
             count2+=1
     indexes_to_remove = []
-    amount_to_balance_to = count-count2
+    amount_to_balance_to = count - count2*2
     amount = 0
     while amount < amount_to_balance_to:
         index = random.randint(0, len(class_array) - 1)
@@ -246,7 +246,7 @@ def convertToFloat(string_array):
 def allFnsAlreadyExist(all_fns):
     all_exist = 0
     for f in range(len(all_fns)):
-        if file_exists(all_fns[f]):
+        if fileExists(all_fns[f]):
             print(all_fns[f], "Already exists")
             all_exist += 1
         else:
@@ -271,7 +271,7 @@ def sortIndexesByArraySize(array):
 
 import pandas as pd
 
-def file_exists(fn):
+def fileExists(fn):
     return os.path.exists(fn)
 
 def write_to_csv(csv_fn, col_names, cols_to_add):
@@ -280,6 +280,9 @@ def write_to_csv(csv_fn, col_names, cols_to_add):
         df[col_names[c]] = cols_to_add[c]
     df.to_csv(csv_fn)
 
+def read_csv(csv_fn):
+    return pd.read_csv(csv_fn, index_col=0)
+
 def write_csv(csv_fn, col_names, cols_to_add, key):
     d = {}
     for c in range(len(cols_to_add)):
@@ -287,6 +290,20 @@ def write_csv(csv_fn, col_names, cols_to_add, key):
     df = pd.DataFrame(d, index=key)
     df.to_csv(csv_fn)
 
+def findDifference(string1, string2):
+    index = 0
+    for l in range(len(string1)):
+        if string1[l] != string2[l]:
+            index = l
+            break
+        else:
+            index = len(string1)
+    print(string1[index:])
+    print(string2[index:])
+"""
+findDifference("moviesppmirankE200DS[200, 100, 50]DN0.3reluCV1SFT0S0L0200ndcg0.8400IT3000.txt",
+               "moviesppmirankE200DS[200, 100, 50]DN0.3reluCV1SFT0S0L0200ndcg0.9400IT3000.txt")
+"""
 def write2dCSV(array, name):
     file = open(name, "w")
 
@@ -621,14 +638,6 @@ def convertPPMI_original(mat):
     return mat
 #write2dArray(convertPPMI_original( np.asarray(import2dArray("../data/movies/bow/frequency/phrases/class-all"))), "../data/movies/bow/ppmi/class-all-lori")
 
-def convertToTfIDF(freq_arrays_fn):
-    freq = np.asarray(import2dArray(freq_arrays_fn))
-    v = TfidfTransformer()
-    x = v.fit_transform(freq)
-    x = x.toarray()
-    write2dArray(x, "../data/movies/bow/tfidf/class-all")
-    writeClassAll("../data/movies/bow/tfidf/class-all", "../data/movies/bow/phrase_names.txt",
-                  "../data/movies/bow/names/200.txt", "../data/movies/bow/tfidf/class-all-200")
 
 def writeIndividualClasses(overall_class_fn, names_fn, output_filename):
     overall_class = import2dArray(overall_class_fn, "f")
@@ -639,11 +648,10 @@ def writeIndividualClasses(overall_class_fn, names_fn, output_filename):
 
 #writeIndividualClasses("../data/movies/bow/frequency/phrases/class-all-scaled0,1.txt", "../data/movies/bow/phrase_names.txt", "../data/movies/bow/normalized_frequency/")
 #writeIndividualClasses("../data/movies/bow/ppmi/class-all-scaled0,1", "../data/movies/bow/phrase_names.txt", "../data/movies/bow/normalized_ppmi/")
-def plotSpace(fn):
+def plotSpace(space):
 
     single_values = []
 
-    space = np.asarray(import2dArray(fn))
     counter = 0
     for s in space:
         single_values.extend(s)
@@ -763,6 +771,22 @@ def removeEverythingFromString(string):
     string = string.lower()
     string = "".join(string.split())
     return string
+
+def remove_indexes(indexes, array_fn):
+    array = np.asarray(import1dArray(array_fn))
+    array = np.delete(array, indexes, axis=0)
+    write1dArray(array, array_fn)
+    print("wrote", array_fn)
+
+def averageCSVs(csv_array):
+    for csv in range(len(csv_array)):
+        for col in range(1, len(csv_array)):
+            for val in range(len(csv_array[col])):
+                csv_array[0][col][val] += csv_array[csv][col][val]
+    for col in range(1, len(csv_array)):
+        for val in range(len(csv_array[col])):
+            csv_array[0][col][val] = csv_array[0][col][val] / len(csv_array)
+    return csv_array[0]
 """
 #getTop10Clusters("films100L2100N0.5", [1644,164,4018,6390])
 

@@ -1,5 +1,5 @@
 from scipy import spatial
-import helper.data as dt
+import data as dt
 
 
 def getSimilarity(vector1, vector2):

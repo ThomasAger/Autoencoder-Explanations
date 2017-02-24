@@ -2,12 +2,25 @@
 from __future__ import unicode_literals
 
 import numpy as np
+from keras.layers.noise import GaussianNoise
 import data as dt
-from keras.regularizers import l2
-from keras.optimizers import SGD, Adagrad
-from sklearn.metrics import f1_score, accuracy_score
+from keras.regularizers import l2, activity_l2
+from keras.layers import Input, Dense, Dropout
+from keras.optimizers import SGD, Adagrad, Adadelta, Adam, RMSprop
 from keras.models import Sequential
-from keras.layers.core import Dense, Dropout
+from keras.models import model_from_json
+from sklearn import preprocessing
+from sklearn.cross_validation import train_test_split
+import matplotlib.pyplot as plt
+from sklearn.metrics import f1_score, accuracy_score
+from hyperopt import Trials, STATUS_OK, tpe
+from hyperas import optim
+from hyperas.distributions import choice, uniform, conditional
+from keras.datasets import mnist
+from keras.utils import np_utils
+from keras.models import Sequential
+from keras.layers.core import Dense, Dropout, Activation
+import gini
 import cluster
 import rank
 import finetune_outputs as fto
@@ -15,6 +28,11 @@ import svm
 import tree
 import hierarchy
 import ndcg
+from keras.wrappers.scikit_learn import KerasClassifier
+from keras.wrappers.scikit_learn import KerasRegressor
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import KFold
 
 class NeuralNetwork:
@@ -55,7 +73,7 @@ class NeuralNetwork:
                  hidden_activation="tanh", layer_init="glorot_uniform", output_activation="tanh", deep_size = None, corrupt_finetune_weights = False, split_to_use=-1,
                    hidden_layer_size=100, file_name="unspecified_filename", vector_path=None, is_identity=False, activity_reg=0.0, finetune_size=0, data_type="movies",
                  optimizer_name="rmsprop", noise=0.0, fine_tune_weights_fn=None, past_model_weights_fn=None, from_ae=True, save_outputs=False,
-                 rewrite_files=False, cv_splits=1, tuning_parameters=False, cutoff_start=0.2, development=False):
+                 rewrite_files=False, cv_splits=1, tuning_parameters=False, cutoff_start=0.2):
 
         total_file_name = "../data/" + data_type + "/nnet/spaces/" + file_name
         space_fn = total_file_name + "L0.txt"
@@ -112,8 +130,6 @@ class NeuralNetwork:
         entity_classes = np.asarray(dt.import2dArray(self.class_path))
         print("Imported classes", len(entity_classes), len(entity_classes[0]))
 
-
-
         if fine_tune_weights_fn is not None:
             entity_classes = entity_classes.transpose()
             print("Transposed classes, now in form", len(entity_classes), len(entity_classes[0]))
@@ -167,9 +183,6 @@ class NeuralNetwork:
         y_train = []
         x_test = []
         y_test = []
-        x_dev = []
-        y_dev = []
-
         c = 0
         for i in range(cv_splits):
             if split_to_use > -1:
@@ -183,39 +196,36 @@ class NeuralNetwork:
         accuracy_scores = []
         f1_averages = []
         accuracy_averages = []
-        if cv_splits == 1:
-            k_fold = KFold(n_splits=3, shuffle=False, random_state=None)
-        else:
+        if cv_splits > 1:
             k_fold = KFold(n_splits=cv_splits, shuffle=False, random_state=None)
-        c = 0
-        for train, test in k_fold.split(entity_vectors):
-            if split_to_use > -1:
-                if c != split_to_use:
-                    c += 1
-                    continue
-            x_train.append(entity_vectors[train[int(len(train) * 0.2):]])
-            y_train.append(entity_classes[train[int(len(train) * 0.2):]])
-            x_test.append(entity_vectors[test])
-            y_test.append(entity_classes[test])
-            x_dev.append(entity_vectors[train[:int(len(train) * 0.2)]])
-            y_dev.append(entity_classes[train[:int(len(train) * 0.2)]])
-            models[c].fit(entity_vectors[train[int(len(train) * 0.2):]], entity_classes[train[int(len(train) * 0.2):]], nb_epoch=self.epochs,
-                          batch_size=self.batch_size, verbose=1)
-            c += 1
-            if cv_splits == 1:
-                break
-
+            c = 0
+            for train, test in k_fold.split(entity_vectors):
+                if split_to_use > -1:
+                    if c != split_to_use:
+                        c += 1
+                        continue
+                x_train.append(entity_vectors[train])
+                y_train.append(entity_classes[train])
+                x_test.append(entity_vectors[test])
+                y_test.append(entity_classes[test])
+                models[0].fit(entity_vectors[train], entity_classes[train], nb_epoch=self.epochs,
+                              batch_size=self.batch_size, verbose=1)
+                c += 1
+        else:
+            x_tr, x_te, y_tr, y_te = train_test_split(entity_vectors, entity_classes, test_size=0.3, random_state=0)
+            x_train.append(x_tr)
+            x_test.append(x_te)
+            y_train.append(y_tr)
+            y_test.append(y_te)
+            models[0].fit(x_train, y_train, nb_epoch=self.epochs, batch_size=self.batch_size, verbose=1)
 
         original_fn = file_name
         for m in range(len(models)):
-            if development:
-                x_test[m] = np.copy(x_dev[m])
-                y_test[m] = np.copy(y_dev[m])
-
             if get_scores:
 
                 vals_to_try = np.arange(start=cutoff_start, stop=1, step=0.01)
                 test_pred = models[m].predict(x_train[m]).transpose()
+                #dt.plotSpace(test_pred)
                 y_train_m = np.asarray(y_train[m]).transpose()
                 highest_f1 = [0]*len(test_pred)
                 highest_vals = [0.5]*len(test_pred)
@@ -238,7 +248,7 @@ class NeuralNetwork:
                 for y in range(len(y_pred)):
                     y_pred[y][y_pred[y] >= highest_vals[y]] = 1
                     y_pred[y][y_pred[y] < highest_vals[y]] = 0
-                y_test[m] = np.asarray(y_test[m]).transpose()
+                y_test[m]  = np.asarray(y_test[m]).transpose()
                 f1_array = []
                 accuracy_array = []
                 for y in range(len(y_pred)):
@@ -392,7 +402,7 @@ class NeuralNetwork:
 import random
 def main(data_type, classification_task, file_name, init_vector_path, hidden_activation, is_identity, amount_of_finetune,
          breakoff, kappa, score_limit, rewrite_files, cluster_amt, threads, dropout_noise, learn_rate, epochs, cross_val, ep,
-         output_activation, cs, deep_size, classification, direction_count, lowest_amt, loss, development):
+         output_activation, cs, deep_size, classification, direction_count, lowest_amt, loss):
     cv_splits = cross_val
     init_vector_path = init_vector_path
     for splits in range(cv_splits):
@@ -452,7 +462,7 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
                 hidden_activation=hidden_activation, output_activation=output_activation, epochs=ep,
                 learn_rate=lr, is_identity=is_identity, output_size=output_size, split_to_use=splits,
                 batch_size=batch_size, past_model_weights_fn=past_model_weights_fn, loss=loss, cv_splits=cv_splits,
-                file_name=file_name, from_ae=from_ae, data_type=data_type, rewrite_files=rewrite_files, development=development)
+                file_name=file_name, from_ae=from_ae, data_type=data_type, rewrite_files=rewrite_files)
 
             new_file_names = []
 
@@ -505,14 +515,14 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
                 highest_count = direction_count
                 vector_path = "../data/" + data_type + "/nnet/spaces/"+new_file_names[j]+".txt"
                 bow_path = "../data/" + data_type + "/bow/binary/phrases/class-all-" + str(lowest_amt)
-                property_names_fn = "../data/" + data_type + "/bow/names/" + str(lowest_amt) + "-" +str(highest_amt)+"-"+ classification_task +".txt"
+                property_names_fn = "../data/" + data_type + "/bow/names/" + str(lowest_amt) + "-" + str(highest_count) + "-" + str(classification) +".txt"
                 directions_fn = "../data/" + data_type + "/svm/directions/" + file_name + ".txt"
 
 
                 """ DIRECTION RANKINGS """
                 # Get rankings
                 vector_names_fn = "../data/" + data_type + "/nnet/spaces/entitynames.txt"
-                class_names_fn = property_names_fn
+                class_names_fn = "../data/" + data_type + "/bow/names/" + str(lowest_amt) + ".txt"
 
 
                 """ CLUSTERING """
@@ -521,7 +531,7 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
                     scores_fn = "../data/" + data_type + "/ndcg/" + file_name + ".txt"
                 else:
                     scores_fn = "../data/" + data_type + "/svm/kappa/" + file_name + ".txt"
-                names_fn = property_names_fn
+                names_fn = "../data/" + data_type + "/bow/names/" + str(lowest_amt) + ".txt"
 
                 if breakoff:
                     similarity_threshold = 0.5
@@ -579,13 +589,11 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
                     rank.getAllPhraseRankings(directions_fn, vector_path, class_names_fn, vector_names_fn, file_name,
                                   data_type=data_type, rewrite_files=rewrite_files)
                     ndcg.getNDCG("../data/" + data_type + "/rank/numeric/" + file_name + "ALL.txt", file_name,
-                             data_type=data_type, lowest_count=lowest_amt, rewrite_files=rewrite_files,
-                                 highest_count=highest_count, classification=classification_task)
+                             data_type=data_type, lowest_count=lowest_amt, rewrite_files=rewrite_files)
                 if breakoff:
                     hierarchy.initClustering(vector_path, directions_fn, scores_fn, names_fn, amount_to_start, False,
                          similarity_threshold,  cluster_amt, score_limit, file_name, kappa, dissimilarity_threshold,
-                                 add_all_terms=add_all_terms, data_type=data_type, rewrite_files=rewrite_files,
-                                             lowest_amt=lowest_amt, highest_amt=highest_count, classification=classification_task)
+                                 add_all_terms=add_all_terms, data_type=data_type, rewrite_files=rewrite_files)
                 else:
                     cluster.getClusters(directions_fn, scores_fn, names_fn, False,  0, 0, file_name, cluster_amt,
                                         high_threshold, low_threshold, data_type, rewrite_files=rewrite_files)
@@ -595,15 +603,15 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
 
                 tree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name + str(3), 10000,
                           max_depth=3, balance="balanced", criterion="entropy", save_details=True, cv_splits=cv_splits, split_to_use=splits,
-                          data_type=data_type, csv_fn=csv_name, rewrite_files=True, development=development)
+                          data_type=data_type, csv_fn=csv_name, rewrite_files=True)
 
                 tree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name + "None", 10000,
                                       max_depth=None, balance="balanced", criterion="entropy", save_details=False,
                                   data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
-                                  cv_splits=cv_splits, split_to_use=splits, development=development)
+                                  cv_splits=cv_splits, split_to_use=splits)
 
                 fto.pavPPMI(cluster_names_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=rewrite_files,
-                            classification=classification, lowest_amt=lowest_amt, highest_amt=highest_count)
+                            classification=classification, lowest_amt=lowest_amt)
 
                 file_name = file_name + "FT"
                 SDA = NeuralNetwork(noise=0, fine_tune_weights_fn=fine_tune_weights_fn, optimizer_name=optimizer_name,
@@ -619,13 +627,12 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
                 new_file_names[j] = file_name
 
                 tree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name + str(3), 10000,
-                          max_depth=3, balance="balanced", criterion="entropy", save_details=True, cv_splits=cv_splits, split_to_use=splits,
-                          data_type=data_type, csv_fn=csv_name, rewrite_files=True, development=development)
+                                  3, balance="balanced", criterion="entropy", save_details=True,  cv_splits=cv_splits, split_to_use=splits,
+                                  data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files)
 
                 tree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name + "None", 10000,
-                                      max_depth=None, balance="balanced", criterion="entropy", save_details=False,
-                                  data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
-                                  cv_splits=cv_splits, split_to_use=splits, development=development)
+                                  None, balance="balanced", criterion="entropy", save_details=False,  cv_splits=cv_splits, split_to_use=splits,
+                                  data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files)
                 if len(new_file_names) > 1:
                     init_vector_path = vector_path
 
@@ -634,13 +641,14 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
             file_name = new_file_names[0]
             init_vector_path = "../data/" + data_type + "/nnet/spaces/" + file_name + "S0L0.txt"
             deep_size = deep_size[d+1:]
+highest_amt = 10
 
-"""
+""""
 data_type = "wines"
 classification_task = "types"
 file_name = "wines ppmi"
 lowest_amt = 50
-highest_amt = 10
+direction_count = 50
 loss="binary_crossentropy"
 """
 """
@@ -648,32 +656,31 @@ data_type = "movies"
 classification_task = "genres"
 file_name = "movies ppmi"
 lowest_amt = 100
-highest_amt = 10
+direction_count = 10
 loss="binary_crossentropy"
 """
-
 data_type = "placetypes"
-classification_task = "geonames"
-file_name = "placetypes ppmi"
+classification_task = "foursquare"
+file_name = "placetypes ppmi " + classification_task
 lowest_amt = 50
-highest_amt = 10
 loss="binary_crossentropy"
-
 
 hidden_activation = "tanh"
 dropout_noise = 0.5
 output_activation = "sigmoid"
-cutoff_start = 0.2
+cutoff_start = 0.0
 size = 200
 deep_size = [100,100,100]
 ep=200
-init_vector_path = "../data/"+data_type+"/nnet/spaces/places100-geonames.txt"
+init_vector_path = "../data/"+data_type+"/nnet/spaces/places100-"+classification_task+".txt"
+
+
 """
-hidden_activation = "relu"
-dropout_noise = 0.5
+hidden_activation = "tanh"
+dropout_noise = 0.3
 output_activation = "sigmoid"
 cutoff_start = 0.2
-deep_size = [400,300,200,100]
+deep_size = [200,200,200,200,200]
 init_vector_path = "../data/"+data_type+"/bow/ppmi/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+classification_task
 ep =200
 """
@@ -681,22 +688,22 @@ is_identity = True
 amount_of_finetune = 1
 
 breakoff = True
-score_limit = 0.8
+score_limit = 0.9
 cluster_multiplier = 2
 epochs=3000
 learn_rate=0.001
 kappa = False
-development = False
+
 
 
 cross_val = 1
 
-rewrite_files = False
+rewrite_files = True
 
-threads=50
+threads=500
 
 if  __name__ =='__main__':main(data_type, classification_task, file_name, init_vector_path, hidden_activation,
                                is_identity, amount_of_finetune, breakoff, kappa, score_limit, rewrite_files,
                                cluster_multiplier, threads, dropout_noise, learn_rate, epochs, cross_val, ep,
                                output_activation, cutoff_start, deep_size, classification_task, highest_amt,
-                               lowest_amt, loss, development)
+                               lowest_amt, loss)

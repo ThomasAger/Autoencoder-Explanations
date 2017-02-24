@@ -1,6 +1,6 @@
 import numpy as np
-import helper.data as dt
-import helper.similarity as st
+import data as dt
+import similarity as st
 from sklearn.metrics import cohen_kappa_score
 from sklearn import svm
 import cProfile
@@ -13,13 +13,19 @@ class Cluster:
     names = []
     ranks = None
     data_type = "movies"
+    lowest_amt = 0
+    highest_amt = 0
+    classification = 0
 
-    def __init__(self, kappa_scores, directions, names, data_type):
+    def __init__(self, kappa_scores, directions, names, data_type, lowest_amt, highest_amt, classification):
         self.kappa_scores = np.asarray(kappa_scores)
         self.directions = np.asarray(directions)
         self.names = np.asarray(names)
         self.combineDirections()
         self.data_type = data_type
+        self.lowest_amt = lowest_amt
+        self.highest_amt = highest_amt
+        self.classification = classification
 
     def combineDirections(self):
         if len(self.directions) > 1:
@@ -61,7 +67,8 @@ class Cluster:
         c = 0
         for n in [0, len(self.names) - 1]:
             clf = svm.LinearSVC()
-            ppmi = np.asarray(dt.import1dArray("../data/" + self.data_type + "/bow/binary/phrases/class-trimmed-" + self.names[n], "f"))
+            ppmi = np.asarray(dt.import1dArray("../data/" + self.data_type + "/bow/binary/phrases/class-" + self.names[n]
+                                               + str(self.lowest_amt) + "-" + str(self.highest_amt) + "-" + str(self.classification), "f"))
             clf.fit(self.ranks, ppmi)
             y_pred = clf.predict(self.ranks)
             score = cohen_kappa_score(ppmi, y_pred)
@@ -75,7 +82,8 @@ class Cluster:
         ndcgs = np.empty(2)
         c = 0
         for n in [0, len(self.names) - 1]:
-            ppmi = np.asarray(dt.import1dArray("../data/" + self.data_type + "/bow/ppmi/class-trimmed-" + self.names[n], "f"))
+            ppmi = np.asarray(dt.import1dArray("../data/" + self.data_type + "/bow/ppmi/class-" + self.names[n] + "-"
+                                               + str(self.lowest_amt) + "-" + str(self.highest_amt) + "-" + str(self.classification), "f"))
             sorted_indices = np.argsort(self.ranks)[::-1]
             score = ndcg.ndcg_from_ranking(ppmi, sorted_indices)
             ndcgs[c] = score
@@ -93,7 +101,8 @@ class Cluster:
         else:
             index_array = [0,1,2,3,4,len(self.names)-1]
         for n in index_array:
-            ppmi = np.asarray(dt.import1dArray("../data/" + self.data_type + "/bow/ppmi/class-" + self.names[n], "f"))
+            ppmi = np.asarray(dt.import1dArray("../data/" + self.data_type + "/bow/ppmi/class-" + self.names[n] + "-"
+                                               + str(self.lowest_amt) + "-" + str(self.highest_amt) + "-" + str(self.classification), "f"))
             sorted_indices = np.argsort(self.ranks)[::-1]
             score = ndcg.ndcg_from_ranking(ppmi, sorted_indices)
             ndcgs[c] = score
@@ -106,7 +115,8 @@ class Cluster:
         # For each discrete rank, obtain the Kappa score compared to the word occ
         ndcgs = np.empty(len(self.names))
         for n in range(len(self.names)):
-            ppmi = np.asarray(dt.import1dArray("../data/" + self.data_type + "/bow/ppmi/class-" + self.names[n], "f"))
+            ppmi = np.asarray(dt.import1dArray("../data/" + self.data_type + "/bow/ppmi/class-" + self.names[n] + "-"
+                                               + str(self.lowest_amt) + "-" + str(self.highest_amt) + "-" + str(self.classification), "f"))
             sorted_indices = np.argsort(self.ranks)[::-1]
             score = ndcg.ndcg_from_ranking(ppmi, sorted_indices)
             ndcgs[n] = score
@@ -118,7 +128,8 @@ class Cluster:
         kappas = np.empty(len(self.names))
         for n in range(len(self.names)):
             clf = svm.LinearSVC()
-            ppmi = np.asarray(dt.import1dArray("../data/" + self.data_type + "/bow/binary/phrases/class-" + self.names[n], "i"))
+            ppmi = np.asarray(dt.import1dArray("../data/" + self.data_type + "/bow/ppmi/class-" + self.names[n] + "-"
+                                               + str(self.lowest_amt) + "-" + str(self.highest_amt) + "-" + str(self.classification), "f"))
             clf.fit(self.ranks, ppmi)
             y_pred = clf.predict(self.ranks)
             score = cohen_kappa_score(ppmi, y_pred)
@@ -293,7 +304,7 @@ def getBreakOffClustersMaxScoring(vectors, directions, scores, names, score_limi
 # New method, instead of averaging, compare each individual direction. Start with one cluster and then add more.
 def getBreakOffClusters(vectors, directions, scores, names, score_limit, dissimilarity_threshold, max_clusters,
                             file_name, kappa, similarity_threshold, add_all_terms, data_type, largest_clusters,
-                 rewrite_files=False):
+                 rewrite_files=False, lowest_amt=0, highest_amt=0, classification="genres"):
 
 
     output_directions_fn =  "../data/" + data_type + "/cluster/hierarchy_directions/"+file_name+".txt"
@@ -309,7 +320,7 @@ def getBreakOffClusters(vectors, directions, scores, names, score_limit, dissimi
 
     clusters = []
     # Initialize a list of indexes to keep track of which directions have been combined
-    clusters.append(Cluster([scores[0]], [directions[0]], [names[0]], data_type))
+    clusters.append(Cluster([scores[0]], [directions[0]], [names[0]], data_type, lowest_amt, highest_amt, classification))
     clusters = np.asarray(clusters)
     all_subsets = []
     clustersExist = True
@@ -324,7 +335,7 @@ def getBreakOffClusters(vectors, directions, scores, names, score_limit, dissimi
         dont_add = False
         print(d, "/", len(directions))
         failed = True
-        current_direction = Cluster([scores[d]], [directions[d]], [names[d]], data_type)
+        current_direction = Cluster([scores[d]], [directions[d]], [names[d]], data_type, lowest_amt, highest_amt, classification)
         if len(clusters) >= max_clusters and reached_max is False:
             print("REACHED MAX CLUSTERS")
             if add_all_terms:
@@ -352,7 +363,7 @@ def getBreakOffClusters(vectors, directions, scores, names, score_limit, dissimi
             new_cluster = Cluster(
                 np.concatenate([clusters[c].getScores(), current_direction.getScores()]),
                 np.concatenate([clusters[c].getDirections(), current_direction.getDirections()]),
-                np.concatenate([clusters[c].getNames(), current_direction.getNames()]), data_type)
+                np.concatenate([clusters[c].getNames(), current_direction.getNames()]), data_type, lowest_amt, highest_amt, classification)
 
             # Use the combined direction to see if the Kappa scores are not decreased an unreasonable amount
             if kappa:
@@ -389,9 +400,7 @@ def getBreakOffClusters(vectors, directions, scores, names, score_limit, dissimi
             print("Failed", current_direction.getNames())
     dt.write1dArray(failed_array, "../data/temp/failed_array.txt")
 
-    if largest_clusters:
-        dt.sortIndexesByArraySize(clusters)
-    #a.sort(key=len)
+
 
     output_directions = []
     output_names = []
@@ -399,6 +408,11 @@ def getBreakOffClusters(vectors, directions, scores, names, score_limit, dissimi
         if clusters[c] is not None:
             output_directions.append(clusters[c].getClusterDirection())
             output_names.append(clusters[c].getNames())
+
+    if largest_clusters:
+        largest_indexes = dt.sortIndexesByArraySize(output_names)
+
+
 
     all_directions = []
     all_names = []
@@ -467,7 +481,7 @@ def getBreakOffClusters(vectors, directions, scores, names, score_limit):
 def initClustering(vector_fn, directions_fn, scores_fn, names_fn, amt_to_start, profiling, dissimilarity_threshold,
                    max_clusters, score_limit, file_name, kappa, similarity_threshold, add_all_terms=False,
                    data_type="movies", largest_clusters=False,
-                 rewrite_files=False):
+                 rewrite_files=False, lowest_amt=0, highest_amt=0, classification="genres"):
     vectors = dt.import2dArray(vector_fn)
     directions = dt.import2dArray(directions_fn)
     scores = dt.import1dArray(scores_fn, "f")
@@ -489,7 +503,7 @@ def initClustering(vector_fn, directions_fn, scores_fn, names_fn, amt_to_start, 
     else:
         getBreakOffClusters(vectors, top_directions, top_scores, top_names, score_limit, dissimilarity_threshold,
                                 max_clusters, file_name, kappa, similarity_threshold, add_all_terms, data_type,
-                            largest_clusters, rewrite_files=False)
+                            largest_clusters, rewrite_files=False, lowest_amt=lowest_amt, highest_amt=highest_amt, classification=classification)
 
 
 file_name = "films100"

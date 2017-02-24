@@ -1,6 +1,6 @@
 import numpy as np
 from sklearn.decomposition import TruncatedSVD, PCA
-import helper.data as dt
+import data as dt
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from numpy.random import rand

@@ -1,5 +1,5 @@
-import helper.data as dt
-import helper.similarity as st
+import data as dt
+import similarity as st
 from collections import OrderedDict
 import numpy as np
 from scipy import spatial
@@ -582,12 +582,12 @@ def createTermClusters(hv_directions, lv_directions, hv_names, lv_names, amt_of_
 def getClusters(directions_fn, scores_fn, names_fn, is_gini, amt_high_directions, amt_low_directions, filename,
                 amt_of_clusters, high_threshold, low_threshold, data_type, rewrite_files=False):
 
-    names_fn = "../data/" + data_type + "/cluster/names/" + filename + ".txt"
+    cluster_names_fn = "../data/" + data_type + "/cluster/names/" + filename + ".txt"
     clusters_fn = "../data/" + data_type + "/cluster/clusters/" + filename + ".txt"
     dict_fn = "../data/" + data_type + "/cluster/dict/" + filename + ".txt"
     cluster_center_fn = "../data/" + data_type + "/cluster/directions/" + filename + ".txt"
 
-    all_fns = [names_fn, clusters_fn, dict_fn, cluster_center_fn]
+    all_fns = [cluster_names_fn, clusters_fn, dict_fn, cluster_center_fn]
     if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
         print("Skipping task", getClusters.__name__)
         return
@@ -607,7 +607,7 @@ def getClusters(directions_fn, scores_fn, names_fn, is_gini, amt_high_directions
     #    additional_text = "gini"
 
 
-    dt.write1dArray(least_similar_cluster_names, names_fn)
+    dt.write1dArray(least_similar_cluster_names, cluster_names_fn)
     dt.write2dArray(least_similar_clusters, clusters_fn)
     dt.writeArrayDict(cluster_name_dict, dict_fn)
     #dt.write1dArray(word_vector_names, word_vector_names_fn)

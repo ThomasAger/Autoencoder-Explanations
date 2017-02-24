@@ -4,7 +4,7 @@ from __future__ import print_function
 
 import numpy as np
 from keras.layers.noise import GaussianNoise
-import helper.data as dt
+import data as dt
 from keras.regularizers import l2, activity_l2
 from keras.layers import Input, Dense, Dropout
 from keras.optimizers import SGD, Adagrad, Adadelta, Adam, RMSprop

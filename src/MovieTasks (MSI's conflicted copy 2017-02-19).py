@@ -13,7 +13,6 @@ def getVectors(input_folder, file_names_fn, extension, output_folder, only_words
                classification=""):
     file_names = dt.import1dArray(file_names_fn)
     phrase_dict = defaultdict(int)
-    failed_indexes = []
     failed_filenames = []
     working_filenames = []
 
@@ -23,21 +22,15 @@ def getVectors(input_folder, file_names_fn, extension, output_folder, only_words
         try:
             full_name = input_folder + file_names[f] + "." + extension
             phrase_list = dt.import2dArray(full_name, "s")
-
             if cut_first_line:
                 phrase_list = phrase_list[1:]
             for p in phrase_list:
-                if p[0] != "all":
-                    phrase_dict[p[0]] += 1
-                else:
-                    print("found class all")
+                phrase_dict[p[0]] += 1
             working_filenames.append(file_names[f])
         except FileNotFoundError:
-            print("Failed to find", file_names[f], f)
+            print("Failed to find", file_names[f])
             failed_filenames.append(file_names[f])
-            failed_indexes.append(f)
-    print(failed_indexes)
-    print(failed_filenames)
+
     phrase_sets = []
     # Convert to array so we can sort it
     phrase_list = []
@@ -54,8 +47,12 @@ def getVectors(input_folder, file_names_fn, extension, output_folder, only_words
     for phrase_list in phrase_sets:
         if not get_all and counter > 0:
             break
-        all_phrase_fn = output_folder+"frequency/phrases/" + "class-all-" +str(only_words_in_x_entities) + "-"+str(words_without_x_entities)+"-"+ classification
-        phrase_name_fn = output_folder + "names/"  +str(only_words_in_x_entities) + "-"+str(words_without_x_entities)+"-"+ classification +".txt"
+        if counter == 0:
+            all_phrase_fn = output_folder+"frequency/phrases/" + "class-all-" + str(only_words_in_x_entities) + "-" + classification
+            phrase_name_fn = output_folder + "names/" + str(only_words_in_x_entities) + "-" + classification + ".txt"
+        else:
+            all_phrase_fn = output_folder+"frequency/phrases/" + "class-all"
+            phrase_name_fn = output_folder + "names/all.txt"
         phrase_list = sorted(phrase_list)
 
         print("Found", len(phrase_list), "Phrases")
@@ -112,14 +109,14 @@ def getVectors(input_folder, file_names_fn, extension, output_folder, only_words
         dt.write1dArray(phrase_list, phrase_name_fn)
         if make_individual:
             for p in range(len(all_phrases_complete)):
-                dt.write1dArray(all_phrases_complete[p], output_folder+"frequency/phrases/class-" + phrase_list[p] +
-                                 "-"+str(only_words_in_x_entities) + "-"+str(words_without_x_entities)+"-"+ classification)
-                print("Wrote", phrase_list[p])
+                if not dt.file_exists(output_folder+"frequency/phrases/class-" + phrase_list[p] + "-" + classification):
+                    dt.write1dArray(all_phrases_complete[p], output_folder+"frequency/phrases/class-" + phrase_list[p] + "-" + classification)
+                    print("Wrote", phrase_list[p])
+                else:
+                    print(phrase_list[p] + " Already exists")
 
 
         dt.write2dArray(all_phrases_complete, all_phrase_fn)
-
-
         print("Created class-all")
         all_phrases_complete = np.asarray(all_phrases_complete).transpose()
         for a in range(len(all_phrases_complete)):
@@ -131,15 +128,14 @@ def getVectors(input_folder, file_names_fn, extension, output_folder, only_words
 
         if make_individual:
             for p in range(len(all_phrases_complete)):
-                dt.write1dArray(all_phrases_complete[p], output_folder+"binary/phrases/class-" + phrase_list[p] +
-                                "-"+str(only_words_in_x_entities) + "-"+str(words_without_x_entities)+"-"+ classification)
-                print("Wrote binary", phrase_list[p])
+                if not dt.file_exists(output_folder + "frequency/phrases/class-" + phrase_list[
+                    p] + "-" + classification):
+                    dt.write1dArray(all_phrases_complete[p], output_folder+"binary/phrases/class-" + phrase_list[p] + "-" + classification)
+                    print("Wrote binary", phrase_list[p])
+                else:
+                    print(phrase_list[p] + " Already exists")
 
-
-        all_phrase_fn = output_folder + "binary/phrases/" + "class-all-" + str(
-            only_words_in_x_entities) + "-" + str(words_without_x_entities) + "-" + classification
         dt.write2dArray(all_phrases_complete, all_phrase_fn)
-
         print("Created class-all binary")
         counter += 1
         #for p in range(len(all_phrases)):
@@ -197,24 +193,24 @@ def convertPPMI(mat):
     P = np.fmax(np.zeros((nrows,ncols), dtype=np.float64), np.log(P))
     return P
 
-def convertToTfIDF(data_type, lowest_count, highest_count, freq_arrays_fn, class_type):
+def convertToTfIDF(data_type, lowest_count, freq_arrays_fn, class_type):
     freq = np.asarray(dt.import2dArray(freq_arrays_fn))
     v = TfidfTransformer()
     x = v.fit_transform(freq)
     x = x.toarray()
-    dt.write2dArray(x, "../data/"+data_type+"/bow/tfidf/class-all-"+str(lowest_count)+"-"+str(highest_count)+"-"+str(class_type))
-    dt.writeClassAll("../data/"+data_type+"/bow/tfidf/class-all-"+str(lowest_count)+"-"+str(highest_count)+"-"+str(class_type),
-                     "../data/"+data_type+"/bow/names/"+str(lowest_count)+"-"+str(highest_count)+"-"+str(class_type)+".txt",
-                  "../data/"+data_type+"/bow/names/"+str(lowest_count)+"-"+str(highest_count)+"-"+str(class_type)+".txt",
-                     "../data/"+data_type+"/bow/tfidf/class-all-"+str(lowest_count)+"-"+str(highest_count)+"-"+str(class_type))
+    dt.write2dArray(x, "../data/"+data_type+"/bow/tfidf/class-all-"+str(lowest_count)+"-"+str(class_type))
+    dt.writeClassAll("../data/"+data_type+"/bow/tfidf/class-all-"+str(lowest_count)+"-"+str(class_type),
+                     "../data/"+data_type+"/bow/names/"+str(lowest_count)+"-"+str(class_type)+".txt",
+                  "../data/"+data_type+"/bow/names/"+str(lowest_count)+"-"+str(class_type)+".txt",
+                     "../data/"+data_type+"/bow/tfidf/class-all-"+str(lowest_count)+"-"+str(class_type))
 
 
-def printIndividualFromAll(data_type, type, lowest_count, max, class_type, classification):
+def printIndividualFromAll(data_type, type, lowest_count, class_type, classification):
     fn = "../data/" + data_type + "/bow/"
-    all = np.asarray(dt.import2dArray(fn + type + "/class-all-"+str(lowest_count)+"-"+str(max)+"-"+str(classification)))
-    names = dt.import1dArray(fn + "names/"+str(lowest_count)+"-"+str(max)+"-"+str(classification)+".txt")
+    all = np.asarray(dt.import2dArray(fn + type + "/class-all-"+str(lowest_count)+"-"+str(classification)))
+    names = dt.import1dArray(fn + "names/"+str(lowest_count)+"-"+str(classification)+".txt")
     for c in range(len(all)):
-        dt.write1dArray(all[c], fn+ type+"/class-"+str(names[c]+"-"+str(lowest_count)+"-"+str(max)+"-"+str(classification)))
+        dt.write1dArray(all[c], fn+ type+"/class-"+str(names[c]+"-"+type))
         print("Wrote " + str(names[c]))
 
 def writeClassesFromNames(folder_name, file_names, output_folder):
@@ -322,7 +318,7 @@ def trimRankings(rankings_fn, available_indexes_fn, names, folder_name):
     print("Writing", rankings_fn[-6:])
     dt.write2dArray(trimmed_rankings, folder_name + "class-" + rankings_fn[-6:])
 
-def match_entities(entity_fn, t_entity_fn, entities_fn, classification):
+def match_entities(entity_fn, t_entity_fn, entities_fn):
     names = dt.import1dArray(entity_fn)
     t_names = dt.import1dArray(t_entity_fn)
     t_names.sort()
@@ -330,48 +326,19 @@ def match_entities(entity_fn, t_entity_fn, entities_fn, classification):
     if len(entities) < len(entities[0]):
         entities = np.asarray(entities).transpose()
     indexes_to_delete = []
-    amount_found = 0
-    for n in range(len(names)):
-        names[n] = dt.removeEverythingFromString(names[n])
-    for n in range(len(t_names)):
-        t_names[n] = dt.removeEverythingFromString(t_names[n])
     for n in range(len(names)):
         found = False
-        for t_n in range(len(t_names)-1, -1, -1):
-            if names[n] == t_names[t_n]:
+        for t_name in t_names:
+            if names[n] == t_name:
                 found = True
-                del t_names[t_n]
-                amount_found += 1
-                print("found", names[n])
                 break
         if not found:
             indexes_to_delete.append(n)
-            print("deleting", names[n])
-    print("Amount found", amount_found)
     entities = np.delete(np.asarray(entities), indexes_to_delete, axis=0)
-    dt.write2dArray(entities, entities_fn[:len(entities_fn)-4] + "-" + classification + ".txt")
+    dt.write2dArray(entities, entities_fn)
 
 
-"""
-fns = "../data/movies/classify/genres/class-all"
-remove_indexes([80, 8351, 14985], fns)
-
-fns = "../data/movies/classify/keywords/class-all"
-remove_indexes([80, 8351, 14985], fns)
-"""
-classification = "genres"
-data_type = "movies"
-"""
-match_entities("../data/"+data_type+"/nnet/spaces/entitynames.txt", "../data/"+data_type+"/classify/"+classification+"/available_entities.txt",
-               "../data/"+data_type+"/nnet/spaces/films200.txt", classification)
-
-classification = "keywords"
-data_type = "movies"
-
-match_entities("../data/"+data_type+"/nnet/spaces/entitynames.txt", "../data/"+data_type+"/classify/"+classification+"/available_entities.txt",
-               "../data/"+data_type+"/nnet/spaces/films200.txt", classification)
-"""
-"""
+match_entities("../data/raw/previous work/placeNames.txt", "../data/placetypes/classify/foursquare/available_entities.txt", "../data/placetypes/nnet/spaces/places200.txt")
 data_type = "wines"
 output_folder = "../data/"+data_type+"/classify/types/"
 folder_name = "../data/raw/previous work/wineclasses/"
@@ -380,7 +347,7 @@ phrase_names = "../data/"+data_type+"/bow/names/50.txt"
 #writeClassesFromNames(folder_name, file_names, output_folder)
 
 folder_name = "../data/"+data_type+"/bow/binary/phrases/"
-"""
+
 #trimRankings("../data/movies/nnet/spaces/films200.txt", "../data/"+data_type+"/classify/genres/available_indexes.txt", phrase_names, folder_name)
 
 """
@@ -395,49 +362,28 @@ get_all = False
 additional_name = ""
 make_individual = True
 """
-def main(min, max, class_type, classification, raw_fn, extension, cut_first_line, additional_name, make_individual):
-
-    getVectors(raw_fn, "../data/"+class_type+"/classify/"+classification+"/available_entities.txt", extension, "../data/"+class_type+"/bow/",
-               min, max, cut_first_line, get_all, additional_name, make_individual, classification)
-
-    dt.write2dArray(convertPPMI( sp.csr_matrix(dt.import2dArray("../data/"+class_type+"/bow/frequency/phrases/class-all-"+str(min)+"-" + str(max)+"-"+classification))),
-                    "../data/"+class_type+"/bow/ppmi/class-all-"+str(min)+"-"+str(max)+"-" + classification)
-
-    printIndividualFromAll(class_type, "ppmi", min, max, class_type, classification)
-
-    convertToTfIDF(class_type, min, max, "../data/"+class_type+"/bow/frequency/phrases/class-all-"+str(min)+"-"+str(max)+"-"+classification, classification)
-
-    printIndividualFromAll(class_type, "tfidf", min, max, class_type, classification)
-
 min=50
-max=10
-"""
-class_type = "movies"
-classification = "keywords"
-raw_fn = "../data/raw/previous work/movievectors/tokens/"
-extension = "film"
-cut_first_line = True
-"""
-"""
-class_type = "wines"
-classification = "types"
-raw_fn = "../data/raw/previous work/winevectors/"
-extension = ""
-cut_first_line = True
-"""
+max=1
 class_type = "placetypes"
 classification = "geonames"
 raw_fn = "../data/raw/previous work/placevectors/"
 extension = "photos"
 cut_first_line = False
-
 get_all = False
 additional_name = ""
 make_individual = True
 
-if  __name__ =='__main__':main(min, max, class_type, classification, raw_fn, extension, cut_first_line, additional_name, make_individual)
+getVectors(raw_fn, "../data/"+class_type+"/classify/"+classification+"/available_entities.txt", extension, "../data/"+class_type+"/bow/",
+           min, max, cut_first_line, get_all, additional_name, make_individual, classification)
 
+dt.write2dArray(convertPPMI( sp.csr_matrix(dt.import2dArray("../data/"+class_type+"/bow/frequency/phrases/class-all-"+str(min)+"-"+classification))),
+                "../data/"+class_type+"/bow/ppmi/class-all-"+str(min)+"-" + classification)
 
+printIndividualFromAll(class_type, "ppmi", min, class_type, classification)
+
+convertToTfIDF(class_type, min, "../data/"+class_type+"/bow/frequency/phrases/class-all-"+str(min)+"-"+classification, classification)
+
+printIndividualFromAll(class_type, "tfidf", min, class_type, classification)
 
 """
 dt.write2dArray(convertPPMI( sp.csr_matrix(dt.import2dArray("../data/wines/bow/frequency/phrases/class-all-50"))), "../data/wines/bow/ppmi/class-all-50")

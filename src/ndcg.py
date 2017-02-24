@@ -1,5 +1,5 @@
 import numpy as np
-import helper.data as dt
+import data as dt
 
 def ranking_precision_score(y_true, y_score, k=10):
     """Precision at rank k
@@ -178,7 +178,7 @@ def ndcg_from_ranking(y_true, ranking):
     dcg = dcg_from_ranking(y_true, ranking)
     return dcg / best
 
-def getNDCG(rankings_fn, fn, data_type, lowest_count, rewrite_files=False):
+def getNDCG(rankings_fn, fn, data_type, lowest_count, rewrite_files=False, highest_count = 0, classification = ""):
     ndcg_fn = "../data/" + data_type + "/ndcg/"+fn+".txt"
     all_fns = [ndcg_fn]
     if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
@@ -188,17 +188,14 @@ def getNDCG(rankings_fn, fn, data_type, lowest_count, rewrite_files=False):
         print("Running task", getNDCG.__name__)
 
     rankings = dt.import2dArray(rankings_fn, "f")
-    ppmi = dt.import2dArray("../data/" + data_type + "/bow/ppmi/class-all-"+str(lowest_count))
-    names = dt.import1dArray("../data/" + data_type + "/bow/names/"+str(lowest_count)+".txt")
+    ppmi = np.asarray(dt.import2dArray("../data/" + data_type + "/bow/ppmi/class-all-"+str(lowest_count)+"-" + str(highest_count)+"-" +classification))
+    names = dt.import1dArray("../data/" + data_type + "/bow/names/"+str(lowest_count)+"-" + str(highest_count)+"-" +classification+".txt")
     ndcg_a = []
     for r in range(len(rankings)):
         sorted_indices = np.argsort(rankings[r])[::-1]
-        try:
-            ndcg = ndcg_from_ranking(ppmi[r], sorted_indices)
-            ndcg_a.append(ndcg)
-            print(ndcg, names[r], r)
-        except IndexError:
-            print(r, "FAILED")
+        ndcg = ndcg_from_ranking(ppmi[r], sorted_indices)
+        ndcg_a.append(ndcg)
+        print(ndcg, names[r], r)
     dt.write1dArray(ndcg_a, ndcg_fn)
 
 

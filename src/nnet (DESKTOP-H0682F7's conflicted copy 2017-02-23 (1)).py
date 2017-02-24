@@ -199,7 +199,7 @@ class NeuralNetwork:
             y_test.append(entity_classes[test])
             x_dev.append(entity_vectors[train[:int(len(train) * 0.2)]])
             y_dev.append(entity_classes[train[:int(len(train) * 0.2)]])
-            models[c].fit(entity_vectors[train[int(len(train) * 0.2):]], entity_classes[train[int(len(train) * 0.2):]], nb_epoch=self.epochs,
+            models[0].fit(entity_vectors[train], entity_classes[train], nb_epoch=self.epochs,
                           batch_size=self.batch_size, verbose=1)
             c += 1
             if cv_splits == 1:
@@ -584,8 +584,7 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
                 if breakoff:
                     hierarchy.initClustering(vector_path, directions_fn, scores_fn, names_fn, amount_to_start, False,
                          similarity_threshold,  cluster_amt, score_limit, file_name, kappa, dissimilarity_threshold,
-                                 add_all_terms=add_all_terms, data_type=data_type, rewrite_files=rewrite_files,
-                                             lowest_amt=lowest_amt, highest_amt=highest_count, classification=classification_task)
+                                 add_all_terms=add_all_terms, data_type=data_type, rewrite_files=rewrite_files)
                 else:
                     cluster.getClusters(directions_fn, scores_fn, names_fn, False,  0, 0, file_name, cluster_amt,
                                         high_threshold, low_threshold, data_type, rewrite_files=rewrite_files)
@@ -643,7 +642,6 @@ lowest_amt = 50
 highest_amt = 10
 loss="binary_crossentropy"
 """
-"""
 data_type = "movies"
 classification_task = "genres"
 file_name = "movies ppmi"
@@ -658,16 +656,16 @@ file_name = "placetypes ppmi"
 lowest_amt = 50
 highest_amt = 10
 loss="binary_crossentropy"
-
+"""
 
 hidden_activation = "tanh"
-dropout_noise = 0.5
+dropout_noise = 0.0
 output_activation = "sigmoid"
-cutoff_start = 0.2
+cutoff_start = 0.0
 size = 200
-deep_size = [100,100,100]
+deep_size = [200,200,200]
 ep=200
-init_vector_path = "../data/"+data_type+"/nnet/spaces/places100-geonames.txt"
+init_vector_path = "../data/"+data_type+"/nnet/spaces/films200-genres.txt"
 """
 hidden_activation = "relu"
 dropout_noise = 0.5
@@ -686,14 +684,14 @@ cluster_multiplier = 2
 epochs=3000
 learn_rate=0.001
 kappa = False
-development = False
+development = True
 
 
 cross_val = 1
 
-rewrite_files = False
+rewrite_files = True
 
-threads=50
+threads=100
 
 if  __name__ =='__main__':main(data_type, classification_task, file_name, init_vector_path, hidden_activation,
                                is_identity, amount_of_finetune, breakoff, kappa, score_limit, rewrite_files,

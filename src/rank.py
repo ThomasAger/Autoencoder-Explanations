@@ -1,5 +1,5 @@
 import numpy as np
-import helper.data as dt
+import data as dt
 from collections import OrderedDict
 
 
@@ -52,12 +52,12 @@ def createDiscreteLabels(rankings, percentage_increment):
 def getAllRankings(directions_fn, vectors_fn, cluster_names_fn, vector_names_fn, percent, percentage_increment, by_vector, fn, discrete=True, data_type="movies",
                  rewrite_files=False):
 
-    labels_fn = "../data/"+data_type+"/rank/labels/" + fn + ".txt"
+    #labels_fn = "../data/"+data_type+"/rank/labels/" + fn + ".txt"
     rankings_fn = "../data/"+data_type+"/rank/numeric/" + fn + ".txt"
     ranking_names_fn = "../data/"+data_type+"/rank/names/" + fn + ".txt"
-    discrete_labels_fn = "../data/"+data_type+"/rank/discrete/" + fn + ".txt"
+    #discrete_labels_fn = "../data/"+data_type+"/rank/discrete/" + fn + ".txt"
 
-    all_fns = [labels_fn, rankings_fn, ranking_names_fn, discrete_labels_fn]
+    all_fns = [rankings_fn, ranking_names_fn]
     if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
         for f in all_fns:
             print(f, "Already exists")
