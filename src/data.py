@@ -177,6 +177,12 @@ DATA EDITING TASKS
 
 """
 
+def toBool(string):
+    if string == "True":
+        return True
+    else:
+        return False
+
 def writeArrayDict(dict, name):
     file = open(name, "w")
     for key, value in dict.items():
@@ -185,7 +191,6 @@ def writeArrayDict(dict, name):
             file.write(str(v) + " ")
         file.write("\n")
     file.close()
-
 
 def writeArrayDict1D(dict, name):
     file = open(name, "w")
@@ -290,6 +295,22 @@ def write_csv(csv_fn, col_names, cols_to_add, key):
     df = pd.DataFrame(d, index=key)
     df.to_csv(csv_fn)
 
+def average_csv(csv_fns):
+    csvs = []
+    for i in range(len(csv_fns)):
+        csvs.append(read_csv(csv_fns[i]))
+    for c in csvs:
+        for col in c:
+            for val in col:
+                print(val)
+        print("Average")
+
+csv_fns = []
+for i in range(5):
+    csv_fns.append("../data/wines/rules/tree_csv/" +
+        "wines ppmi E200 DS[100, 100, 100] DN0.5 HAtanh CV5 S0 SFT0L050 ndcg0.9001100" + ".csv")
+#average_csv(csv_fns)
+
 def findDifference(string1, string2):
     index = 0
     for l in range(len(string1)):
@@ -350,15 +371,15 @@ def writeArff(features, classes, class_names, file_name, header=True):
         if header:
             for i in range(len(features[0])):
                 file.write("@ATTRIBUTE " + str(i) + " NUMERIC\n")
-            file.write("@ATTRIBUTE " + class_names[c] + " {0,1}\n")
+            file.write("@ATTRIBUTE " + class_names[c] + " {f,t}\n")
         file.write("@DATA\n")
         for i in range(len(features)):
             for n in range(len(features[i])):
                 if n >= len(features[i]) - 1:
                     if classes[c][i] == 0:
-                        file.write(str(features[i][n]) + ",0")
+                        file.write(str(features[i][n]) + ",f")
                     else:
-                        file.write(str(features[i][n]) + ",1")
+                        file.write(str(features[i][n]) + ",t")
                 else:
                     file.write(str(features[i][n]) + ",")
             file.write("\n")
@@ -371,7 +392,12 @@ def write1dArray(array, name):
         file.write(str(array[i]) + "\n")
     file.close()
 
-
+import io
+def write1dLinux(array, name):
+    file = io.open(name, "w", newline='\n')
+    for i in range(len(array)):
+        file.write(str(array[i]) + "\n")
+    file.close()
 
 def write1dCSV(array, name):
     file = open(name, "w")
@@ -480,8 +506,6 @@ write1dArray(top250, "filmdata/top250.txt")
 
 #write1dArray(getFns("../data/movies/bow/binary/phrases/"), "../data/movies/bow/phrase_names.txt")
 
-
-
 def getScoreDifferences(name_word_file1, name_score_file1, name_score_file2, name):
     word_file1 = open(name_word_file1, "r")
     score_file1 = open(name_score_file1, "r")
@@ -506,8 +530,6 @@ def getScoreDifferences(name_word_file1, name_score_file1, name_score_file2, nam
     differences_list = sorted(differences_list)
     write1dArray(most_different_words, "../data/movies/SVM/most_different_words_" + name + ".txt")
     write1dArray(differences_list, "../data/movies/SVM/most_different_values_" + name + ".txt")
-
-
 
 def convertToPPMIOld(freq_arrays_fn, term_names_fn):
     file = open(freq_arrays_fn)
@@ -778,19 +800,78 @@ def remove_indexes(indexes, array_fn):
     write1dArray(array, array_fn)
     print("wrote", array_fn)
 
-def averageCSVs(csv_array):
-    for csv in range(len(csv_array)):
-        for col in range(1, len(csv_array)):
-            for val in range(len(csv_array[col])):
-                csv_array[0][col][val] += csv_array[csv][col][val]
-    for col in range(1, len(csv_array)):
-        for val in range(len(csv_array[col])):
-            csv_array[0][col][val] = csv_array[0][col][val] / len(csv_array)
-    return csv_array[0]
+def averageCSVs(csv_array_fns):
+    csv_array = []
+    for csv_name in csv_array_fns:
+        csv_array.append(read_csv(csv_name))
+    for csv in range(1, len(csv_array)):
+        for col in range(1, len(csv_array[csv])):
+            for val in range(len(csv_array[csv].iloc[col])):
+                csv_array[0].iloc[col][val] += csv_array[csv].iloc[col][val]
+    for col in range(1, len(csv_array[0])):
+        for val in range(len(csv_array[0].iloc[col])):
+            print(csv_array[0].iloc[col][val])
+            csv_array[0].iloc[col][val] = csv_array[0].iloc[col][val] / len(csv_array)
+            print(csv_array[0].iloc[col][val])
+
+    csv_array[0].to_csv(csv_array_fns[0][:len(csv_array_fns[0])-4] + "AVG.csv")
+
+def stringToArray(string):
+    array = string.split()
+    for e in range(len(array)):
+        array[e] = eval(removeEverythingFromString(array[e]))
+    return array
+
+def chunks(l, n):
+    return [l[i:i + n] for i in range(0, len(l), n)]
+import time
+def compileSVMResults(file_name, chunk_amt, data_type):
+    if fileExists("../data/"+data_type+"/svm/directions/"+file_name+".txt") is False:
+        print("Compiling SVM results")
+        randomcount = 0
+        directions = []
+        for c in range(chunk_amt):
+            directions.append("../data/"+data_type+"/svm/directions/"+file_name + " CID" + str(c) + " CAMT" + str(chunk_amt)+".txt")
+        kappa = []
+        for c in range(chunk_amt):
+            kappa.append("../data/"+data_type+"/svm/kappa/"+file_name + " CID" + str(c) + " CAMT" + str(chunk_amt)+".txt")
+        for f in directions:
+            while not fileExists(f):
+                time.sleep(10)
+        time.sleep(10)
+        di = []
+        for d in directions:
+            di.extend(import2dArray(d))
+        ka = []
+        for k in kappa:
+            ka.extend(import1dArray(k))
+        write2dArray(di, "../data/"+data_type+"/svm/directions/"+file_name+".txt")
+        write1dArray(ka, "../data/"+data_type+"/svm/kappa/"+file_name+".txt")
+    else:
+        print ("Skipping compile")
+
+def shorten2dFloats(floats_fn):
+    fa = import2dArray(floats_fn)
+    for a in range(len(fa)):
+        fa[a] = np.around(fa[a], decimals=4)
+    return fa
+
+
+def deleteAllButIndexes(array, indexes):
+    old_ind = list(range(len(array)))
+    del_ind = np.delete(old_ind, indexes)
+    array = np.delete(array, del_ind)
+    return array
+
+"""
+write2dArray(deleteAllButIndexes(import2dArray("../data/movies/cluster/hierarchy_directions/films200-genres100ndcg0.9200.txt", "s"),
+                                               import1dArray("../data/movies/cluster/hierarchy_names/human_ids films200genres.txt")),
+                                 "../data/movies/cluster/hierarchy_directions/films200-genres100ndcg0.9200 human_prune.txt")
+
 """
 #getTop10Clusters("films100L2100N0.5", [1644,164,4018,6390])
 
-
+"""
 from sklearn.datasets import dump_svmlight_file
 genre_names = import1dArray("../data/movies/classify/genres/names.txt", "s")
 
@@ -806,15 +887,15 @@ class_all = np.asarray(class_all).transpose()
 
 #write2dArray(class_all, "../data/movies/classify/genres/class-all")
 
-space_name = "films100"
-space = np.asarray(import2dArray("../data/movies/nnet/spaces/"+space_name+".txt"))
+space_name = "films200-genres100ndcg0.85200 tdev3004FTL0 E100 DS[200] DN0.5 CTgenres HAtanh CV1 S0 DevFalse SFT0L0100ndcg0.95200MC1"
+space = np.asarray(import2dArray("../data/movies/rank/numeric/"+space_name+".txt")).transpose()
 
 writeArff(space, genres, genre_names, "../data/movies/keel/vectors/"+space_name+"genres", header=True)
 
 #np.savetxt( "../data/movies/keel/vectors/"+space_name+"np.csv", space, delimiter=",")
-
-
 """
+
+
 
 """
 

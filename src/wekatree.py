@@ -61,9 +61,13 @@ class DecisionTree:
         labels = labels.transpose()
         print("labels transposed")
         print("labels", len(labels), len(labels[0]))
-        for l in range(len(labels)):
 
-            #vectors, labels[l] = dt.balanceClasses(vectors, labels[l])
+        for l in range(len(labels)):
+            if balance:
+                new_vectors, new_labels = dt.balanceClasses(vectors, labels[l])
+            else:
+                new_vectors = vectors
+                new_labels = labels[l]
             # Select training data with cross validation
 
 
@@ -80,17 +84,17 @@ class DecisionTree:
             else:
                 kf = KFold(n_splits=cv_splits, shuffle=False, random_state=None)
             c = 0
-            for train, test in kf.split(vectors):
+            for train, test in kf.split(new_vectors):
                 if split_to_use > -1:
                     if c != split_to_use:
                         c += 1
                         continue
-                ac_y_test.append(labels[l][test])
-                ac_y_train.append(labels[l][train[int(len(train) * 0.2):]])
-                ac_x_train.append(vectors[train[int(len(train) * 0.2):]])
-                ac_x_test.append(vectors[test])
-                ac_x_dev.append(vectors[train[:int(len(train) * 0.2)]])
-                ac_y_dev.append(labels[l][train[:int(len(train) * 0.2)]])
+                ac_y_test.append(new_labels[test])
+                ac_y_train.append(new_labels[train[int(len(train) * 0.2):]])
+                ac_x_train.append(new_vectors[train[int(len(train) * 0.2):]])
+                ac_x_test.append(new_vectors[test])
+                ac_x_dev.append(new_vectors[train[:int(len(train) * 0.2)]])
+                ac_y_dev.append(new_labels[train[:int(len(train) * 0.2)]])
                 c += 1
                 if cv_splits == 1:
                     break
@@ -185,6 +189,8 @@ class DecisionTree:
 
         cls.build_classifier(train_data)
 
+        print(cls.to_help())
+
         y_pred = []
 
         test_data = loader.load_file(test_fn)
@@ -208,17 +214,24 @@ def main(cluster_vectors_fn, classes_fn, label_names_fn, cluster_names_fn, file_
 data_type = "movies"
 classes = "genres"
 
-file_name = "films100rankE200DS[100, 100, 100]L3300L1svmndcg0.9200"
+file_name = "movies mds E100 DS[200] DN0.5 CTgenres HAtanh CV1 S0 DevFalse SFT0L0100kappa0.92003000FT"
 
-cluster_vectors_fn = "../data/" + data_type + "/rank/numeric/" + file_name + ".txt"
+#cluster_vectors_fn = "../data/" + data_type + "/rank/numeric/" + file_name + ".txt"
+cluster_vectors_fn = "../data/" + data_type + "/nnet/clusters/" + file_name + ".txt"
+#cluster_vectors_fn = "../data/" + data_type + "/nnet/spaces/" + file_name + ".txt"
 cluster_names_fn = "../data/" + data_type + "/cluster/hierarchy_names/" + file_name + ".txt"
+
+cluster_names_fn = "../data/" + data_type + "/cluster/hierarchy_names/movies mds E100 DS[200] DN0.5 CTgenres HAtanh CV1 S0 DevFalse SFT0L0100kappa0.9200.txt"
+
 label_names_fn = "../data/" + data_type + "/classify/"+classes+"/names.txt"
 classes_fn = "../data/" + data_type + "/classify/"+classes+"/class-All"
 lowest_val = 10000
 max_depth = None
-balance = None
+balance = True
 criterion = None
 save_details = True
+if balance:
+    file_name = file_name + "balance"
 file_name = file_name + "J48"
 csv_fn = "../data/"+ data_type + "/rules/tree_csv/"+file_name+".csv"
 cv_splits = 1

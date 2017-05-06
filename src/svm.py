@@ -38,49 +38,48 @@ class SVM:
         #ppmi_score, ppmi_ratio = get_ppmi_score(y_pred, property_name)
         return kappa_score, direction, f1, 0, 0
 
-    x_train, x_test, get_kappa, get_f1, data_type, classification, lowest_amt, higher_amt = None, None, False, False, "", "", 0, 0
+    x_train, x_test, get_kappa, get_f1, data_type, classification, lowest_amt, higher_amt, y_train, y_test = None, None, False, False, "", "", 0, 0, None, None
     def runSVM(self, property_name):
-        #print("../data/" + self.data_type + "/bow/binary/phrases/class-" + str(property_name) + "-" + str(self.classification))
-        y = dt.import1dArray("../data/" + self.data_type + "/bow/binary/phrases/class-" + property_name + "-" + str(self.lowest_amt) + "-" + str(self.higher_amt) + "-" + self.classification)
-
-        y_train, y_test = train_test_split(y, test_size=0.3, random_state=0)
+        if self.get_kappa:
+            y = dt.import1dArray("../data/" + self.data_type + "/bow/binary/phrases/class-" + property_name + "-" + str(self.lowest_amt) + "-" + str(self.higher_amt) + "-" + self.classification)
+            y_train, y_test = train_test_split(y, test_size=0.3, random_state=0)
+        else:
+            y = dt.import1dArray("../data/" + self.data_type + "/bow/binary/phrases/class-" + property_name + "-" + str(
+                self.lowest_amt) + "-" + str(self.higher_amt) + "-" + self.classification)
+            y_train = y
+            y_test = y
         #x_train, y_train = dt.balanceClasses(x_train, y_train)
         clf = svm.LinearSVC(class_weight="balanced")
-        """
-        if get_f1:
-            cross_val = cross_val_score(clf, x_train, y_train, scoring="f1", cv=5)
-            f1 = np.average(cross_val)
-        else:
-            f1 = 0
-        """
-        try:
-            clf.fit(self.x_train, y_train)
-        except ValueError:
-            print(property_name)
-            print(self.x_train[0])
-            print(y_train[0])
-            exit(0)
+
+        clf.fit(self.x_train, y_train)
+
         direction = clf.coef_.tolist()[0]
         y_pred = clf.predict(self.x_test)
         y_pred = y_pred.tolist()
-        if self.get_f1:
-            f1 = f1_score(y_test, y_pred, average="macro")
-        else:
-            f1 = 0
-        if self.get_kappa:
-            kappa_score = cohen_kappa_score(y_test, y_pred)
-        else:
-            kappa_score = 0
+        f1 = 0.0
+        kappa_score = cohen_kappa_score(y_test, y_pred)
 
-        ktau = 0
+
+        ktau = 0.0
         #ppmi_score, ppmi_ratio = get_ppmi_score(y_pred, property_name)
 
         return kappa_score, f1, direction,  0, 0
+
+    def runClassifySVM(self, y_test, y_train):
+        clf = svm.LinearSVC(class_weight="balanced")
+
+        clf.fit(self.x_train, y_train)
+        y_pred = clf.predict(self.x_test)
+        y_pred = y_pred.tolist()
+        f1 = f1_score(y_test, y_pred, average="binary")
+        acc = accuracy_score(y_test, y_pred)
+        return f1, acc
+
     def runAllSVMs(self, y_test, y_train, property_names, file_name, svm_type, getting_directions, threads):
 
-        kappa_scores = [0] * len(property_names)
+        kappa_scores = [0.0] * len(property_names)
         directions = [None] * len(property_names)
-        f1_scores = [0] * len(property_names)
+        f1_scores = [0.0] * len(property_names)
         saved_x_trans = None
         saved_test_x_trans = None
         indexes_to_remove = []
@@ -118,12 +117,10 @@ class SVM:
 
         return kappa_scores, directions, f1_scores, property_names
 
-
-
     def __init__(self, vector_path, class_path, property_names_fn, file_name, svm_type, training_size=10000,  lowest_count=200,
                       highest_count=21470000, get_kappa=True, get_f1=True, single_class=True, data_type="movies",
-                      getting_directions=True, threads=1,
-                     rewrite_files=False, classification="genres"):
+                      getting_directions=True, threads=1, chunk_amt = 0, chunk_id = 0,
+                     rewrite_files=False, classification="genres", loc ="../data/"):
 
         self.get_kappa = get_kappa
         self.get_f1 = get_f1
@@ -132,11 +129,15 @@ class SVM:
         self.lowest_amt = lowest_count
         self.higher_amt = highest_count
 
-        directions_fn = "../data/" + data_type + "/svm/directions/" + file_name + ".txt"
-        kappa_fn = "../data/" + data_type + "/svm/kappa/" + file_name + ".txt"
-        ktau_scores_fn = "../data/" + data_type + "/svm/f1/" + file_name + ".txt"
+        if chunk_amt > 0:
+            file_name = file_name + " CID" + str(chunk_id) + " CAMT" + str(chunk_amt)
 
-        all_fns = [directions_fn, kappa_fn, ktau_scores_fn]
+        directions_fn = loc + data_type + "/svm/directions/" + file_name + ".txt"
+        ktau_scores_fn = loc + data_type + "/svm/f1/" + file_name + ".txt"
+        kappa_fn = loc + data_type + "/svm/kappa/" + file_name + ".txt"
+        acc_fn = loc + data_type + "/svm/acc/" + file_name + ".txt"
+
+        all_fns = [directions_fn, kappa_fn]
         if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
             print("Skipping task", "getSVMResults")
             return
@@ -145,49 +146,94 @@ class SVM:
 
         y_train = 0
         y_test = 0
-        if get_f1:
-            vectors = np.asarray(dt.import2dArray(vector_path)).transpose()
-            print("Vectors transposed")
-        else:
-            vectors = np.asarray(dt.import2dArray(vector_path))
+        vectors = np.asarray(dt.import2dArray(vector_path))
         if not getting_directions:
             classes = np.asarray(dt.import2dArray(class_path))
         property_names = dt.import1dArray(property_names_fn)
 
-        if single_class and not getting_directions:
-            classes = classes.transpose()
+        if chunk_amt > 0:
+            if chunk_id == chunk_amt-1:
+                chunk = int(len(property_names) / chunk_amt)
+                multiply = chunk_amt-1
+                property_names = property_names[chunk*multiply:]
+            else:
+                property_names = dt.chunks(property_names, int((len(property_names) / chunk_amt)))[chunk_id]
+
 
         if not getting_directions:
+            vectors = vectors.transpose()
             x_train, x_test, y_train, y_test = train_test_split(vectors, classes, test_size=0.3, random_state=0)
         else:
-            x_train, x_test = train_test_split(vectors,  test_size=0.3, random_state=0)
+            if not get_kappa:
+                x_train = vectors
+                x_test = vectors
+            else:
+                x_train, x_test = train_test_split(vectors,  test_size=0.3, random_state=0)
 
-        if single_class and not getting_directions:
+        if get_f1:
             y_train = y_train.transpose()
             y_test = y_test.transpose()
+            print("transpoosed")
         self.x_train = x_train
         self.x_test = x_test
-        kappa_scores, directions, ktau_scores, property_names = self.runAllSVMs(y_test, y_train,property_names, file_name,
-                                                           svm_type, getting_directions, threads)
+        self.y_train = y_train
+        self.y_test = y_test
+        if self.get_f1 is False:
+            kappa_scores, directions, ktau_scores, property_names = self.runAllSVMs(y_test, y_train,property_names, file_name,
+                                                               svm_type, getting_directions, threads)
 
-        dt.write1dArray(kappa_scores, kappa_fn)
-        dt.write2dArray(directions, directions_fn)
-        dt.write1dArray(ktau_scores, ktau_scores_fn)
-        dt.write1dArray(property_names, property_names_fn + file_name + ".txt")
+            dt.write1dArray(kappa_scores, kappa_fn)
+            dt.write2dArray(directions, directions_fn)
+            dt.write1dArray(ktau_scores, ktau_scores_fn)
+            dt.write1dArray(property_names, property_names_fn + file_name + ".txt")
+        else:
+            final_f1 = []
+            final_acc = []
+            for y in range(len(y_train)):
+                f1, acc = self.runClassifySVM(y_test[y], y_train[y])
+                print(f1, acc)
+                final_f1.append(f1)
+                final_acc.append(acc)
+            dt.write1dArray(final_f1, ktau_scores_fn)
+            dt.write1dArray(final_acc, acc_fn)
+
 
 def createSVM(vector_path, class_path, property_names_fn, file_name, svm_type, training_size=10000,  lowest_count=200,
                       highest_count=21470000, get_kappa=True, get_f1=True, single_class=True, data_type="movies",
-                      getting_directions=True, threads=1,
-                     rewrite_files=False, classification="genres", lowest_amt=0):
+                      getting_directions=True, threads=1, chunk_amt=0, chunk_id=0,
+                     rewrite_files=False, classification="genres", lowest_amt=0, loc="../data/"):
     svm = SVM(vector_path, class_path, property_names_fn, file_name, svm_type, training_size=training_size,  lowest_count=lowest_count,
                       highest_count=highest_count, get_kappa=get_kappa, get_f1=get_f1, single_class=single_class, data_type=data_type,
-                      getting_directions=getting_directions, threads=threads,
-                     rewrite_files=rewrite_files, classification=classification)
+                      getting_directions=getting_directions, threads=threads, chunk_amt=chunk_amt, chunk_id=chunk_id,
+                     rewrite_files=rewrite_files, classification=classification, loc=loc)
 
 
 def main(vectors_fn, classes_fn, property_names, training_size, file_name, lowest_count, largest_count):
     SVM(vectors_fn, classes_fn, property_names, lowest_count=lowest_count,
         training_size=training_size, file_name=file_name, largest_count=largest_count)
+
+
+data_type = "movies"
+classify = "genres"
+file_name = "films200-genres100ndcg0.85200 tdev3004FTL0 E100 DS[200] DN0.5 CTgenres HAtanh CV1 S0 DevFalse SFT0L0100ndcg0.95200MC1MS0.7533000FT"
+vector_path = "../data/"+data_type+"/rank/numeric/" + file_name + ".txt"
+classification_path = "../data/"+data_type+"/classify/" + classify + "/class-All"
+class_names_fn = "../data/"+data_type+"/classify/" + classify + "/names.txt"
+lowest_amt = 100
+highest_count = 10
+svm_type = "svm"
+rewrite_files = True
+classification = classify
+chunk_amt = 0
+chunk_id = 0
+"""
+createSVM(vector_path, classification_path, class_names_fn, file_name, lowest_count=lowest_amt,
+                                  highest_count=highest_count, data_type=data_type, get_kappa=False,
+                                  get_f1=True, single_class=True,svm_type=svm_type, getting_directions=False, threads=1,
+                                  rewrite_files=rewrite_files,
+                                  classification=classification, lowest_amt=lowest_amt, chunk_amt=chunk_amt,
+                                  chunk_id=chunk_id)
+"""
 """
 data_type = "wines"
 file_name = "winesppmirankE500DS[1000, 500, 250, 100, 50]L0DN0.3reluSFT0L050ndcgSimilarityClusteringIT3000"

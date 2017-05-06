@@ -20,7 +20,7 @@ def plot(x, y, y_):
     plt.show()
 
 def readPPMI(name, data_type, lowest_amt, highest_amt, classification):
-    name = name.split()[0]
+
     file = open("../data/"+data_type+"/bow/ppmi/" + "class-" + name + "-" + str(lowest_amt) + "-" + str(highest_amt) + "-" + classification)
     lines = file.readlines()
     frq_a = []
@@ -44,8 +44,50 @@ def pavPPMI(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type="movi
     counter = 0
 
     for name in names:
+        name = name.split()[0]
         frq.append(readPPMI(name, data_type, lowest_amt, highest_amt, classification))
 
+    pav_classes = []
+
+    for f in range(len(frq)):
+        print(names[f])
+        x = np.asarray(frq[f])
+        y = ranking[f]
+
+        ir = IsotonicRegression()
+        y_ = ir.fit_transform(x, y)
+        pav_classes.append(y_)
+        if do_p:
+            plot(x, y, y_)
+        print(f)
+
+    dt.write2dArray(pav_classes, pavPPMI_fn)
+    return pav_classes
+
+def pavPPMIAverage(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type="movies", rewrite_files=False,
+            classification="genres", lowest_amt=0, highest_amt=2147000000):
+    pavPPMI_fn = "../data/" + data_type + "/finetune/" + file_name + ".txt"
+    all_fns = [pavPPMI_fn]
+    if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
+        print("Skipping task", pavPPMI.__name__)
+        return
+    else:
+        print("Running task", pavPPMI.__name__)
+
+    ranking = dt.import2dArray(ranking_fn)
+    names = dt.import2dArray(cluster_names_fn, "s")
+    frq = []
+    counter = 0
+
+    for n in range(len(names)):
+        name_frq = []
+        for name in names[n]:
+            name_frq.append(readPPMI(name, data_type, lowest_amt, highest_amt, classification))
+        avg_frq = []
+        name_frq = np.asarray(name_frq).transpose()
+        for name in name_frq:
+            avg_frq.append(np.average(name))
+        frq.append(np.asarray(avg_frq))
     pav_classes = []
 
     for f in range(len(frq)):

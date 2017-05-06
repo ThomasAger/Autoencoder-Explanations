@@ -67,7 +67,7 @@ class Cluster:
         c = 0
         for n in [0, len(self.names) - 1]:
             clf = svm.LinearSVC()
-            ppmi = np.asarray(dt.import1dArray("../data/" + self.data_type + "/bow/binary/phrases/class-" + self.names[n]
+            ppmi = np.asarray(dt.import1dArray("../data/" + self.data_type + "/bow/binary/phrases/class-" + self.names[n] + "-"
                                                + str(self.lowest_amt) + "-" + str(self.highest_amt) + "-" + str(self.classification), "f"))
             clf.fit(self.ranks, ppmi)
             y_pred = clf.predict(self.ranks)
@@ -304,19 +304,13 @@ def getBreakOffClustersMaxScoring(vectors, directions, scores, names, score_limi
 # New method, instead of averaging, compare each individual direction. Start with one cluster and then add more.
 def getBreakOffClusters(vectors, directions, scores, names, score_limit, dissimilarity_threshold, max_clusters,
                             file_name, kappa, similarity_threshold, add_all_terms, data_type, largest_clusters,
-                 rewrite_files=False, lowest_amt=0, highest_amt=0, classification="genres"):
+                 rewrite_files=False, lowest_amt=0, highest_amt=0, classification="genres", min_size=1):
 
 
     output_directions_fn =  "../data/" + data_type + "/cluster/hierarchy_directions/"+file_name+".txt"
     output_names_fn = "../data/" + data_type + "/cluster/hierarchy_names/" + file_name +".txt"
     all_directions_fn = "../data/" + data_type + "/cluster/all_directions/" + file_name + ".txt"
     all_names_fn = "../data/" + data_type + "/cluster/all_names/" + file_name + ".txt"
-    all_fns = [output_directions_fn, output_names_fn, all_directions_fn, all_names_fn]
-    if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
-        print("Skipping task", getBreakOffClusters.__name__)
-        return
-    else:
-        print("Running task", getBreakOffClusters.__name__)
 
     clusters = []
     # Initialize a list of indexes to keep track of which directions have been combined
@@ -390,7 +384,7 @@ def getBreakOffClusters(vectors, directions, scores, names, score_limit, dissimi
                 failed = False
                 all_subsets = np.append(all_subsets, new_cluster)
                 break
-        if failed and not reached_max:
+        if failed and not reached_max or failed and min_size > 1:
             failed_array.append(s)
             if too_similar is True:
                 print("Skipped", current_direction.getNames()[0], "Too similar to", clusters[c].getNames()[0])
@@ -398,14 +392,14 @@ def getBreakOffClusters(vectors, directions, scores, names, score_limit, dissimi
             clusters = np.append(clusters, current_direction)
             all_subsets = np.append(all_subsets, current_direction)
             print("Failed", current_direction.getNames())
-    dt.write1dArray(failed_array, "../data/temp/failed_array.txt")
 
+    dt.write1dArray(failed_array, "../data/temp/failed_array.txt")
 
 
     output_directions = []
     output_names = []
     for c in range(len(clusters)):
-        if clusters[c] is not None:
+        if clusters[c] is not None and len(clusters[c].getNames()) >= min_size:
             output_directions.append(clusters[c].getClusterDirection())
             output_names.append(clusters[c].getNames())
 
@@ -481,14 +475,29 @@ def getBreakOffClusters(vectors, directions, scores, names, score_limit):
 def initClustering(vector_fn, directions_fn, scores_fn, names_fn, amt_to_start, profiling, dissimilarity_threshold,
                    max_clusters, score_limit, file_name, kappa, similarity_threshold, add_all_terms=False,
                    data_type="movies", largest_clusters=False,
-                 rewrite_files=False, lowest_amt=0, highest_amt=0, classification="genres"):
+                 rewrite_files=False, lowest_amt=0, highest_amt=0, classification="genres", min_score=0, min_size = 1):
+
+    output_directions_fn =  "../data/" + data_type + "/cluster/hierarchy_directions/"+file_name+".txt"
+    output_names_fn = "../data/" + data_type + "/cluster/hierarchy_names/" + file_name +".txt"
+    all_directions_fn = "../data/" + data_type + "/cluster/all_directions/" + file_name + ".txt"
+    all_names_fn = "../data/" + data_type + "/cluster/all_names/" + file_name + ".txt"
+    all_fns = [output_directions_fn, output_names_fn, all_directions_fn, all_names_fn]
+    if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
+        print("Skipping task", getBreakOffClusters.__name__)
+        return
+    else:
+        print("Running task", getBreakOffClusters.__name__)
+
     vectors = dt.import2dArray(vector_fn)
     directions = dt.import2dArray(directions_fn)
     scores = dt.import1dArray(scores_fn, "f")
     names = dt.import1dArray(names_fn)
 
-    ind = np.flipud(np.argsort(scores))[:amt_to_start]
-
+    if amt_to_start > 0:
+        ind = np.flipud(np.argsort(scores))[:amt_to_start] #Top X scoring
+    else:
+        ind = np.flipud(np.argsort(scores))
+        ind = [i for i in ind if scores[i] > min_score]
     top_directions = []
     top_scores = []
     top_names = []
@@ -503,7 +512,8 @@ def initClustering(vector_fn, directions_fn, scores_fn, names_fn, amt_to_start, 
     else:
         getBreakOffClusters(vectors, top_directions, top_scores, top_names, score_limit, dissimilarity_threshold,
                                 max_clusters, file_name, kappa, similarity_threshold, add_all_terms, data_type,
-                            largest_clusters, rewrite_files=False, lowest_amt=lowest_amt, highest_amt=highest_amt, classification=classification)
+                            largest_clusters, rewrite_files=rewrite_files, lowest_amt=lowest_amt, highest_amt=highest_amt,
+                            classification=classification, min_size = min_size)
 
 
 file_name = "films100"

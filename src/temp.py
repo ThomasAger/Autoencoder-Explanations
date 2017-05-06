@@ -3,9 +3,7 @@ import numpy as np
 from sklearn.model_selection import KFold
 
 
-k_fold = KFold(n_splits=3, shuffle=False, random_state=None)
-letters = np.asarray(["a", "b", "c", "d", "e"])
-
-for train, test in k_fold.split(letters):
-    print(letters[train])
-    print(letters[test])
+deep_size = [100,100,100]
+for d in range(len(deep_size)):
+    deep_size = deep_size[1:]
+    print(deep_size)
