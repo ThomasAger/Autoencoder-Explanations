@@ -275,9 +275,24 @@ def writeFromMultiClass(multi_class_fn, output_folder, entity_names_fn, data_typ
             highest_class = cv
 
 
+
     matched_entity_names = list(set(entity_names).intersection(class_names))
     matched_entity_names.sort()
     dt.write1dArray(matched_entity_names, "../data/" + data_type + "/classify/"+classify_name+"/available_entities.txt")
+
+
+    indexes_to_delete = []
+
+    for n in range(len(class_names)):
+        found = False
+        for en in range(len(matched_entity_names)):
+            if class_names[n] == matched_entity_names[en]:
+                found=True
+                break
+        if found is False:
+            indexes_to_delete.append(n)
+
+    class_val = np.delete(class_val, indexes_to_delete)
 
     classes = []
     print("Found " + str(highest_class) + " classes")
@@ -293,13 +308,7 @@ def writeFromMultiClass(multi_class_fn, output_folder, entity_names_fn, data_typ
     for cn in range(len(classes)):
         dt.write1dArray(classes[cn], "../data/"+data_type+"/classify/"+classify_name+"/class-"+str(cn))
         print("Wrote", "class-"+str(cn))
-"""
-writeFromMultiClass("../data/raw/previous work/placeclasses/GeonamesClasses.txt", "../data/placetypes/classify/Geonames/",
-                    "../data/raw/previous work/placeNames.txt", data_type="placetypes", classify_name="Geonames")
 
-writeFromMultiClass("../data/raw/previous work/placeclasses/Foursquareclasses.txt", "../data/placetypes/classify/Foursquare/",
-                    "../data/raw/previous work/placeNames.txt", data_type="placetypes", classify_name="Foursquare")
-"""
 def removeClass(array_fn):
     array = dt.import1dArray(array_fn)
     for e in range(len(array)):
@@ -393,9 +402,15 @@ data_type = "placetypes"
 match_entities("../data/"+data_type+"/nnet/spaces/entitynames.txt",
     "../data/"+data_type+"/classify/"+classification+"/available_entities.txt",
                "../data/"+data_type+"/rank/numeric/places100projected.txt", classification)
-
+"""
 classification = "foursquare"
 data_type = "placetypes"
+"""
+writeFromMultiClass("../data/raw/previous work/placeclasses/GeonamesClasses.txt", "../data/placetypes/classify/Geonames/",
+                    "../data/raw/previous work/placeNames.txt", data_type="placetypes", classify_name="Geonames")
+
+writeFromMultiClass("../data/raw/previous work/placeclasses/Foursquareclasses.txt", "../data/placetypes/classify/Foursquare/",
+                    "../data/raw/previous work/placeNames.txt", data_type="placetypes", classify_name="Foursquare")
 
 match_entities("../data/"+data_type+"/nnet/spaces/entitynames.txt",
     "../data/"+data_type+"/classify/"+classification+"/available_entities.txt",
@@ -434,26 +449,27 @@ make_individual = True
 """
 def main(min, max, class_type, classification, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn):
     """
-    getVectors(raw_fn, "../data/"+class_type+"/classify/"+classification+"/available_entities.txt", extension, "../data/"+class_type+"/bow/",
+    if classification == "all":
+        getVectors(raw_fn, entity_name_fn, extension, "../data/"+class_type+"/bow/",
+               min, max, cut_first_line, get_all, additional_name, make_individual, classification)
+    else:
+        getVectors(raw_fn, "../data/"+class_type+"/classify/"+classification+"/available_entities.txt", extension, "../data/"+class_type+"/bow/",
                min, max, cut_first_line, get_all, additional_name, make_individual, classification)
     """
-    getVectors(raw_fn, entity_name_fn, extension, "../data/"+class_type+"/bow/",
-               min, max, cut_first_line, get_all, additional_name, make_individual, classification)
-
-
     dt.write2dArray(convertPPMI( sp.csr_matrix(dt.import2dArray("../data/"+class_type+"/bow/frequency/phrases/class-all-"+str(min)+"-" + str(max)+"-"+classification))),
                     "../data/"+class_type+"/bow/ppmi/class-all-"+str(min)+"-"+str(max)+"-" + classification)
-    """
+
     printIndividualFromAll(class_type, "ppmi", min, max, class_type, classification)
+    #printIndividualFromAll(class_type, "binary/phrases", min, max, class_type, classification)
 
     convertToTfIDF(class_type, min, max, "../data/"+class_type+"/bow/frequency/phrases/class-all-"+str(min)+"-"+str(max)+"-"+classification, classification)
 
     printIndividualFromAll(class_type, "tfidf", min, max, class_type, classification)
-    """
 
-min=25
-max=5
 
+min=50
+max=10
+"""
 class_type = "movies"
 classification = "genres"
 raw_fn = "../data/raw/previous work/movievectors/tokens/"
@@ -461,23 +477,25 @@ extension = "film"
 cut_first_line = True
 entity_name_fn = "../data/raw/previous work/filmIds.txt"
 """
+"""
 class_type = "wines"
 classification = "all"
 raw_fn = "../data/raw/previous work/winevectors/"
 extension = ""
 cut_first_line = True
 """
-"""
+
 class_type = "placetypes"
-classification = "mixed"
+classification = "all"
 raw_fn = "../data/raw/previous work/placevectors/"
 extension = "photos"
 cut_first_line = False
-"""
+entity_name_fn = "../data/"+class_type+"/nnet/spaces/entitynames.txt"
+
 get_all = False
 additional_name = ""
 #make_individual = True
-make_individual = False
+make_individual = True
 
 if  __name__ =='__main__':main(min, max, class_type, classification, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn)
 

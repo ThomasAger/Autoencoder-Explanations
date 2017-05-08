@@ -206,8 +206,8 @@ class DecisionTree:
             key.append("AVERAGE")
             dt.write_csv(csv_fn, file_names, scores, key)
 
-        dt.write2dArray(all_top_names, "../data/movies/rules/names/" + filename + ".txt")
-        dt.write2dArray(all_top_clusters, "../data/movies/rules/clusters/" + filename + ".txt")
+        dt.write2dArray(all_top_names, "../data/"+data_type+"/rules/names/" + filename + ".txt")
+        dt.write2dArray(all_top_clusters, "../data/"+data_type+"/rules/clusters/" + filename + ".txt")
 
 
     def getNodesToDepth(self, tree, clusters, feature_names):

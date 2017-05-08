@@ -40,14 +40,11 @@ class SVM:
 
     x_train, x_test, get_kappa, get_f1, data_type, classification, lowest_amt, higher_amt, y_train, y_test = None, None, False, False, "", "", 0, 0, None, None
     def runSVM(self, property_name):
-        if self.get_kappa:
-            y = dt.import1dArray("../data/" + self.data_type + "/bow/binary/phrases/class-" + property_name + "-" + str(self.lowest_amt) + "-" + str(self.higher_amt) + "-" + self.classification)
-            y_train, y_test = train_test_split(y, test_size=0.3, random_state=0)
-        else:
-            y = dt.import1dArray("../data/" + self.data_type + "/bow/binary/phrases/class-" + property_name + "-" + str(
-                self.lowest_amt) + "-" + str(self.higher_amt) + "-" + self.classification)
-            y_train = y
-            y_test = y
+
+        y = dt.import1dArray("../data/" + self.data_type + "/bow/binary/phrases/class-" + property_name + "-" + str(
+            self.lowest_amt) + "-" + str(self.higher_amt) + "-" + self.classification)
+        y_train = y
+        y_test = y
         #x_train, y_train = dt.balanceClasses(x_train, y_train)
         clf = svm.LinearSVC(class_weight="balanced")
 
@@ -164,11 +161,8 @@ class SVM:
             vectors = vectors.transpose()
             x_train, x_test, y_train, y_test = train_test_split(vectors, classes, test_size=0.3, random_state=0)
         else:
-            if not get_kappa:
-                x_train = vectors
-                x_test = vectors
-            else:
-                x_train, x_test = train_test_split(vectors,  test_size=0.3, random_state=0)
+            x_train = vectors
+            x_test = vectors
 
         if get_f1:
             y_train = y_train.transpose()

@@ -63,7 +63,7 @@ class NeuralNetwork:
                  optimizer_name="rmsprop", noise=0.0, fine_tune_weights_fn=None, past_model_weights_fn=None,
                  from_ae=True, save_outputs=False, label_names_fn="",
                  rewrite_files=False, cv_splits=1,cutoff_start=0.2, development=False,
-                 class_weight=None, csv_fn=None):
+                 class_weight=None, csv_fn=None, tune_vals=False, get_nnet_vectors_path=None):
 
         total_file_name = "../data/" + data_type + "/nnet/spaces/" + file_name
         space_fn = total_file_name + "L0.txt"
@@ -124,6 +124,9 @@ class NeuralNetwork:
         entity_vectors = np.asarray(dt.import2dArray(self.vector_path))
         print("Imported vectors", len(entity_vectors), len(entity_vectors[0]))
 
+
+        nnet_vectors = np.asarray(dt.import2dArray(get_nnet_vectors_path))
+        print("Imported vectors", len(entity_vectors), len(entity_vectors[0]))
 
         entity_classes = np.asarray(dt.import2dArray(self.class_path))
         print("Imported classes", len(entity_classes), len(entity_classes[0]))
@@ -244,20 +247,20 @@ class NeuralNetwork:
                 print(test_pred)
                 y_train_m = np.asarray(y_train[m]).transpose()
                 highest_f1 = [0]*len(test_pred)
-                highest_vals = [0.5]*len(test_pred)
+                highest_vals = [0.2]*len(test_pred)
 
-
-                for c in range(len(test_pred)):
-                    for val in vals_to_try:
-                        test_pred_c = np.copy(test_pred[c])
-                        test_pred_c[test_pred_c >= val] = 1
-                        test_pred_c[test_pred_c< val] = 0
-                        acc = accuracy_score(y_train_m[c], test_pred_c)
-                        f1 = f1_score(y_train_m[c], test_pred_c, average="binary")
-                        f1 = (f1 + acc) / 2
-                        if f1 > highest_f1[c]:
-                            highest_f1[c] = f1
-                            highest_vals[c] = val
+                if tune_vals:
+                    for c in range(len(test_pred)):
+                        for val in vals_to_try:
+                            test_pred_c = np.copy(test_pred[c])
+                            test_pred_c[test_pred_c >= val] = 1
+                            test_pred_c[test_pred_c< val] = 0
+                            acc = accuracy_score(y_train_m[c], test_pred_c)
+                            f1 = f1_score(y_train_m[c], test_pred_c, average="binary")
+                            f1 = (f1 + acc) / 2
+                            if f1 > highest_f1[c]:
+                                highest_f1[c] = f1
+                                highest_vals[c] = val
                 print("optimal f1s", highest_f1 )
                 print("optimal vals", highest_vals )
                 y_pred = models[m].predict(x_test[m]).transpose()
@@ -329,7 +332,10 @@ class NeuralNetwork:
                 for a in range(l+1):
                     truncated_model.add(models[m].layers[a])
                 truncated_model.compile(loss=self.loss, optimizer="sgd")
-                self.end_space = truncated_model.predict(entity_vectors)
+                if get_nnet_vectors_path is not None:
+                    self.end_space = truncated_model.predict(nnet_vectors)
+                else:
+                    self.end_space = truncated_model.predict(entity_vectors)
                 total_file_name = "../data/" + data_type + "/nnet/spaces/" + file_name
                 dt.write2dArray(self.end_space, total_file_name + "L" + str(l) + ".txt")
 
@@ -480,7 +486,7 @@ class NeuralNetwork:
 import random
 import sys
 def main(loss, output_activation, optimizer_name, hidden_activation, ep, dropout_noise, cv_splits, deep_size,
-             init_vector_path, data_type, rewrite_files, development, class_weight, classification_task, file_name):
+             init_vector_path, data_type, rewrite_files, development, class_weight, classification_task, file_name, tune_vals):
 
     if isinstance(deep_size, str):
         ep = int(ep)
@@ -499,7 +505,8 @@ def main(loss, output_activation, optimizer_name, hidden_activation, ep, dropout
     split_fns = []
     for s in range(cv_splits):
         fn = file_name + " E" + str(ep) + " DS" + str(deep_size) + " DN" + str(dropout_noise) + " CT" + classification_task + \
-                        " HA" + str(hidden_activation) + " CV" + str(cv_splits)  +  " S" + str(s) + " Dev" + str(development)
+                        " HA" + str(hidden_activation) + " CV" + str(cv_splits)  +  " S" + str(s) + " Dev" + str(development) + \
+             " Opt" + optimizer_name
         split_fns.append(fn)
 
     for splits in range(cv_splits):
@@ -541,9 +548,12 @@ def main(loss, output_activation, optimizer_name, hidden_activation, ep, dropout
                 vector_path=init_vector_path, hidden_layer_size=hidden_layer_size, class_path=classification_path,
                 identity_swap=identity_swap, dropout_noise=dropout_noise, save_outputs=save_outputs,
                 hidden_activation=hidden_activation, output_activation=output_activation, epochs=ep,
-                learn_rate=lr, is_identity=is_identity, output_size=output_size, split_to_use=splits, label_names_fn=label_names_fn,
-                batch_size=batch_size, past_model_weights_fn=past_model_weights_fn, loss=loss, cv_splits=cv_splits, csv_fn = file_name,
-                file_name=file_name, from_ae=from_ae, data_type=data_type, rewrite_files=rewrite_files, development=development, class_weight=class_weight)
+                learn_rate=lr, is_identity=is_identity, output_size=output_size, split_to_use=splits,
+                                label_names_fn=label_names_fn,
+                batch_size=batch_size, past_model_weights_fn=past_model_weights_fn, loss=loss, cv_splits=cv_splits,
+                                csv_fn = file_name, tune_vals=tune_vals,
+                file_name=file_name, from_ae=from_ae, data_type=data_type, rewrite_files=rewrite_files, development=development,
+                                class_weight=class_weight)
 
             csv_fns.append("../data/"+data_type+"/nnet/csv/"+file_name+".csv")
             new_file_names = []
@@ -574,6 +584,7 @@ classification_task = "geonames"
 file_name = "placetypes mds"
 lowest_amt = 50
 highest_amt = 10
+#init_vector_path = "../data/"+data_type+"/bow/ppmi/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+classification_task
 init_vector_path = "../data/"+data_type+"/nnet/spaces/places100-"+classification_task+".txt"
 """
 hidden_activation = "relu"
@@ -583,16 +594,16 @@ cutoff_start = 0.2
 ep=200
 """
 hidden_activation = "tanh"
-dropout_noise = 0.2
-output_activation = "sigmoid"
+dropout_noise = 0.6
+output_activation = "softmax"
 cutoff_start = 0.2
-deep_size = [200]
+deep_size = [100]
 #init_vector_path = "../data/"+data_type+"/bow/ppmi/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+classification_task
 #file_name = "movies ppmi"
-ep =200
-
+ep =2000
+tune_vals = True
 class_weight = None
-optimizer_name = "adagrad"
+optimizer_name = "adadelta"
 loss="categorical_crossentropy"
 development = False
 cv_splits = 5
@@ -630,5 +641,5 @@ if len(args) > 0:
     file_name = args[14]
 
 if  __name__ =='__main__':main(loss, output_activation, optimizer_name, hidden_activation, ep, dropout_noise, cv_splits, deep_size,
-             init_vector_path, data_type, rewrite_files, development, class_weight, classification_task, file_name)
+             init_vector_path, data_type, rewrite_files, development, class_weight, classification_task, file_name, tune_vals)
 

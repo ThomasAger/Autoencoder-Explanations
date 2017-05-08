@@ -16,6 +16,7 @@ import tree
 import hierarchy
 import ndcg
 import nnet
+import wekatree
 from sklearn.model_selection import KFold
 from sklearn.preprocessing import MultiLabelBinarizer
 import random
@@ -26,7 +27,7 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
          breakoff, kappa, score_limit, rewrite_files, cluster_multiplier, threads, dropout_noise, learn_rate, epochs, cross_val, ep,
          output_activation, cs, deep_size, classification, direction_count, lowest_amt, loss, development, add_all_terms,
          average_ppmi, optimizer_name, class_weight, amount_to_start, chunk_amt, chunk_id, lr, vector_path_replacement, dt_dev,
-         use_pruned, max_depth, min_score, min_size):
+         use_pruned, max_depth, min_score, min_size, limit_entities, svm_classify, get_nnet_vectors_path):
 
     if isinstance(deep_size, str):
         epochs = int(epochs)
@@ -144,7 +145,8 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
                 hidden_activation=hidden_activation, output_activation=output_activation, epochs=ep,
                 learn_rate=lr, is_identity=is_identity, output_size=output_size, split_to_use=splits, label_names_fn=label_names_fn,
                 batch_size=batch_size, past_model_weights_fn=past_model_weights_fn, loss=loss, cv_splits=cv_splits, csv_fn = file_name,
-                file_name=file_name, from_ae=from_ae, data_type=data_type, rewrite_files=rewrite_files, development=development, class_weight=class_weight)
+                file_name=file_name, from_ae=from_ae, data_type=data_type, rewrite_files=rewrite_files, development=development,
+                                     class_weight=class_weight, get_nnet_vectors_path=get_nnet_vectors_path)
 
             new_file_names = []
 
@@ -161,7 +163,14 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
             #for j in range(len(new_file_names)):
             for x in range(len(deep_size)):
             #for x in range(len([0])):
+
+                if limit_entities is False:
+                    new_classification_task = "all"
+                else:
+                    new_classification_task = classification_task
                 file_name = new_file_names[x]
+
+                file_name = file_name + " LE" + str(limit_entities)
                 if vector_path_replacement is not None:
                     file_name = vector_path_replacement
                     vector_path = "../data/" + data_type + "/nnet/spaces/"+file_name+".txt"
@@ -181,8 +190,8 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
                 if vector_path_replacement is  None:
                     vector_path = "../data/" + data_type + "/nnet/spaces/"+new_file_names[x]+".txt"
                 #vector_path = "../data/" + data_type + "/nnet/spaces/"+vector_path_replacement+".txt"
-                bow_path = "../data/" + data_type + "/bow/binary/phrases/class-all-"+str(lowest_amt)+"-"+str(highest_count)+"-"+classification_task
-                property_names_fn = "../data/" + data_type + "/bow/names/" + str(lowest_amt) + "-" +str(highest_count)+"-"+ classification_task +".txt"
+                bow_path = "../data/" + data_type + "/bow/binary/phrases/class-all-"+str(lowest_amt)+"-"+str(highest_count)+"-"+new_classification_task
+                property_names_fn = "../data/" + data_type + "/bow/names/" + str(lowest_amt) + "-" +str(highest_count)+"-"+ new_classification_task +".txt"
                 directions_fn = "../data/" + data_type + "/svm/directions/" + file_name + ".txt"
 
 
@@ -223,7 +232,8 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
                 svm.createSVM(vector_path, bow_path, property_names_fn, file_name, lowest_count=lowest_amt,
                   highest_count=highest_count, data_type=data_type, get_kappa=kappa,
                   get_f1=False, svm_type=svm_type, getting_directions=True, threads=threads, rewrite_files=rewrite_files,
-                              classification=classification, lowest_amt=lowest_amt, chunk_amt=chunk_amt, chunk_id=chunk_id)
+                              classification=new_classification_task, lowest_amt=lowest_amt, chunk_amt=chunk_amt, chunk_id=chunk_id)
+
 
                 if chunk_amt > 0:
                     if chunk_id == chunk_amt-1:
@@ -241,18 +251,14 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
                             if d != len(deep_fns)-1:
                                 while not dt.fileExists("../data/"+data_type+"/nnet/spaces/"+deep_fns[d+1]+".txt"):
                                     time.sleep(10)
-                if kappa is False:
-                    scores_fn = "../data/" + data_type + "/ndcg/" + file_name + ".txt"
-                else:
-                    scores_fn = "../data/" + data_type + "/svm/kappa/" + file_name + ".txt"
+
                 if chunk_id == chunk_amt -1 or chunk_amt <= 0:
                     if not kappa:
                         rank.getAllPhraseRankings(directions_fn, vector_path, class_names_fn, vector_names_fn, file_name,
                                       data_type=data_type, rewrite_files=rewrite_files)
                         ndcg.getNDCG("../data/" + data_type + "/rank/numeric/" + file_name + "ALL.txt", file_name,
                                  data_type=data_type, lowest_count=lowest_amt, rewrite_files=rewrite_files,
-                                     highest_count=highest_count, classification=classification_task)
-
+                                     highest_count=highest_count, classification=new_classification_task)
                     if kappa is False:
                         scores_fn = "../data/" + data_type + "/ndcg/" + file_name + ".txt"
                         file_name = file_name + "ndcg"
@@ -290,14 +296,14 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
                         hierarchy.initClustering(vector_path, directions_fn, scores_fn, names_fn, amount_to_start, False,
                              similarity_threshold,  cluster_amt, score_limit, file_name, kappa, dissimilarity_threshold,
                                      add_all_terms=add_all_terms, data_type=data_type, rewrite_files=rewrite_files,
-                                                 lowest_amt=lowest_amt, highest_amt=highest_count, classification=classification_task,
+                                                 lowest_amt=lowest_amt, highest_amt=highest_count, classification=new_classification_task,
                                                  min_score=min_score, min_size = min_size)
                     else:
                         cluster.getClusters(directions_fn, scores_fn, names_fn, False,  0, 0, file_name, cluster_amt,
                                             high_threshold, low_threshold, data_type, rewrite_files=rewrite_files)
 
                     """ CLUSTER RANKING """
-                    vector_names_fn = "../data/" + data_type + "/nnet/spaces/entitynames.txt"
+                    vector_names_fn = "../data/" + data_type + "/classify/"+classification_task+"/available_entities.txt"
                     ranking_fn = "../data/" + data_type + "/rank/numeric/" + file_name + ".txt"
 
                     csv_name = "../data/" + data_type + "/rules/tree_csv/" + file_name + ".csv"
@@ -322,6 +328,9 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
                                       data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
                                       cv_splits=cv_splits, split_to_use=splits, development=dt_dev)
 
+                    wekatree.DecisionTree(ranking_fn, classification_path, label_names_fn , cluster_names_fn , file_name,
+                       save_details=True, data_type=data_type,
+                       csv_fn=csv_name, cv_splits=cv_splits)
 
                     if use_pruned:
                         clusters_fn = "../data/"+ data_type + "/rules/clusters/" + file_name + ".txt"
@@ -330,21 +339,23 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
                     classes = dt.import1dArray(label_names_fn)
                     current_fn = file_name
 
-                    for c in classes:
-                        print(c)
-                        file_name = current_fn + c
-                        class_c_fn = "../data/"+ data_type + "/rules/clusters/" + file_name + ".txt"
-                        class_n_fn = "../data/"+ data_type + "/rules/names/" + file_name + ".txt"
-                        rank.getAllRankings(class_c_fn, vector_path, class_n_fn , vector_names_fn, 0.2, 1, False, file_name,
-                                            False, data_type=data_type, rewrite_files=rewrite_files)
-                        class_rank_fn = "../data/"+ data_type + "/rank/numeric/" + file_name + ".txt"
-                        class_p_fn = "../data/" + data_type + "/classify/" +  classification_task + "/class-" + c
-                        svm.createSVM(class_rank_fn, class_p_fn, class_n_fn, file_name, lowest_count=lowest_amt,
-                                  highest_count=highest_count, data_type=data_type, get_kappa=False,
-                                  get_f1=True, single_class=True,svm_type=svm_type, getting_directions=False, threads=1,
-                                  rewrite_files=rewrite_files,
-                                  classification=classification, lowest_amt=lowest_amt, chunk_amt=chunk_amt,
-                                  chunk_id=chunk_id)
+                    # Use an SVM to classify each of the classes
+                    if svm_classify:
+                        for c in classes:
+                            print(c)
+                            file_name = current_fn + c
+                            class_c_fn = "../data/"+ data_type + "/rules/clusters/" + file_name + ".txt"
+                            class_n_fn = "../data/"+ data_type + "/rules/names/" + file_name + ".txt"
+                            rank.getAllRankings(class_c_fn, vector_path, class_n_fn , vector_names_fn, 0.2, 1, False, file_name,
+                                                False, data_type=data_type, rewrite_files=rewrite_files)
+                            class_rank_fn = "../data/"+ data_type + "/rank/numeric/" + file_name + ".txt"
+                            class_p_fn = "../data/" + data_type + "/classify/" +  classification_task + "/class-" + c
+                            svm.createSVM(class_rank_fn, class_p_fn, class_n_fn, file_name, lowest_count=lowest_amt,
+                                      highest_count=highest_count, data_type=data_type, get_kappa=False,
+                                      get_f1=True, single_class=True,svm_type=svm_type, getting_directions=False, threads=1,
+                                      rewrite_files=rewrite_files,
+                                      classification=classification, lowest_amt=lowest_amt, chunk_amt=chunk_amt,
+                                      chunk_id=chunk_id)
 
 
                     file_name = current_fn
@@ -428,23 +439,30 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
                     tree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name, 10000,
                               max_depth=max_depth, balance="balanced", criterion="entropy", save_details=True, cv_splits=cv_splits, split_to_use=splits,
                               data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files, development=dt_dev)
+
+                    wekatree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name,
+                                          save_details=True, data_type=data_type,
+                                          csv_fn=csv_name, cv_splits=cv_splits)
+
                     current_fn = file_name
-                    for c in classes:
-                        print(c)
-                        file_name = current_fn + c
-                        class_c_fn = "../data/" + data_type + "/rules/clusters/" + file_name + ".txt"
-                        class_n_fn = "../data/" + data_type + "/rules/names/" + file_name + ".txt"
-                        rank.getAllRankings(class_c_fn, vector_path, class_n_fn, vector_names_fn, 0.2, 1, False,
-                                            file_name,
-                                            False, data_type=data_type, rewrite_files=rewrite_files)
-                        class_rank_fn = "../data/"+ data_type + "/rank/numeric/" + file_name + ".txt"
-                        class_p_fn = "../data/" + data_type + "/classify/" +  classification_task + "/class-" + c
-                        svm.createSVM(class_rank_fn, class_p_fn, class_n_fn, file_name, lowest_count=lowest_amt,
-                                  highest_count=highest_count, data_type=data_type, get_kappa=False,
-                                  get_f1=True, single_class=True,svm_type=svm_type, getting_directions=False, threads=1,
-                                  rewrite_files=rewrite_files,
-                                  classification=classification, lowest_amt=lowest_amt, chunk_amt=chunk_amt,
-                                  chunk_id=chunk_id)
+                    #SVM Classification
+                    if svm_classify:
+                        for c in classes:
+                            print(c)
+                            file_name = current_fn + c
+                            class_c_fn = "../data/" + data_type + "/rules/clusters/" + file_name + ".txt"
+                            class_n_fn = "../data/" + data_type + "/rules/names/" + file_name + ".txt"
+                            rank.getAllRankings(class_c_fn, vector_path, class_n_fn, vector_names_fn, 0.2, 1, False,
+                                                file_name,
+                                                False, data_type=data_type, rewrite_files=rewrite_files)
+                            class_rank_fn = "../data/"+ data_type + "/rank/numeric/" + file_name + ".txt"
+                            class_p_fn = "../data/" + data_type + "/classify/" +  classification_task + "/class-" + c
+                            svm.createSVM(class_rank_fn, class_p_fn, class_n_fn, file_name, lowest_count=lowest_amt,
+                                      highest_count=highest_count, data_type=data_type, get_kappa=False,
+                                      get_f1=True, single_class=True,svm_type=svm_type, getting_directions=False, threads=1,
+                                      rewrite_files=rewrite_files,
+                                      classification=classification, lowest_amt=lowest_amt, chunk_amt=chunk_amt,
+                                      chunk_id=chunk_id)
                     file_name = current_fn
                     rank.getAllRankings(clusters_fn, vector_path, cluster_names_fn, vector_names_fn, 0.2, 1, False,
                                         file_name,
@@ -480,6 +498,7 @@ lowest_amt = 50
 highest_amt = 10
 init_vector_path = "../data/"+data_type+"/nnet/spaces/wines100-"+classification_task+".txt"
 """
+"""
 data_type = "movies"
 classification_task = "genres"
 file_name = "movies mds"
@@ -492,23 +511,22 @@ init_vector_path = "../data/"+data_type+"/nnet/spaces/films200-"+classification_
 """
 data_type = "placetypes"
 classification_task = "foursquare"
-file_name = "placetypes ppmi"
+file_name = "placetypes mds"
 lowest_amt = 50
 highest_amt = 10
 init_vector_path = "../data/"+data_type+"/nnet/spaces/places100-"+classification_task+".txt"
-hidden_activation = "relu"
-dropout_noise = 0.5
-output_activation = "sigmoid"
-trainer = "adam"
+get_nnet_vectors_path = "../data/"+data_type+"/nnet/spaces/places100.txt"
+hidden_activation = "tanh"
+dropout_noise = 0.6
+output_activation = "softmax"
+trainer = "adadelta"
 loss="categorical_crossentropy"
 class_weight = None
 deep_size = [100]
-ep =100
+ep =2000
 lr = 0.01
-rewrite_files = True
-vector_path_replacement = "places100-"+classification_task
+vector_path_replacement = None#"places100-"+classification_task
 nnet_dev = False
-"""
 """
 
 hidden_activation = "relu"
@@ -532,6 +550,7 @@ loss="categorical_crossentropy"
 class_weight = "balanced"
 rewrite_files = True
 """
+"""
 hidden_activation = "tanh"
 dropout_noise = 0.5
 output_activation = "sigmoid"
@@ -544,25 +563,30 @@ lr = 0.01
 rewrite_files = False
 vector_path_replacement = "films200-"+classification_task
 nnet_dev = False
+"""
 cutoff_start = 0.2
 is_identity = True
 amount_of_finetune = 1
 
 min_size = 1
 
-min_score = 0.75
+min_score = 0.55
 max_depth = 3
 
 breakoff = True
-score_limit = 0.8
+score_limit = 0.85
 cluster_multiplier = 1
 epochs=3000
 learn_rate=0.001
 kappa = False
-dt_dev = False
+dt_dev = True
 add_all_terms = False
 average_ppmi = False
 use_pruned = False
+limit_entities = False
+svm_classify = False
+rewrite_files = True
+
 amount_to_start = 0
 
 cross_val = 1
@@ -632,4 +656,4 @@ if  __name__ =='__main__':main(data_type, classification_task, file_name, init_v
                                output_activation, cutoff_start, deep_size, classification_task, highest_amt,
                                lowest_amt, loss, nnet_dev, add_all_terms, average_ppmi, trainer, class_weight,
                                amount_to_start, chunk_amt, chunk_id, lr, vector_path_replacement, dt_dev, use_pruned, max_depth,
-                               min_score, min_size)
+                               min_score, min_size, limit_entities, svm_classify, get_nnet_vectors_path)

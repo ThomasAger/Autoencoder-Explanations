@@ -20,7 +20,7 @@ from weka.classifiers import Classifier
 class DecisionTree:
     clf = None
     def __init__(self, features_fn, classes_fn,  class_names_fn, cluster_names_fn, filename,
-                 training_data,  max_depth=None, balance=None, criterion="entropy", save_details=False, data_type="movies",cv_splits=5,
+                   max_depth=None, balance=None, criterion="entropy", save_details=False, data_type="movies",cv_splits=5,
                  csv_fn="../data/temp/no_csv_provided.csv", rewrite_files=True, split_to_use=-1, development=False):
 
         jvm.start(max_heap_size="512m")
@@ -41,10 +41,10 @@ class DecisionTree:
         all_fns.append(f1_fn)
 
         if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
-            print("Skipping task", "DecisionTree")
+            print("Skipping task", "Weka Tree")
             return
         else:
-            print("Running task", "DecisionTree")
+            print("Running task", "Weka Tree")
 
         for l in range(len(cluster_names)):
             cluster_names[l] = cluster_names[l].split()[0]
@@ -112,7 +112,8 @@ class DecisionTree:
                 # Get the weka predictions
                 dt.writeArff(ac_x_train[splits], [ac_y_train[splits]], [label_names[splits]], train_fn, header=True)
                 dt.writeArff(ac_x_test[splits], [ac_y_test[splits]], [label_names[splits]], test_fn, header=True)
-                predictions.append(self.getWekaPredictions(train_fn+label_names[splits]+".arff", test_fn+label_names[splits]+".arff"))
+                predictions.append(self.getWekaPredictions(train_fn+label_names[splits]+".arff",
+                                                           test_fn+label_names[splits]+".arff", save_details))
 
             for i in range(len(predictions)):
                 f1 = f1_score(ac_y_test[i], predictions[i], average="binary")
@@ -177,7 +178,7 @@ class DecisionTree:
         file.close()
 
 
-    def getWekaPredictions(self, train_fn, test_fn):
+    def getWekaPredictions(self, train_fn, test_fn, save_details):
         print("weka")
 
         loader = Loader(classname="weka.core.converters.ArffLoader")
@@ -189,8 +190,6 @@ class DecisionTree:
 
         cls.build_classifier(train_data)
 
-        print(cls.to_help())
-
         y_pred = []
 
         test_data = loader.load_file(test_fn)
@@ -201,27 +200,30 @@ class DecisionTree:
             dist = cls.distribution_for_instance(inst)
             y_pred.append(pred)
 
+        if save_details:
+
+
         return y_pred
 
-def main(cluster_vectors_fn, classes_fn, label_names_fn, cluster_names_fn, file_name, lowest_val, max_depth, balance, criterion, save_details, data_type, csv_fn, cv_splits):
+def main(cluster_vectors_fn, classes_fn, label_names_fn, cluster_names_fn, file_name, balance,save_details, data_type, csv_fn, cv_splits):
 
-    clf = DecisionTree(cluster_vectors_fn, classes_fn, label_names_fn , cluster_names_fn , file_name, lowest_val,
-                       max_depth, balance=balance, criterion=criterion, save_details=save_details, data_type=data_type,
+    clf = DecisionTree(cluster_vectors_fn, classes_fn, label_names_fn , cluster_names_fn , file_name,
+                       balance=balance, save_details=save_details, data_type=data_type,
                        csv_fn=csv_fn, cv_splits=cv_splits)
 
 
 
-data_type = "movies"
-classes = "genres"
+data_type = "placetypes"
+classes = "foursquare"
 
-file_name = "movies mds E100 DS[200] DN0.5 CTgenres HAtanh CV1 S0 DevFalse SFT0L0100kappa0.92003000FT"
+file_name = "placetypes mds E2000 DS[100] DN0.6 CTfoursquare HAtanh CV1 S0 DevFalse SFT0L050LETruendcg1200MC1MS0.5"
 
-#cluster_vectors_fn = "../data/" + data_type + "/rank/numeric/" + file_name + ".txt"
-cluster_vectors_fn = "../data/" + data_type + "/nnet/clusters/" + file_name + ".txt"
+cluster_vectors_fn = "../data/" + data_type + "/rank/numeric/" + file_name + ".txt"
+#cluster_vectors_fn = "../data/" + data_type + "/nnet/clusters/" + file_name + ".txt"
 #cluster_vectors_fn = "../data/" + data_type + "/nnet/spaces/" + file_name + ".txt"
 cluster_names_fn = "../data/" + data_type + "/cluster/hierarchy_names/" + file_name + ".txt"
 
-cluster_names_fn = "../data/" + data_type + "/cluster/hierarchy_names/movies mds E100 DS[200] DN0.5 CTgenres HAtanh CV1 S0 DevFalse SFT0L0100kappa0.9200.txt"
+cluster_names_fn = "../data/" + data_type + "/cluster/hierarchy_names/"+file_name+".txt"
 
 label_names_fn = "../data/" + data_type + "/classify/"+classes+"/names.txt"
 classes_fn = "../data/" + data_type + "/classify/"+classes+"/class-All"
@@ -233,6 +235,7 @@ save_details = True
 if balance:
     file_name = file_name + "balance"
 file_name = file_name + "J48"
-csv_fn = "../data/"+ data_type + "/rules/tree_csv/"+file_name+".csv"
+csv_fn = "../data/"+ data_type + "/weka/tree_csv/"+file_name+".csv"
 cv_splits = 1
-if  __name__ =='__main__':main(cluster_vectors_fn, classes_fn, label_names_fn, cluster_names_fn, file_name, lowest_val, max_depth, balance, criterion, save_details, data_type, csv_fn, cv_splits)
+if  __name__ =='__main__':main(cluster_vectors_fn, classes_fn, label_names_fn, cluster_names_fn, file_name,
+                              balance,  save_details, data_type, csv_fn, cv_splits)
