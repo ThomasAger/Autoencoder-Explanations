@@ -13,7 +13,6 @@ from sklearn.model_selection import cross_val_predict
 from sklearn.model_selection import KFold
 import random
 from weka.core.converters import Loader
-import weka.core.jvm as jvm
 from weka.classifiers import Classifier
 
 
@@ -21,9 +20,9 @@ class DecisionTree:
     clf = None
     def __init__(self, features_fn, classes_fn,  class_names_fn, cluster_names_fn, filename,
                    max_depth=None, balance=None, criterion="entropy", save_details=False, data_type="movies",cv_splits=5,
-                 csv_fn="../data/temp/no_csv_provided.csv", rewrite_files=True, split_to_use=-1, development=False):
+                 csv_fn="../data/temp/no_csv_provided.csv", rewrite_files=True, split_to_use=-1, development=False,
+                 limit_entities=False, limited_label_fn=None, vector_names_fn=None):
 
-        jvm.start(max_heap_size="512m")
         vectors = np.asarray(dt.import2dArray(features_fn)).transpose()
 
         labels = np.asarray(dt.import2dArray(classes_fn, "i"))
@@ -62,7 +61,13 @@ class DecisionTree:
         print("labels transposed")
         print("labels", len(labels), len(labels[0]))
 
+        if limit_entities is False:
+            vector_names = dt.import1dArray(vector_names_fn)
+            limited_labels = dt.import1dArray(limited_label_fn)
+            vectors = np.asarray(dt.match_entities(vectors, limited_labels, vector_names))
+
         for l in range(len(labels)):
+
             if balance:
                 new_vectors, new_labels = dt.balanceClasses(vectors, labels[l])
             else:
@@ -91,7 +96,10 @@ class DecisionTree:
                         continue
                 ac_y_test.append(new_labels[test])
                 ac_y_train.append(new_labels[train[int(len(train) * 0.2):]])
-                ac_x_train.append(new_vectors[train[int(len(train) * 0.2):]])
+                val = int(len(train) * 0.2)
+                t_val = train[val:]
+                nv_t_val = new_vectors[t_val]
+                ac_x_train.append(nv_t_val)
                 ac_x_test.append(new_vectors[test])
                 ac_x_dev.append(new_vectors[train[:int(len(train) * 0.2)]])
                 ac_y_dev.append(new_labels[train[:int(len(train) * 0.2)]])
@@ -114,6 +122,7 @@ class DecisionTree:
                 dt.writeArff(ac_x_test[splits], [ac_y_test[splits]], [label_names[splits]], test_fn, header=True)
                 predictions.append(self.getWekaPredictions(train_fn+label_names[splits]+".arff",
                                                            test_fn+label_names[splits]+".arff", save_details))
+
 
             for i in range(len(predictions)):
                 f1 = f1_score(ac_y_test[i], predictions[i], average="binary")
@@ -145,6 +154,7 @@ class DecisionTree:
         dt.write1dArray(accuracy_array, acc_fn)
         dt.write1dArray(f1_array, f1_fn)
 
+        print(csv_fn)
         if dt.fileExists(csv_fn):
             print("File exists, writing to csv")
             try:
@@ -165,8 +175,6 @@ class DecisionTree:
             key.append("AVERAGE")
             dt.write_csv(csv_fn, file_names, scores, key)
 
-        jvm.stop()
-
 
     def get_code(self, tree, feature_names, class_names, filename, data_type):
         rules_array = []
@@ -180,6 +188,7 @@ class DecisionTree:
 
     def getWekaPredictions(self, train_fn, test_fn, save_details):
         print("weka")
+
 
         loader = Loader(classname="weka.core.converters.ArffLoader")
         train_data = loader.load_file(train_fn)
@@ -201,7 +210,7 @@ class DecisionTree:
             y_pred.append(pred)
 
         if save_details:
-
+            print("Totes saving details now")
 
         return y_pred
 

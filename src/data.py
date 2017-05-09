@@ -863,6 +863,29 @@ def deleteAllButIndexes(array, indexes):
     array = np.delete(array, del_ind)
     return array
 
+def match_entities(entities, t_names, names):
+    indexes_to_delete = []
+    amount_found = 0
+    for n in range(len(names)):
+        names[n] = removeEverythingFromString(names[n])
+    for n in range(len(t_names)):
+        t_names[n] = removeEverythingFromString(t_names[n])
+    matched_ids = []
+    for n in range(len(t_names)):
+        for ni in range(len(names)):
+            matched_name = t_names[n]
+            all_name = names[ni]
+            if matched_name == all_name:
+                #print(matched_name)
+                matched_ids.append(ni)
+                amount_found += 1
+                break
+    matched_entities = []
+    for e in matched_ids:
+        matched_entities.append(entities[e])
+    print("Amount found", amount_found)
+    return matched_entities
+
 """
 write2dArray(deleteAllButIndexes(import2dArray("../data/movies/cluster/hierarchy_directions/films200-genres100ndcg0.9200.txt", "s"),
                                                import1dArray("../data/movies/cluster/hierarchy_names/human_ids films200genres.txt")),

@@ -17,7 +17,8 @@ class DecisionTree:
     clf = None
     def __init__(self, features_fn, classes_fn,  class_names_fn, cluster_names_fn, filename,
                  training_data,  max_depth=None, balance=None, criterion="entropy", save_details=False, data_type="movies",cv_splits=5,
-                 csv_fn="../data/temp/no_csv_provided.csv", rewrite_files=False, split_to_use=-1, development=False):
+                 csv_fn="../data/temp/no_csv_provided.csv", rewrite_files=False, split_to_use=-1, development=False,
+                 limit_entities=False, limited_label_fn=None, vector_names_fn=None):
 
         vectors = np.asarray(dt.import2dArray(features_fn)).transpose()
 
@@ -37,6 +38,12 @@ class DecisionTree:
         f1_fn = '../data/' + data_type + '/rules/tree_scores/' + file_names[1] + '.scores'
         all_fns.append(acc_fn)
         all_fns.append(f1_fn)
+
+
+        if limit_entities is False:
+            vector_names = dt.import1dArray(vector_names_fn)
+            limited_labels = dt.import1dArray(limited_label_fn)
+            vectors = np.asarray(dt.match_entities(vectors, limited_labels, vector_names))
 
         if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
             print("Skipping task", "DecisionTree")

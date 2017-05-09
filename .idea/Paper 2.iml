@@ -5,7 +5,7 @@
       <excludeFolder url="file://$MODULE_DIR$/Data" />
       <excludeFolder url="file://$MODULE_DIR$/experiments" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.4.5 (C:\Anaconda3\envs\py34\python.exe)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.4.5 (C:\Users\Tom\AppData\Local\conda\conda\envs\py34\python.exe)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>

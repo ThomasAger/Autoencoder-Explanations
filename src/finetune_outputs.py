@@ -28,7 +28,7 @@ def readPPMI(name, data_type, lowest_amt, highest_amt, classification):
         frq_a.append(float(line))
     return frq_a
 
-def pavPPMI(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type="movies", rewrite_files=False,
+def pavPPMI(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type="movies", rewrite_files=False,limit_entities=False,
             classification="genres", lowest_amt=0, highest_amt=2147000000):
     pavPPMI_fn = "../data/" + data_type + "/finetune/" + file_name + ".txt"
     all_fns = [pavPPMI_fn]
@@ -37,6 +37,9 @@ def pavPPMI(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type="movi
         return
     else:
         print("Running task", pavPPMI.__name__)
+
+    if limit_entities is False:
+        classification = "all"
 
     ranking = dt.import2dArray(ranking_fn)
     names = dt.import1dArray(cluster_names_fn)

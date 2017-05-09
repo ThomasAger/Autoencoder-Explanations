@@ -193,7 +193,8 @@ def convertPPMI(mat):
     for j in range(ncols):
         colMat[:,j] = 0 if colTotals[0,j] == 0 else (1.0 / colTotals[0,j])
         print(j)
-    P = N * mat.toarray() * rowMat * colMat
+    mat = mat.toarray()
+    P = N * mat * rowMat * colMat
     P = np.fmax(np.zeros((nrows,ncols), dtype=np.float64), np.log(P))
     return P
 
@@ -456,8 +457,8 @@ def main(min, max, class_type, classification, raw_fn, extension, cut_first_line
         getVectors(raw_fn, "../data/"+class_type+"/classify/"+classification+"/available_entities.txt", extension, "../data/"+class_type+"/bow/",
                min, max, cut_first_line, get_all, additional_name, make_individual, classification)
     """
-    dt.write2dArray(convertPPMI( sp.csr_matrix(dt.import2dArray("../data/"+class_type+"/bow/frequency/phrases/class-all-"+str(min)+"-" + str(max)+"-"+classification))),
-                    "../data/"+class_type+"/bow/ppmi/class-all-"+str(min)+"-"+str(max)+"-" + classification)
+    bow = sp.csr_matrix(dt.import2dArray("../data/"+class_type+"/bow/frequency/phrases/class-all-"+str(min)+"-" + str(max)+"-"+classification))
+    dt.write2dArray(convertPPMI( bow), "../data/"+class_type+"/bow/ppmi/class-all-"+str(min)+"-"+str(max)+"-" + classification)
 
     printIndividualFromAll(class_type, "ppmi", min, max, class_type, classification)
     #printIndividualFromAll(class_type, "binary/phrases", min, max, class_type, classification)

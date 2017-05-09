@@ -124,9 +124,9 @@ class NeuralNetwork:
         entity_vectors = np.asarray(dt.import2dArray(self.vector_path))
         print("Imported vectors", len(entity_vectors), len(entity_vectors[0]))
 
-
-        nnet_vectors = np.asarray(dt.import2dArray(get_nnet_vectors_path))
-        print("Imported vectors", len(entity_vectors), len(entity_vectors[0]))
+        if get_nnet_vectors_path is not None:
+            nnet_vectors = np.asarray(dt.import2dArray(get_nnet_vectors_path))
+            print("Imported vectors", len(entity_vectors), len(entity_vectors[0]))
 
         entity_classes = np.asarray(dt.import2dArray(self.class_path))
         print("Imported classes", len(entity_classes), len(entity_classes[0]))
@@ -135,8 +135,7 @@ class NeuralNetwork:
         if fine_tune_weights_fn is not None:
             entity_classes = entity_classes.transpose()
             print("Transposed classes, now in form", len(entity_classes), len(entity_classes[0]))
-
-        if len(entity_vectors) != len(entity_classes):
+        elif len(entity_vectors) != len(entity_classes):
             entity_vectors = entity_vectors.transpose()
             print("Transposed vectors, now in form", len(entity_vectors), len(entity_vectors[0]))
 
