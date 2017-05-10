@@ -856,7 +856,6 @@ def shorten2dFloats(floats_fn):
         fa[a] = np.around(fa[a], decimals=4)
     return fa
 
-
 def deleteAllButIndexes(array, indexes):
     old_ind = list(range(len(array)))
     del_ind = np.delete(old_ind, indexes)

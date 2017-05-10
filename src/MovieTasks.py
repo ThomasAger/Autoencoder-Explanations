@@ -416,6 +416,8 @@ writeFromMultiClass("../data/raw/previous work/placeclasses/Foursquareclasses.tx
 match_entities("../data/"+data_type+"/nnet/spaces/entitynames.txt",
     "../data/"+data_type+"/classify/"+classification+"/available_entities.txt",
                "../data/"+data_type+"/rank/numeric/places100projected.txt", classification)
+               """
+"""
 """
 """
 classification = "keywords"
@@ -487,7 +489,7 @@ cut_first_line = True
 """
 
 class_type = "placetypes"
-classification = "all"
+classification = "foursquare"
 raw_fn = "../data/raw/previous work/placevectors/"
 extension = "photos"
 cut_first_line = False

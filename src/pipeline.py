@@ -323,7 +323,6 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
                         file_name = file_name + " tdev"
 
                     file_name = file_name + str(max_depth)
-                    csv_name = "../data/" + data_type + "/rules/tree_csv/" + file_name + ".csv"
                     tree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name, 10000,
                               max_depth=max_depth, balance="balanced", criterion="entropy", save_details=True, cv_splits=cv_splits, split_to_use=splits,
                               data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files, development=dt_dev, limit_entities=limit_entities,
@@ -335,12 +334,10 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
                                       cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
                                       limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn)
 
-                    csv_name = "../data/" + data_type + "/rules/tree_csv/" + file_name + "J48.csv"
                     wekatree.DecisionTree(ranking_fn, classification_path, label_names_fn , cluster_names_fn , file_name,
                        save_details=True, data_type=data_type,
                                       limited_label_fn=limited_label_fn,
                        csv_fn=csv_name, cv_splits=cv_splits, limit_entities=limit_entities, vector_names_fn=vector_names_fn)
-                    csv_name = "../data/" + data_type + "/rules/tree_csv/" + file_name + ".csv"
 
                     if use_pruned:
                         clusters_fn = "../data/"+ data_type + "/rules/clusters/" + file_name + ".txt"
@@ -453,7 +450,7 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
                     tree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name, 10000,
                                           max_depth=max_depth, balance="balanced", criterion="entropy", save_details=True,
                                       data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
-                                      cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
+                                      cv_splits=5, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
                                       limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn)
 
                     tree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name + "None", 10000,
@@ -461,8 +458,8 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
                                       data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
                                       cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
                                       limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn)
-                    csv_name = "../data/" + data_type + "/rules/tree_csv/" + file_name + "J48.csv"
-                    wekatree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name,
+
+                    wekatree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name,
                                           save_details=True, data_type=data_type,
                                           csv_fn=csv_name, cv_splits=cv_splits, limit_entities=limit_entities,
                                           limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn)
@@ -486,21 +483,21 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
                                       rewrite_files=rewrite_files,
                                       classification=classification, lowest_amt=lowest_amt, chunk_amt=chunk_amt,
                                       chunk_id=chunk_id)
-                    file_name = current_fn
-                    rank.getAllRankings(clusters_fn, vector_path, cluster_names_fn, vector_names_fn, 0.2, 1, False,
-                                        file_name,
-                                        False, data_type=data_type, rewrite_files=rewrite_files)
-                    csv_name = "../data/" + data_type + "/rules/tree_csv/" + file_name + "TopDT.csv"
-                    tree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name + "None", 10000,
-                                          max_depth=None, balance="balanced", criterion="entropy", save_details=False,
-                                      data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
-                                      cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=True,
-                                      limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn)
-                    csv_name = "../data/" + data_type + "/rules/tree_csv/" + file_name + "TopDTJ48.csv"
-                    wekatree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name,
-                                          save_details=True, data_type=data_type,
-                                          csv_fn=csv_name, cv_splits=cv_splits, limit_entities=True,
+                        file_name = current_fn
+                        rank.getAllRankings(clusters_fn, vector_path, cluster_names_fn, vector_names_fn, 0.2, 1, False,
+                                            file_name,
+                                            False, data_type=data_type, rewrite_files=rewrite_files)
+                        csv_name = "../data/" + data_type + "/rules/tree_csv/" + file_name + "TopDT.csv"
+                        tree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name + "None", 10000,
+                                              max_depth=None, balance="balanced", criterion="entropy", save_details=False,
+                                          data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
+                                          cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
                                           limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn)
+                        csv_name = "../data/" + data_type + "/rules/tree_csv/" + file_name + "TopDTJ48.csv"
+                        wekatree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name,
+                                              save_details=True, data_type=data_type,
+                                              csv_fn=csv_name, cv_splits=cv_splits, limit_entities=limit_entities,
+                                              limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn)
                     if len(new_file_names) > 1:
                         init_vector_path = vector_path
 
@@ -525,7 +522,7 @@ file_name = "wines ppmi"
 lowest_amt = 50
 highest_amt = 10
 init_vector_path = "../data/"+data_type+"/nnet/spaces/wines100-"+classification_task+".txt"
-"""
+get_nnet_vectors_path = "../data/"+data_type+"/nnet/spaces/wines100.txt"
 """
 data_type = "movies"
 classification_task = "genres"
@@ -539,7 +536,7 @@ init_vector_path = "../data/"+data_type+"/nnet/spaces/films200-"+classification_
 """
 data_type = "placetypes"
 classification_task = "foursquare"
-file_name = "placetypes mds"
+file_name = "placetypes mds 5"
 lowest_amt = 50
 highest_amt = 10
 init_vector_path = "../data/"+data_type+"/nnet/spaces/places100-"+classification_task+".txt"
@@ -553,8 +550,9 @@ class_weight = None
 deep_size = [100]
 ep =2000
 lr = 0.01
-vector_path_replacement = None#"places100-"+classification_task
+vector_path_replacement = None#"places100"
 nnet_dev = False
+"""
 """
 
 hidden_activation = "relu"
@@ -578,7 +576,8 @@ loss="categorical_crossentropy"
 class_weight = "balanced"
 rewrite_files = True
 """
-"""
+
+get_nnet_vectors_path = "../data/"+data_type+"/nnet/spaces/films200.txt"
 hidden_activation = "tanh"
 dropout_noise = 0.5
 output_activation = "sigmoid"
@@ -589,31 +588,30 @@ deep_size = [200]
 ep =100
 lr = 0.01
 rewrite_files = False
-vector_path_replacement = "films200-"+classification_task
+vector_path_replacement = "class-all-100-10-genresd5"#"films200-"+classification_task
 nnet_dev = False
-"""
+
 cutoff_start = 0.2
 is_identity = True
 amount_of_finetune = 1
-
 min_size = 1
 
-min_score = 0.5
+min_score = 0.75
 max_depth = 3
 
 breakoff = True
-score_limit = 0.9
-cluster_multiplier =1 
+score_limit = 2
+cluster_multiplier =2
 epochs=3001
 learn_rate=0.001
-kappa = True
+kappa = False
 dt_dev = False
 add_all_terms = False
 average_ppmi = False
 use_pruned = False
-limit_entities = False
+limit_entities = True
 svm_classify = False
-rewrite_files = False
+rewrite_files = True
 
 amount_to_start = 0
 
@@ -622,7 +620,7 @@ cross_val = 1
 
 
 arcca = False
-threads=50
+threads=3
 chunk_amt = 0
 chunk_id = 0
 variables = [data_type, classification_task, file_name, init_vector_path, hidden_activation,
