@@ -33,7 +33,7 @@ class DecisionTree:
         cluster_names = dt.import1dArray(cluster_names_fn)
         label_names = dt.import1dArray(class_names_fn)
         all_fns = []
-        file_names = ['ACC ' + filename, 'F1 ' + filename]
+        file_names = ['ACC J48' + filename, 'F1 J48' + filename]
         acc_fn = '../data/' + data_type + '/rules/tree_scores/' + file_names[0] + '.scores'
         f1_fn = '../data/' + data_type + '/rules/tree_scores/' + file_names[1] + '.scores'
         all_fns.append(acc_fn)
