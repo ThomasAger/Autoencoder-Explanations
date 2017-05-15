@@ -29,6 +29,7 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
          output_activation, cs, deep_size, classification, direction_count, lowest_amt, loss, development, add_all_terms,
          average_ppmi, optimizer_name, class_weight, amount_to_start, chunk_amt, chunk_id, lr, vector_path_replacement, dt_dev,
          use_pruned, max_depth, min_score, min_size, limit_entities, svm_classify, get_nnet_vectors_path):
+
     jvm.start(max_heap_size="512m")
     if isinstance(deep_size, str):
         epochs = int(epochs)
@@ -42,20 +43,29 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
         amount_to_start = int(amount_to_start)
         deep_size = dt.stringToArray(deep_size)
         if class_weight != 'None':
-            class_weight = float(class_weight)
+            class_weight = dt.stringToArray(class_weight)
         else:
             class_weight = None
         rewrite_files = bool(rewrite_files)
         development = bool(development)
-        add_all_terms = bool(add_all_terms)
         is_identity = bool(is_identity)
         average_ppmi = bool(average_ppmi)
         breakoff = bool(breakoff)
-        kappa = bool(kappa)
         score_limit = float(score_limit)
         amount_of_finetune = int(amount_of_finetune)
-
-
+        svm_classify = bool(svm_classify)
+        limit_entities = bool(limit_entities)
+        min_size = int(min_size)
+        min_score = float(min_score)
+        max_depth = int(max_depth)
+        use_pruned = float(use_pruned)
+        dt_dev = bool(dt_dev)
+        lr = float(lr)
+        chunk_id = int(chunk_id)
+        chunk_amt = int(chunk_amt)
+        amount_to_start = int(amount_to_start)
+        kappa = bool(kappa)
+        add_all_terms = bool(add_all_terms)
 
     cv_splits = cross_val
     init_vector_path = init_vector_path
@@ -627,16 +637,29 @@ variables = [data_type, classification_task, file_name, init_vector_path, hidden
                                cluster_multiplier, threads, dropout_noise, learn_rate, epochs, cross_val, ep,
                                output_activation, cutoff_start, deep_size, classification_task, highest_amt,
                                lowest_amt, loss, nnet_dev, add_all_terms, average_ppmi, trainer, class_weight,
-                               amount_to_start, chunk_amt, chunk_id, min_size]
+                               amount_to_start, chunk_amt, chunk_id, lr, vector_path_replacement, dt_dev, use_pruned, max_depth,
+                               min_score, min_size, limit_entities, svm_classify, get_nnet_vectors_path]
 
 sys.stdout.write("python pipeline.py ")
 
+variable_string = "python pipeline.py "
+string_variables = ""
+counter = 0
 for v in variables:
+    new_v = dt.stripPunctuation(str(v))
+    if len(new_v) < 15 and counter > 1:
+        string_variables = string_variables + str(new_v) + " "
     if type(v) == str:
         v = '"' + v + '"'
     if type(v) == list:
         v = '"' + str(v) + '"'
     sys.stdout.write(str(v) + " ")
+    variable_string += str(v) + " "
+    counter += 1
+
+
+if arcca is False:
+    dt.write1dArray([variable_string], "../Data/"+data_type+"/cmds/" + string_variables + ".txt")
 
 print("")
 args = sys.argv[1:]
@@ -666,7 +689,7 @@ if len(args) > 0:
     highest_amt = args[22]
     lowest_amt = args[23]
     loss = args[24]
-    development = args[25]
+    nnet_dev = args[25]
     add_all_terms = args[26]
     average_ppmi = args[27]
     trainer = args[28]
@@ -677,7 +700,15 @@ if len(args) > 0:
     lr = args[33]
     vector_path_replacement = args[34]
     dt_dev = args[35]
-    
+    use_pruned = args[36]
+    max_depth = args[37]
+    min_score = args[38]
+    min_size = args[39]
+    limit_entities = args[40]
+    svm_classify = args[41]
+    get_nnet_vectors_path = args[42]
+
+
 
 if  __name__ =='__main__':main(data_type, classification_task, file_name, init_vector_path, hidden_activation,
                                is_identity, amount_of_finetune, breakoff, kappa, score_limit, rewrite_files,
