@@ -135,6 +135,12 @@ class NeuralNetwork:
         if fine_tune_weights_fn is not None:
             entity_classes = entity_classes.transpose()
             print("Transposed classes, now in form", len(entity_classes), len(entity_classes[0]))
+            """
+            # IF Bow
+            if len(entity_vectors[0]) != len(entity_classes[0]):
+                entity_vectors = entity_vectors.transpose()
+                print("Transposed vectors, now in form", len(entity_vectors), len(entity_vectors[0]))
+            """
         elif len(entity_vectors) != len(entity_classes):
             entity_vectors = entity_vectors.transpose()
             print("Transposed vectors, now in form", len(entity_vectors), len(entity_vectors[0]))
@@ -318,7 +324,10 @@ class NeuralNetwork:
                     dt.write_csv(csv_fn, file_names, scores, key)
 
             if save_outputs:
-                self.output_clusters = models[m].predict(entity_vectors)
+                if get_nnet_vectors_path is not None:
+                    self.output_clusters = models[m].predict(nnet_vectors)
+                else:
+                    self.output_clusters = models[m].predict(entity_vectors)
                 dt.write2dArray(self.output_clusters.transpose(), rank_fn)
 
 
@@ -580,11 +589,12 @@ init_vector_path = "../data/"+data_type+"/nnet/spaces/films200-genres100ndcg0.81
 """
 data_type = "placetypes"
 classification_task = "geonames"
-file_name = "placetypes mds"
 lowest_amt = 50
 highest_amt = 10
 #init_vector_path = "../data/"+data_type+"/bow/ppmi/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+classification_task
+#file_name = "placetypes bow"
 init_vector_path = "../data/"+data_type+"/nnet/spaces/places100-"+classification_task+".txt"
+file_name = "placetypes mds"
 """
 hidden_activation = "relu"
 dropout_noise = 0.5
@@ -604,14 +614,14 @@ tune_vals = True
 class_weight = None
 optimizer_name = "adadelta"
 loss="categorical_crossentropy"
-development = False
+development = True
 cv_splits = 5
 rewrite_files = True
 threads=3
 
 variables = [loss, output_activation, optimizer_name, hidden_activation, ep, dropout_noise, cv_splits, deep_size,
              init_vector_path, data_type, rewrite_files, development, class_weight, classification_task, file_name]
-
+""""
 print("python nnet.py", end=' ')
 for v in range(len(variables)):
     if v == len(variables)-1:
@@ -622,6 +632,7 @@ for v in range(len(variables)):
 
 args = sys.argv[1:]
 print(args)
+
 if len(args) > 0:
     loss = args[0]
     output_activation = args[1]
@@ -638,7 +649,7 @@ if len(args) > 0:
     class_weight = args[12]
     classification_task = args[13]
     file_name = args[14]
-
+    """
 if  __name__ =='__main__':main(loss, output_activation, optimizer_name, hidden_activation, ep, dropout_noise, cv_splits, deep_size,
              init_vector_path, data_type, rewrite_files, development, class_weight, classification_task, file_name, tune_vals)
 

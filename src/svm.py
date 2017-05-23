@@ -144,10 +144,12 @@ class SVM:
         y_train = 0
         y_test = 0
         vectors = np.asarray(dt.import2dArray(vector_path))
+        print("imported vectors")
         if not getting_directions:
             classes = np.asarray(dt.import2dArray(class_path))
+            print("imported classes")
         property_names = dt.import1dArray(property_names_fn)
-
+        print("imported propery names")
         if chunk_amt > 0:
             if chunk_id == chunk_amt-1:
                 chunk = int(len(property_names) / chunk_amt)
@@ -172,7 +174,9 @@ class SVM:
         self.x_test = x_test
         self.y_train = y_train
         self.y_test = y_test
+
         if self.get_f1 is False:
+            print("running svms")
             kappa_scores, directions, ktau_scores, property_names = self.runAllSVMs(y_test, y_train,property_names, file_name,
                                                                svm_type, getting_directions, threads)
 

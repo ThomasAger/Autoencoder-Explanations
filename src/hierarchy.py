@@ -320,8 +320,6 @@ def getBreakOffClusters(vectors, directions, scores, names, score_limit, dissimi
     clustersExist = True
     reached_max = False
     clusters_to_take = max_clusters
-    if largest_clusters:
-        max_clusters = len(clusters)
     c = 0
     # Find the most similar direction and check if its combination has a kappa score loss larger than the score limit
     failed_array = []
@@ -403,10 +401,14 @@ def getBreakOffClusters(vectors, directions, scores, names, score_limit, dissimi
             output_directions.append(clusters[c].getClusterDirection())
             output_names.append(clusters[c].getNames())
 
-    if largest_clusters:
-        largest_indexes = dt.sortIndexesByArraySize(output_names)
+    indexes_to_delete = []
+    if largest_clusters > 1:
+        for n in range(len(output_names)):
+            if len(output_names[n]) < largest_clusters:
+                indexes_to_delete.append(n)
 
-
+    output_directions = np.delete(output_directions, indexes_to_delete , axis=0)
+    output_names = np.delete(output_names, indexes_to_delete, axis=0)
 
     all_directions = []
     all_names = []
@@ -474,7 +476,7 @@ def getBreakOffClusters(vectors, directions, scores, names, score_limit):
 """
 def initClustering(vector_fn, directions_fn, scores_fn, names_fn, amt_to_start, profiling, dissimilarity_threshold,
                    max_clusters, score_limit, file_name, kappa, similarity_threshold, add_all_terms=False,
-                   data_type="movies", largest_clusters=False,
+                   data_type="movies", largest_clusters=1,
                  rewrite_files=False, lowest_amt=0, highest_amt=0, classification="genres", min_score=0, min_size = 1):
 
     output_directions_fn =  "../data/" + data_type + "/cluster/hierarchy_directions/"+file_name+".txt"

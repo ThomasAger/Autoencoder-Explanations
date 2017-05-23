@@ -8,7 +8,7 @@ import random
 import theano
 from theano.tensor.shared_randomstreams import RandomStreams
 
-def getVectors(input_folder, file_names_fn, extension, output_folder, only_words_in_x_entities,
+def  getVectors(input_folder, file_names_fn, extension, output_folder, only_words_in_x_entities,
                words_without_x_entities, cut_first_line=False, get_all=False, additional_name="", make_individual=True,
                classification=""):
     file_names = dt.import1dArray(file_names_fn)
@@ -95,7 +95,14 @@ def getVectors(input_folder, file_names_fn, extension, output_folder, only_words
                     continue
                     #print("Deleted phrase", phrase)
 
+        # Import entities specific to the thing
+        # Trim the phrases of entities that aren't included in the classfication
+        if class_type != "all" and class_type != "mixed" and class_type != "genres" and class_type != "ratings":
+            classification_entities = dt.import1dArray("../data/" + data_type + "/classify/" + classification + "/available_entities.txt")
+            all_phrases_complete = dt.match_entities(all_phrases_complete, classification_entities, file_names)
+
         all_phrases_complete = np.asarray(all_phrases_complete).transpose()
+
 
         indexes_to_delete = []
         for a in range(len(all_phrases_complete)):
@@ -358,28 +365,131 @@ def match_entities(entity_fn, t_entity_fn, entities_fn, classification):
     print("Amount found", amount_found)
     dt.write2dArray(matched_entities, entities_fn[:len(entities_fn)-4] + "-" + classification + ".txt")
 
+# Parsing tree in this format
+
+"""
+	labyrinth
+	DELETE
+		cairn
+	border
+		boundary line
+			state line
+		DELETE
+			shoreline
+				beach
+					sandy beach
+					topless beach
+						nude beach
+				coastline
+					foreshore
+			wetland
+				marsh
+					salt marsh
+"""
+
+# Where everything with an higher indentation than a prior class is a member of that class
+# And a class ends once its indentation is met
+# So the algorithm will add things to a class until that indentation changes recursively
+# For each indented class inside of the main class "site"
+
 def parseTree(tree_fn, output_fn):
-    tree = dt.import1dArray(tree_fn)
+    with open(tree_fn, "r") as infile:
+        tree = [line for line in infile]
     tree = tree[1:]
+    indexes_to_delete = []
     for l in range(len(tree)):
-        if dt.removeEverythingFromString(tree[l]) == "DELETE":
-            del tree[l]
+        tree[l] = re.sub(r'\s\*', ' ', tree[l])
+        if "DELETE" in tree[l]:
+            indexes_to_delete.append(l)
+
+    tree = np.delete(tree, indexes_to_delete)
+    entities_classes = {}
+
+    for l in range(len(tree)):
+        removed_asterisk = re.sub(r'\*', ' ', tree[l])
+        stripped = removed_asterisk.strip()
+        entities_classes[stripped] = []
 
     classes = []
     current_tabs = 0
     current_tabs_index = 0
     current_tab_class = []
-    for l in range(len(tree)):
 
-        tabs = len(tree[l]) - len(dt.removeEverythingFromString(tree[l]))
-        if tabs != current_tabs:
-            current_tabs = tabs
-            current_tab_class.append(tree[l])
+    class_names = []
+    next_index = 0
+    for l in range(len(tree)-1):
+        removed_asterisk = re.sub(r'\*', ' ', tree[l])
+        entity = removed_asterisk.strip()
 
-        else:
-            current_tabs_index = l
+        tabs = len(tree[l]) - len(tree[l].strip())
+        next_tabs = len(tree[l+1]) - len(tree[l+1].strip())
+        print("TRY", entity, tabs, next_tabs)
+        # If the tree has a subclass
+        if (next_tabs) > tabs and tabs <= 4:
+            print("START", entity, tabs, next_tabs)
+            for j in range(l+1, len(tree)):
+                inner_tabs = len(tree[j]) - len(tree[j].strip())
+                removed_asterisk = re.sub(r'\*', ' ', tree[j])
+                inner_entity = removed_asterisk.strip()
+                print("ADD", inner_entity)
+                if inner_tabs <= tabs:
+                    print("END", inner_tabs, tabs)
+                    break
+                else:
+                    entities_classes[entity].append(inner_entity)
+                    print("found", inner_entity, "added to", entity)
+
+    for key, value in list(entities_classes.items()):
+        if len(value) <= 0:
+            del entities_classes[key]
+
+    #Now create the 2d matrix versions
+
+    print("k")
 
 
+def importCertificates(cert_fn, entity_fn):
+    all_lines = dt.import1dArray(cert_fn)[14:]
+    en = dt.import1dArray(entity_fn)
+    en_name = []
+    en_year = []
+    for e in range(len(en)):
+        en_name.append(dt.removeEverythingFromString(en[e].split()[0]))
+        en_year.append(en[e].split()[1])
+
+    ratings = {
+        "UK:PG": [],
+        "UK:12": [],
+        "UK:12A": [],
+        "UK:18": [],
+        "USA:PG": [],
+        "USA:PG-13": [],
+        "USA:R": []
+    }
+
+    for line in all_lines:
+        line = line.split()
+        entity_name = dt.removeEverythingFromString(line[0])
+        entity_year = line[1]
+
+        found = False
+        for n in range(len(en_name)):
+            if entity_name == en_name[n] and entity_year == en_year[n]:
+                found = True
+        if found:
+            entity_rating = line[2]
+            if entity_rating in ratings:
+                ratings[entity_rating].append(entity_name)
+
+
+
+
+
+    #Merge 12/12A
+
+
+
+#parseTree("../data/raw/previous work/placeclasses/CYCClasses.txt", "../data/placetypes/classify/OpenCYC/")
 
 
 """
@@ -404,19 +514,19 @@ match_entities("../data/"+data_type+"/nnet/spaces/entitynames.txt",
     "../data/"+data_type+"/classify/"+classification+"/available_entities.txt",
                "../data/"+data_type+"/rank/numeric/places100projected.txt", classification)
 """
-classification = "foursquare"
-data_type = "placetypes"
+classification = "genres"
+data_type = "movies"
 """
 writeFromMultiClass("../data/raw/previous work/placeclasses/GeonamesClasses.txt", "../data/placetypes/classify/Geonames/",
                     "../data/raw/previous work/placeNames.txt", data_type="placetypes", classify_name="Geonames")
 
 writeFromMultiClass("../data/raw/previous work/placeclasses/Foursquareclasses.txt", "../data/placetypes/classify/Foursquare/",
                     "../data/raw/previous work/placeNames.txt", data_type="placetypes", classify_name="Foursquare")
-
+"""
 match_entities("../data/"+data_type+"/nnet/spaces/entitynames.txt",
     "../data/"+data_type+"/classify/"+classification+"/available_entities.txt",
-               "../data/"+data_type+"/rank/numeric/places100projected.txt", classification)
-               """
+               "../data/"+data_type+"/nnet/spaces/films100.txt", classification)
+
 """
 """
 """
@@ -451,14 +561,10 @@ additional_name = ""
 make_individual = True
 """
 def main(min, max, class_type, classification, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn):
-    """
-    if classification == "all":
-        getVectors(raw_fn, entity_name_fn, extension, "../data/"+class_type+"/bow/",
-               min, max, cut_first_line, get_all, additional_name, make_individual, classification)
-    else:
-        getVectors(raw_fn, "../data/"+class_type+"/classify/"+classification+"/available_entities.txt", extension, "../data/"+class_type+"/bow/",
-               min, max, cut_first_line, get_all, additional_name, make_individual, classification)
-    """
+
+    getVectors(raw_fn, entity_name_fn, extension, "../data/"+class_type+"/bow/",
+           min, max, cut_first_line, get_all, additional_name, make_individual, classification)
+
     bow = sp.csr_matrix(dt.import2dArray("../data/"+class_type+"/bow/frequency/phrases/class-all-"+str(min)+"-" + str(max)+"-"+classification))
     dt.write2dArray(convertPPMI( bow), "../data/"+class_type+"/bow/ppmi/class-all-"+str(min)+"-"+str(max)+"-" + classification)
 
@@ -487,7 +593,7 @@ raw_fn = "../data/raw/previous work/winevectors/"
 extension = ""
 cut_first_line = True
 """
-
+"""
 class_type = "placetypes"
 classification = "foursquare"
 raw_fn = "../data/raw/previous work/placevectors/"
@@ -501,7 +607,7 @@ additional_name = ""
 make_individual = True
 
 if  __name__ =='__main__':main(min, max, class_type, classification, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn)
-
+"""
 
 """
 dt.write2dArray(convertPPMI( sp.csr_matrix(dt.import2dArray("../data/wines/bow/frequency/phrases/class-all-50"))), "../data/wines/bow/ppmi/class-all-50")

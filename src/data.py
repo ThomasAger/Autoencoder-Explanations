@@ -325,6 +325,8 @@ def findDifference(string1, string2):
 findDifference("moviesppmirankE200DS[200, 100, 50]DN0.3reluCV1SFT0S0L0200ndcg0.8400IT3000.txt",
                "moviesppmirankE200DS[200, 100, 50]DN0.3reluCV1SFT0S0L0200ndcg0.9400IT3000.txt")
 """
+
+
 def write2dCSV(array, name):
     file = open(name, "w")
 
@@ -505,32 +507,48 @@ write1dArray(top250, "filmdata/top250.txt")
 """
 
 #write1dArray(getFns("../data/movies/bow/binary/phrases/"), "../data/movies/bow/phrase_names.txt")
+# Finding the differences between two entities with different bag of words, but similar terms
+def getIndexOfCommonElements(short_list, long_list):
+    index = []
+    for n in range(len(short_list)):
+        for ni in range(len(long_list)):
+            if short_list[n] == long_list[ni]:
+                index.append(ni)
+    return index
 
-def getScoreDifferences(name_word_file1, name_score_file1, name_score_file2, name):
-    word_file1 = open(name_word_file1, "r")
-    score_file1 = open(name_score_file1, "r")
-    word_lines1 = word_file1.readlines()
-    score_lines1 = score_file1.readlines()
-    scores1 = []
-    words1 = []
-    for s in score_lines1:
-        scores1.append(float(s.strip()))
-    for w in word_lines1:
-        words1.append(w.strip())
-    score_file2 = open(name_score_file2, "r")
-    score_lines2 = score_file2.readlines()
-    scores2 = []
-    words2 = []
-    for s in score_lines2:
-        scores2.append(float(s))
+
+def getScoreDifferences(name_word_file1, name_score_file1, name_word_file2, name_score_file2, name, data_type):
+
+    scores1 = import1dArray(name_score_file1, "f")
+    scores2 = import1dArray(name_score_file2, "f")
+
+    words1 = import1dArray(name_word_file1, "s")
+    words2 = import1dArray(name_word_file2, "s")
+
     differences_list = []
-    for i in range(len(score_lines1)):
+    if len(words1) > len(words2):
+        same_element_index = getIndexOfCommonElements(words2, words1)
+        scores1 = np.asarray(scores1)[same_element_index]
+        words1 = np.asarray(words1)[same_element_index]
+    else:
+        same_element_index = getIndexOfCommonElements(words1, words2)
+        scores2 = np.asarray(scores2)[same_element_index]
+        words2 = np.asarray(words2)[same_element_index]
+
+    for i in range(len(scores1)):
         differences_list.append(scores1[i] - scores2[i])
     most_different_words = [x for (y,x) in sorted(zip(differences_list,words1))]
     differences_list = sorted(differences_list)
-    write1dArray(most_different_words, "../data/movies/SVM/most_different_words_" + name + ".txt")
-    write1dArray(differences_list, "../data/movies/SVM/most_different_values_" + name + ".txt")
-
+    write1dArray(most_different_words, "../data/"+data_type+"/SVM/difference/most_different_words_" + name + ".txt")
+    write1dArray(differences_list, "../data/"+data_type+"/SVM/difference/most_different_values_" + name + ".txt")
+data_type = "placetypes"
+filepath = "../data/"+data_type+"/"
+"""
+getScoreDifferences(filepath + "bow/names/50-10-geonames.txt", filepath + "ndcg/placetypes mds E2000 DS[100] DN0.6 CTgeonames HAtanh CV1 S0 DevFalse LETrue SFT0L050.txt",
+                    filepath + "bow/names/50-10-all.txt", filepath + "ndcg/placetypes mds E2000 DS[100] DN0.6 CTgeonames HAtanh CV1 S0 DevFalse LEFalse SFT0L050.txt",
+                    "placetypes mds E3000 DS[100] DN0.6 CTgeonames HAtanh CV1 S0 DevFalse SFT0L0 LE", data_type)
+print("done doing score diff")
+"""
 def convertToPPMIOld(freq_arrays_fn, term_names_fn):
     file = open(freq_arrays_fn)
     for line in file:

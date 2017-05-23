@@ -20,6 +20,20 @@ class DecisionTree:
                  csv_fn="../data/temp/no_csv_provided.csv", rewrite_files=False, split_to_use=-1, development=False,
                  limit_entities=False, limited_label_fn=None, vector_names_fn=None):
 
+
+        all_fns = []
+        file_names = ['ACC ' + filename, 'F1 ' + filename]
+        acc_fn = '../data/' + data_type + '/rules/tree_scores/' + file_names[0] + '.scores'
+        f1_fn = '../data/' + data_type + '/rules/tree_scores/' + file_names[1] + '.scores'
+        all_fns.append(acc_fn)
+        all_fns.append(f1_fn)
+
+        if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
+            print("Skipping task", "DecisionTree")
+            return
+        else:
+            print("Running task", "DecisionTree")
+
         vectors = np.asarray(dt.import2dArray(features_fn)).transpose()
 
         labels = np.asarray(dt.import2dArray(classes_fn, "i"))
@@ -32,24 +46,12 @@ class DecisionTree:
         print("vectors", len(vectors), len(vectors[0]))
         cluster_names = dt.import2dArray(cluster_names_fn, "s")
         label_names = dt.import1dArray(class_names_fn)
-        all_fns = []
-        file_names = ['ACC ' + filename, 'F1 ' + filename]
-        acc_fn = '../data/' + data_type + '/rules/tree_scores/' + file_names[0] + '.scores'
-        f1_fn = '../data/' + data_type + '/rules/tree_scores/' + file_names[1] + '.scores'
-        all_fns.append(acc_fn)
-        all_fns.append(f1_fn)
-
 
         if limit_entities is False:
             vector_names = dt.import1dArray(vector_names_fn)
             limited_labels = dt.import1dArray(limited_label_fn)
             vectors = np.asarray(dt.match_entities(vectors, limited_labels, vector_names))
 
-        if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
-            print("Skipping task", "DecisionTree")
-            return
-        else:
-            print("Running task", "DecisionTree")
 
 
         for l in range(len(label_names)):
@@ -154,7 +156,14 @@ class DecisionTree:
                     graph_png_fn = '../data/' + data_type + '/rules/tree_images/' + label_names[l] + " " + filename + "CV" + str(i) + '.png'
                     output_names = []
                     for c in cluster_names:
-                        output_names.append(c[0])
+                        line = ""
+                        counter = 0
+                        for i in range(len(c)):
+                            line = line + c[i] + " "
+                            counter += 1
+                            if counter == 2:
+                                break
+                        output_names.append(line)
                     tree.export_graphviz(clf, feature_names=output_names, class_names=class_names, out_file=dot_file_fn,
                                          max_depth=max_depth)
                     rewrite_dot_file = dt.import1dArray(dot_file_fn)

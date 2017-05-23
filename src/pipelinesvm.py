@@ -146,7 +146,7 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
             for x in range(len(deep_size)):
             #for x in range(len([0])):
                 file_name = new_file_names[x]
-                #vector_path_replacement = "films200-genres"
+                vector_path_replacement = "films100-genres"
                 #file_name = vector_path_replacement
                 """ Begin Filename """
 
@@ -161,8 +161,8 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
                 svm_type = "svm"
                 highest_count = direction_count
 
-                vector_path = loc + data_type + "/nnet/spaces/"+new_file_names[x]+".txt"
-                #vector_path = loc+ data_type + "/nnet/spaces/"+vector_path_replacement+".txt"
+                #vector_path = loc + data_type + "/nnet/spaces/"+new_file_names[x]+".txt"
+                vector_path = loc+ data_type + "/nnet/spaces/"+vector_path_replacement+".txt"
                 bow_path =loc+ data_type + "/bow/binary/phrases/class-all-"+str(lowest_amt)+"-"+str(highest_count)+"-"+classification_task
                 property_names_fn = loc+ data_type + "/bow/names/" + str(lowest_amt) + "-" +str(highest_count)+"-"+ classification_task +".txt"
                 directions_fn = loc + data_type + "/svm/directions/" + file_name + ".txt"
@@ -223,12 +223,12 @@ init_vector_path = "../data/"+data_type+"/nnet/spaces/wines100trimmed.txt"
 """
 
 data_type = "movies"
-classification_task = "keywords"
+classification_task = "genres"
 file_name = "movies mds"
 lowest_amt = 100
 highest_amt = 10
 #init_vector_path = "../data/"+data_type+"/nnet/spaces/films200-"+classification_task+".txt"
-file_name = "movies mds E100 DS[200] DN0.5 CTkeywords HAtanh CV1 S0 DevFalse SFT0L0100ndcg0.81400 tdev3000FTL0"
+file_name = "films100-genres"
 init_vector_path = "../data/"+data_type+"/nnet/spaces/"+file_name+".txt"
 """
 data_type = "placetypes"
