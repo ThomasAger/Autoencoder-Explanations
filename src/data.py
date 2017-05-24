@@ -811,6 +811,10 @@ def removeEverythingFromString(string):
     string = string.lower()
     string = "".join(string.split())
     return string
+def lowercaseSplit(string):
+    string = string.lower()
+    string = "".join(string.split())
+    return string
 
 def remove_indexes(indexes, array_fn):
     array = np.asarray(import1dArray(array_fn))

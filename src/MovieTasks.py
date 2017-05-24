@@ -7,6 +7,7 @@ from collections import defaultdict
 import random
 import theano
 from theano.tensor.shared_randomstreams import RandomStreams
+import pandas as pd
 
 def  getVectors(input_folder, file_names_fn, extension, output_folder, only_words_in_x_entities,
                words_without_x_entities, cut_first_line=False, get_all=False, additional_name="", make_individual=True,
@@ -447,15 +448,17 @@ def parseTree(tree_fn, output_fn):
 
     print("k")
 
-
-def importCertificates(cert_fn, entity_fn):
+import pickle
+def importCertificates(cert_fn, entity_name_fn):
     all_lines = dt.import1dArray(cert_fn)[14:]
-    en = dt.import1dArray(entity_fn)
+    en = dt.import1dArray(entity_name_fn)
     en_name = []
     en_year = []
     for e in range(len(en)):
-        en_name.append(dt.removeEverythingFromString(en[e].split()[0]))
-        en_year.append(en[e].split()[1])
+        split = en[e].split()
+        en_year.append(split[len(split)-1])
+        name = "".join(split[:len(split)-1])
+        en_name.append(dt.lowercaseSplit(name))
 
     ratings = {
         "UK:PG": [],
@@ -466,28 +469,69 @@ def importCertificates(cert_fn, entity_fn):
         "USA:PG-13": [],
         "USA:R": []
     }
+    all_ratings = defaultdict(list)
+    recently_found_name = ""
+    recently_found_year = ""
+    counter = 0
 
-    for line in all_lines:
-        line = line.split()
-        entity_name = dt.removeEverythingFromString(line[0])
-        entity_year = line[1]
+    temp_fn = "../data/temp/cert_dict.pickle"
 
-        found = False
-        for n in range(len(en_name)):
-            if entity_name == en_name[n] and entity_year == en_year[n]:
-                found = True
-        if found:
-            entity_rating = line[2]
-            if entity_rating in ratings:
-                ratings[entity_rating].append(entity_name)
+    if dt.fileExists(temp_fn) is False:
+        for line in all_lines:
+            line = line.split("\t")
+            name_and_year = line[0]
+            split_ny = line[0].split("{")[0]
+            split_ny = split_ny.split()
+            for i in range(len(split_ny)-1, -1, -1):
+                if "{" in split_ny[i]:
+                    del split_ny[i]
+            entity_year_bracketed = split_ny[len(split_ny)-1]
+            entity_year = entity_year_bracketed[1:len(entity_year_bracketed)-1]
+            entity_name = dt.lowercaseSplit("".join(split_ny[:len(split_ny)-1]))
 
+            found = False
+            skip = False
+            if recently_found_name == entity_name and recently_found_year == entity_year:
+                skip = True
+            if not skip:
+                if not found:
+                    for n in range(len(en_name)):
+                        if entity_name == en_name[n] and entity_year == en_year[n]:
+                            found = True
+                            break
+                if found:
+                    entity_rating = line[len(line)-1]
+                    print("found", entity_name, entity_year, entity_rating)
+                    all_ratings[entity_rating].append(entity_name)
+                    if entity_rating in ratings:
+                        ratings[entity_rating].append(entity_name)
+            recently_found_name = entity_name
+            recently_found_year = entity_year
+            counter += 1
+            if counter % 1000 == 0:
+                print(counter)
+        # Store data (serialize)
+        with open(temp_fn, 'wb') as handle:
+            pickle.dump(ratings, handle, protocol=pickle.HIGHEST_PROTOCOL)        # Store data (serialize)
+        with open("../data/temp/cert_all_dict.pickle", 'wb') as handle:
+            pickle.dump(all_ratings, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
+    # Load data (deserialize)
+    with open(temp_fn, 'rb') as handle:
+        ratings = pickle.load(handle)
+    if dt.fileExists("../data/temp/cert_all_dict.pickle"):
+        with open("../data/temp/cert_all_dict.pickle", 'rb') as handle:
+            all_ratings = pickle.load(handle)
 
+    total = 0
 
+    print(total)
 
     #Merge 12/12A
 
-
+cert_fn = "../data/raw/imdb/certs/certificates.list"
+entity_name_fn = "../data/movies/nnet/spaces/entitynames.txt"
+importCertificates(cert_fn, entity_name_fn)
 
 #parseTree("../data/raw/previous work/placeclasses/CYCClasses.txt", "../data/placetypes/classify/OpenCYC/")
 
@@ -523,10 +567,11 @@ writeFromMultiClass("../data/raw/previous work/placeclasses/GeonamesClasses.txt"
 writeFromMultiClass("../data/raw/previous work/placeclasses/Foursquareclasses.txt", "../data/placetypes/classify/Foursquare/",
                     "../data/raw/previous work/placeNames.txt", data_type="placetypes", classify_name="Foursquare")
 """
+"""
 match_entities("../data/"+data_type+"/nnet/spaces/entitynames.txt",
     "../data/"+data_type+"/classify/"+classification+"/available_entities.txt",
                "../data/"+data_type+"/nnet/spaces/films100.txt", classification)
-
+"""
 """
 """
 """
@@ -578,14 +623,14 @@ def main(min, max, class_type, classification, raw_fn, extension, cut_first_line
 
 min=50
 max=10
-"""
+
 class_type = "movies"
-classification = "genres"
+classification = "all"
 raw_fn = "../data/raw/previous work/movievectors/tokens/"
 extension = "film"
 cut_first_line = True
 entity_name_fn = "../data/raw/previous work/filmIds.txt"
-"""
+
 """
 class_type = "wines"
 classification = "all"
@@ -600,14 +645,14 @@ raw_fn = "../data/raw/previous work/placevectors/"
 extension = "photos"
 cut_first_line = False
 entity_name_fn = "../data/"+class_type+"/nnet/spaces/entitynames.txt"
-
+"""
 get_all = False
 additional_name = ""
 #make_individual = True
 make_individual = True
 
-if  __name__ =='__main__':main(min, max, class_type, classification, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn)
-"""
+#if  __name__ =='__main__':main(min, max, class_type, classification, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn)
+
 
 """
 dt.write2dArray(convertPPMI( sp.csr_matrix(dt.import2dArray("../data/wines/bow/frequency/phrases/class-all-50"))), "../data/wines/bow/ppmi/class-all-50")
