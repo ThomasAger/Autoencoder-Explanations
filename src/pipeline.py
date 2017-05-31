@@ -197,8 +197,7 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
                 file_name = new_file_names[x]
 
                 if vector_path_replacement is not None:
-                    file_name = vector_path_replacement
-                    vector_path = loc + data_type + "/nnet/spaces/"+file_name+".txt"
+                    vector_path = vector_path_replacement
                 """ Begin Filename """
 
                 is_identity = is_identity
@@ -226,8 +225,6 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
                 class_names_fn = property_names_fn
 
                 cluster_amt = deep_size[x] * cluster_multiplier
-
-
 
                 """ Begin Methods """
                 print(file_name)
@@ -339,6 +336,7 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
                         limited_label_fn = None
                     ranking_fn = loc + data_type + "/rank/numeric/" + file_name + ".txt"
 
+
                     csv_name = loc + data_type + "/rules/tree_csv/" + file_name + ".csv"
 
                     csv_fns_dt[counter] = csv_name
@@ -346,6 +344,8 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
 
                     rank.getAllRankings(clusters_fn, vector_path, cluster_names_fn , vector_names_fn, 0.2, 1, False, file_name,
                                         False, data_type=data_type, rewrite_files=rewrite_files)
+                    if skip_nn:
+                        file_name = file_name + " " + classification_task
 
                     if dt_dev:
                         file_name = file_name + " tdev"
@@ -564,11 +564,11 @@ init_vector_path = loc+data_type+"/nnet/spaces/wines100-"+classification_task+".
 """
 
 data_type = "movies"
-classification_task = "genres"
+classification_task = "ratings"
 file_name = "movies mds"
 lowest_amt = 100
 highest_amt = 10
-init_vector_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
+init_vector_path = loc+data_type+"/nnet/spaces/films100-ratings.txt"
 #init_vector_path = loc+data_type+"/nnet/spaces/films200-"+classification_task+".txt"
 #file_name = "films200-genres100ndcg0.85200 tdev3004FTL0"
 #init_vector_path = loc+data_type+"/nnet/spaces/"+file_name+".txt"
@@ -589,7 +589,7 @@ if limit_entities:
 else:
     get_nnet_vectors_path = loc+data_type+"/nnet/spaces/places100.txt"
 """
-
+"""
 hidden_activation = "tanh"
 dropout_noise = 0.6
 output_activation = "softmax"
@@ -599,16 +599,10 @@ class_weight = None
 deep_size = [100]
 ep =2000
 lr = 0.01
-vector_path_replacement = "films100-genres"
+vector_path_replacement = "films100-ratings"
 nnet_dev = False
 """
 
-hidden_activation = "relu"
-dropout_noise = 0.5
-output_activation = "sigmoid"
-cutoff_start = 0.2
-ep=200
-"""
 """
 hidden_activation = "tanh"
 dropout_noise = 0.2
@@ -624,7 +618,7 @@ loss="categorical_crossentropy"
 class_weight = "balanced"
 rewrite_files = True
 """
-"""
+
 hidden_activation = "tanh"
 dropout_noise = 0.5
 output_activation = "sigmoid"
@@ -635,12 +629,12 @@ deep_size = [200]
 ep =100
 lr = 0.01
 rewrite_files = False
-vector_path_replacement = "films100-"+classification_task
+vector_path_replacement = loc+data_type+"/nnet/spaces/films100-ratings.txt"
 nnet_dev = False
 
-limit_entities = True
-get_nnet_vectors_path = None
-"""
+limit_entities = False
+get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100.txt"
+
 cutoff_start = 0.2
 is_identity = True
 amount_of_finetune = 1
@@ -652,7 +646,7 @@ largest_cluster = 2
 breakoff = True
 score_limit = 0.95
 cluster_multiplier =500000
-kappa = False
+kappa = True
 dt_dev = True
 add_all_terms = False
 average_ppmi = False
@@ -663,8 +657,8 @@ epochs=3002
 learn_rate=0.001
 max_depth = 3
 
-limit_entities = False
-get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100.txt"
+#limit_entities = False
+#get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 
 amount_to_start = 0
 skip_nn = True
