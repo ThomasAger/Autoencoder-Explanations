@@ -40,21 +40,22 @@ class SVM:
 
     x_train, x_test, get_kappa, get_f1, data_type, classification, lowest_amt, higher_amt, y_train, y_test = None, None, False, False, "", "", 0, 0, None, None
     def runSVM(self, property_name):
-
-        y = dt.import1dArray("../data/" + self.data_type + "/bow/binary/phrases/class-" + property_name + "-" + str(
+        if self.classification == "all":
+            y = dt.import1dArray("../data/" + self.data_type + "/bow/binary/phrases/class-" + property_name)
+        else:
+            y = dt.import1dArray("../data/" + self.data_type + "/bow/binary/phrases/class-" + property_name + "-" + str(
             self.lowest_amt) + "-" + str(self.higher_amt) + "-" + self.classification)
-        y_train = y
-        y_test = y
+
         #x_train, y_train = dt.balanceClasses(x_train, y_train)
         clf = svm.LinearSVC(class_weight="balanced")
 
-        clf.fit(self.x_train, y_train)
+        clf.fit(self.x_train, y)
 
         direction = clf.coef_.tolist()[0]
         y_pred = clf.predict(self.x_test)
         y_pred = y_pred.tolist()
         f1 = 0.0
-        kappa_score = cohen_kappa_score(y_test, y_pred)
+        kappa_score = cohen_kappa_score(y, y_pred)
 
 
         ktau = 0.0
@@ -160,7 +161,6 @@ class SVM:
 
 
         if not getting_directions:
-            vectors = vectors.transpose()
             x_train, x_test, y_train, y_test = train_test_split(vectors, classes, test_size=0.3, random_state=0)
         else:
             x_train = vectors
@@ -212,9 +212,9 @@ def main(vectors_fn, classes_fn, property_names, training_size, file_name, lowes
 
 
 data_type = "movies"
-classify = "genres"
-file_name = "films200-genres100ndcg0.85200 tdev3004FTL0 E100 DS[200] DN0.5 CTgenres HAtanh CV1 S0 DevFalse SFT0L0100ndcg0.95200MC1MS0.7533000FT"
-vector_path = "../data/"+data_type+"/rank/numeric/" + file_name + ".txt"
+classify = "ratings"
+file_name = "films100-ratings"
+vector_path = "../data/"+data_type+"/nnet/spaces/" + file_name + ".txt"
 classification_path = "../data/"+data_type+"/classify/" + classify + "/class-All"
 class_names_fn = "../data/"+data_type+"/classify/" + classify + "/names.txt"
 lowest_amt = 100

@@ -37,11 +37,16 @@ def importNumpyVectors(numpy_vector_path=None):
     movie_vectors = list(reversed(zip(*movie_vectors)))
     movie_vectors = np.asarray(movie_vectors)
     return movie_vectors
-
+def convertLine(line):
+    line = list(map(float, line.strip().split()))
+    return line
 def import1dArray(file_name, file_type="s"):
     with open(file_name, "r") as infile:
         if file_type == "f":
-            array = [float(line.strip()) for line in infile]
+            array = []
+            lines = infile.readlines()
+            for line in lines:
+                array.append(float(line.strip()))
         elif file_type == "i":
             array = [int(line.strip()) for line in infile]
         else:
@@ -805,7 +810,15 @@ def getNonZero(class_names_fn, file_name):
         print(np.count_nonzero(class_all[c]))
 
 #getNonZero("../data/movies/classify/genres/names.txt", "../data/movies/classify/genres/class-all")
-
+import string
+import re
+def keepNumbers(string):
+    s = stripPunctuation(string)
+    s = string.lower()
+    s = "".join(s.split())
+    numbers = re.compile('\d+(?:\.\d+)?')
+    s = numbers.findall(s)
+    return s
 def removeEverythingFromString(string):
     string = stripPunctuation(string)
     string = string.lower()
@@ -889,7 +902,6 @@ def deleteAllButIndexes(array, indexes):
     return array
 
 def match_entities(entities, t_names, names):
-    indexes_to_delete = []
     amount_found = 0
     for n in range(len(names)):
         names[n] = removeEverythingFromString(names[n])
@@ -901,7 +913,6 @@ def match_entities(entities, t_names, names):
             matched_name = t_names[n]
             all_name = names[ni]
             if matched_name == all_name:
-                #print(matched_name)
                 matched_ids.append(ni)
                 amount_found += 1
                 break
