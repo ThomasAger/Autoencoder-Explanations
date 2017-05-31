@@ -98,7 +98,7 @@ def  getVectors(input_folder, file_names_fn, extension, output_folder, only_word
 
         # Import entities specific to the thing
         # Trim the phrases of entities that aren't included in the classfication
-        if class_type != "all" and class_type != "mixed" and class_type != "genres" and class_type != "ratings":
+        if classification != "all" and classification != "mixed" and classification != "genres" and classification != "ratings":
             classification_entities = dt.import1dArray("../data/" + data_type + "/classify/" + classification + "/available_entities.txt")
             all_phrases_complete = dt.match_entities(all_phrases_complete, classification_entities, file_names)
 
@@ -218,7 +218,7 @@ def convertToTfIDF(data_type, lowest_count, highest_count, freq_arrays_fn, class
                      "../data/"+data_type+"/bow/tfidf/class-all-"+str(lowest_count)+"-"+str(highest_count)+"-"+str(class_type))
 
 
-def printIndividualFromAll(data_type, type, lowest_count, max, class_type, classification):
+def printIndividualFromAll(data_type, type, lowest_count, max,classification):
     fn = "../data/" + data_type + "/bow/"
     all = np.asarray(dt.import2dArray(fn + type + "/class-all-"+str(lowest_count)+"-"+str(max)+"-"+str(classification)))
     names = dt.import1dArray(fn + "names/"+str(lowest_count)+"-"+str(max)+"-"+str(classification)+".txt")
@@ -558,8 +558,6 @@ match_entities("../data/"+data_type+"/nnet/spaces/entitynames.txt",
     "../data/"+data_type+"/classify/"+classification+"/available_entities.txt",
                "../data/"+data_type+"/rank/numeric/places100projected.txt", classification)
 """
-classification = "genres"
-data_type = "movies"
 """
 writeFromMultiClass("../data/raw/previous work/placeclasses/GeonamesClasses.txt", "../data/placetypes/classify/Geonames/",
                     "../data/raw/previous work/placeNames.txt", data_type="placetypes", classify_name="Geonames")
@@ -605,32 +603,32 @@ get_all = False
 additional_name = ""
 make_individual = True
 """
-def main(min, max, class_type, classification, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn):
+def main(min, max, data_type, classification, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn):
 
-    getVectors(raw_fn, entity_name_fn, extension, "../data/"+class_type+"/bow/",
+    getVectors(raw_fn, entity_name_fn, extension, "../data/"+data_type+"/bow/",
            min, max, cut_first_line, get_all, additional_name, make_individual, classification)
 
-    bow = sp.csr_matrix(dt.import2dArray("../data/"+class_type+"/bow/frequency/phrases/class-all-"+str(min)+"-" + str(max)+"-"+classification))
-    dt.write2dArray(convertPPMI( bow), "../data/"+class_type+"/bow/ppmi/class-all-"+str(min)+"-"+str(max)+"-" + classification)
+    bow = sp.csr_matrix(dt.import2dArray("../data/"+data_type+"/bow/frequency/phrases/class-all-"+str(min)+"-" + str(max)+"-"+classification))
+    dt.write2dArray(convertPPMI( bow), "../data/"+data_type+"/bow/ppmi/class-all-"+str(min)+"-"+str(max)+"-" + classification)
 
-    printIndividualFromAll(class_type, "ppmi", min, max, class_type, classification)
+    printIndividualFromAll(data_type, "ppmi", min, max, classification)
     #printIndividualFromAll(class_type, "binary/phrases", min, max, class_type, classification)
 
-    convertToTfIDF(class_type, min, max, "../data/"+class_type+"/bow/frequency/phrases/class-all-"+str(min)+"-"+str(max)+"-"+classification, classification)
+    convertToTfIDF(data_type, min, max, "../data/"+data_type+"/bow/frequency/phrases/class-all-"+str(min)+"-"+str(max)+"-"+classification, classification)
 
-    printIndividualFromAll(class_type, "tfidf", min, max, class_type, classification)
+    printIndividualFromAll(data_type, "tfidf", min, max, classification)
 
 
 min=50
 max=10
-
+"""
 class_type = "movies"
 classification = "all"
 raw_fn = "../data/raw/previous work/movievectors/tokens/"
 extension = "film"
 cut_first_line = True
 entity_name_fn = "../data/raw/previous work/filmIds.txt"
-
+"""
 """
 class_type = "wines"
 classification = "all"
@@ -638,20 +636,20 @@ raw_fn = "../data/raw/previous work/winevectors/"
 extension = ""
 cut_first_line = True
 """
-"""
-class_type = "placetypes"
+
+data_type = "placetypes"
 classification = "foursquare"
 raw_fn = "../data/raw/previous work/placevectors/"
 extension = "photos"
 cut_first_line = False
-entity_name_fn = "../data/"+class_type+"/nnet/spaces/entitynames.txt"
-"""
-get_all = False
+entity_name_fn = "../data/"+data_type+"/nnet/spaces/entitynames.txt"
+
+get_all = Falseq
 additional_name = ""
 #make_individual = True
 make_individual = True
 
-#if  __name__ =='__main__':main(min, max, class_type, classification, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn)
+if  __name__ =='__main__':main(min, max, data_type, classification, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn)
 
 
 """

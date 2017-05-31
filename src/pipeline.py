@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-
+arcca = True
+if arcca:
+    loc = "/scratch/c1214824/data/"
+else:
+    loc = "../data/"
 import numpy as np
 import data as dt
-from keras.regularizers import l2
-from keras.optimizers import SGD, Adagrad, Adam, RMSprop, Adadelta, Adamax, Nadam
 from sklearn.metrics import f1_score, accuracy_score
-from keras.models import Sequential
-from keras.layers.core import Dense, Dropout
 import cluster
 import rank
 import finetune_outputs as fto
@@ -15,7 +15,12 @@ import svm
 import tree
 import hierarchy
 import ndcg
-import nnet
+if not arcca:
+    import nnet
+    from keras.regularizers import l2
+    from keras.optimizers import SGD, Adagrad, Adam, RMSprop, Adadelta, Adamax, Nadam
+    from keras.models import Sequential
+    from keras.layers.core import Dense, Dropout
 import wekatree
 from sklearn.model_selection import KFold
 from sklearn.preprocessing import MultiLabelBinarizer
@@ -30,7 +35,7 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
          output_activation, cs, deep_size, classification, direction_count, lowest_amt, loss, development, add_all_terms,
          average_ppmi, optimizer_name, class_weight, amount_to_start, chunk_amt, chunk_id, lr, vector_path_replacement, dt_dev,
          use_pruned, max_depth, min_score, min_size, limit_entities, svm_classify, get_nnet_vectors_path, arcca, loc, largest_cluster,
-         skip_nn):
+         skip_nn, max_score):
 
 
     #jvm.start(max_heap_size="512m")
@@ -77,6 +82,7 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
         if get_nnet_vectors_path == 'None':
             get_nnet_vectors_path = None
         skip_nn = dt.toBool(skip_nn)
+        max_score = int(max_score)
 
 
     cv_splits = cross_val
@@ -90,9 +96,9 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
         copy_size = copy_size[1:]
     csv_fns_dt_a.append([])
 
-
-    for d in range(len(deep_size)):
-        csv_fns_nn_a.append([])
+    if skip_nn is False:
+        for d in range(len(deep_size)):
+            csv_fns_nn_a.append([])
 
     split_fns = []
     for s in range(cv_splits):
@@ -116,8 +122,9 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
                 csv_fns_dt.append("")
             copy_size = copy_size[1:]
         csv_fns_dt.append("")
-        for d in range(len(deep_size)):
-            csv_fns_nn.append([])
+        if not skip_nn:
+            for d in range(len(deep_size)):
+                csv_fns_nn.append([])
         data_type = data_type
         threads = threads
         classification_task = classification_task
@@ -157,8 +164,8 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
             randomize_finetune_weights = False
             corrupt_finetune_weights = False
             get_scores = True
-
-            csv_fns_nn[nn_counter] = loc + data_type + "/nnet/csv/" + file_name + ".csv"
+            if not skip_nn:
+                csv_fns_nn[nn_counter] = loc + data_type + "/nnet/csv/" + file_name + ".csv"
             nn_counter+=1
             print("nnet hi", arcca)
             if not arcca and not skip_nn:
@@ -197,8 +204,7 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
                 file_name = new_file_names[x]
 
                 if vector_path_replacement is not None:
-                    file_name = vector_path_replacement
-                    vector_path = loc + data_type + "/nnet/spaces/"+file_name+".txt"
+                    vector_path = vector_path_replacement
                 """ Begin Filename """
 
                 is_identity = is_identity
@@ -258,6 +264,7 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
                     old_vp = vector_path
                     vector_path = get_nnet_vectors_path
                 print(file_name)
+
                 svm.createSVM(vector_path, bow_path, property_names_fn, file_name, lowest_count=lowest_amt,
                   highest_count=highest_count, data_type=data_type, get_kappa=kappa,
                   get_f1=False, svm_type=svm_type, getting_directions=True, threads=threads, rewrite_files=rewrite_files,
@@ -328,7 +335,7 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
                                                  lowest_amt=lowest_amt, highest_amt=highest_count, classification=new_classification_task,
                                                  min_score=min_score, min_size = min_size, largest_clusters=largest_cluster)
                     else:
-                        cluster.getClusters(directions_fn, scores_fn, names_fn, False,  0, 0, file_name, cluster_amt,
+                        cluster.getClusters(directions_fn, scores_fn, names_fn, False,  min_score, max_score, file_name, cluster_amt,
                                             high_threshold, low_threshold, data_type, rewrite_files=rewrite_files)
 
                     """ CLUSTER RANKING """
@@ -339,6 +346,7 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
                         limited_label_fn = None
                     ranking_fn = loc + data_type + "/rank/numeric/" + file_name + ".txt"
 
+
                     csv_name = loc + data_type + "/rules/tree_csv/" + file_name + ".csv"
 
                     csv_fns_dt[counter] = csv_name
@@ -346,11 +354,14 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
 
                     rank.getAllRankings(clusters_fn, vector_path, cluster_names_fn , vector_names_fn, 0.2, 1, False, file_name,
                                         False, data_type=data_type, rewrite_files=rewrite_files)
+                    if skip_nn:
+                        file_name = file_name + " CT" + classification_task
 
                     if dt_dev:
                         file_name = file_name + " tdev"
 
                     file_name = file_name + str(max_depth)
+
                     tree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name, 10000,
                               max_depth=max_depth, balance="balanced", criterion="entropy", save_details=True, cv_splits=cv_splits, split_to_use=splits,
                               data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files, development=dt_dev, limit_entities=limit_entities,
@@ -548,11 +559,7 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
     #jvm.stop()
 
 
-arcca = False
-if arcca:
-    loc = "/scratch/c1214824/data/"
-else:
-    loc = "../data/"
+
 
 """
 data_type = "wines"
@@ -565,10 +572,10 @@ init_vector_path = loc+data_type+"/nnet/spaces/wines100-"+classification_task+".
 
 data_type = "movies"
 classification_task = "genres"
-file_name = "movies mds"
+file_name = "movies pca 100"
 lowest_amt = 100
 highest_amt = 10
-init_vector_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
+init_vector_path = loc+data_type+"/pca/class-all-100-10-genresd100"
 #init_vector_path = loc+data_type+"/nnet/spaces/films200-"+classification_task+".txt"
 #file_name = "films200-genres100ndcg0.85200 tdev3004FTL0"
 #init_vector_path = loc+data_type+"/nnet/spaces/"+file_name+".txt"
@@ -599,7 +606,7 @@ class_weight = None
 deep_size = [100]
 ep =2000
 lr = 0.01
-vector_path_replacement = "films100-genres"
+init_vector_path = loc+data_type+"/pca/class-all-100-10-genresd100"
 nnet_dev = False
 """
 
@@ -647,13 +654,14 @@ amount_of_finetune = 1
 
 min_size = 1
 
-min_score = 0.6
-largest_cluster = 2
+min_score = 0.75
+max_score = 0.65
+largest_cluster = 1
 breakoff = True
-score_limit = 0.95
-cluster_multiplier =500000
+score_limit = 0.9
+cluster_multiplier =2
 kappa = False
-dt_dev = True
+dt_dev = False
 add_all_terms = False
 average_ppmi = False
 use_pruned = False
@@ -662,17 +670,17 @@ rewrite_files = False
 epochs=3002
 learn_rate=0.001
 max_depth = 3
-
+vector_path_replacement = loc+data_type+"/pca/class-all-100-10-genresd100"
 limit_entities = False
-get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100.txt"
+get_nnet_vectors_path = loc+data_type+"/pca/class-all-100-10-genresd100"#"#loc+data_type+"/nnet/spaces/films100.txt"
 
 amount_to_start = 0
 skip_nn = True
 cross_val = 1
+half_and_half = True
 
-
-threads=50
-chunk_amt = 0
+threads=3
+chunk_amt = 20
 chunk_id = 0
 for c in range(chunk_amt):
     chunk_id = c
@@ -683,7 +691,7 @@ for c in range(chunk_amt):
                                    lowest_amt, loss, nnet_dev, add_all_terms, average_ppmi, trainer, class_weight,
                                    amount_to_start, chunk_amt, chunk_id, lr, vector_path_replacement, dt_dev, use_pruned, max_depth,
                                    min_score, min_size, limit_entities, svm_classify, get_nnet_vectors_path, arcca, largest_cluster,
-                 skip_nn]
+                 skip_nn, max_score]
 
     sys.stdout.write("python pipeline.py ")
     variable_string = "python $SRCPATH/pipeline.py "
@@ -715,7 +723,7 @@ for c in range(chunk_amt):
                          "mkdir -p $WDPATH",
                          "cd $WDPATH",
                          "export PYTHONPATH=$SRCPATH",
-                         variable_string], "../data/" + data_type + "/cmds/" + "pipelinesvm" +str(c) + ".sh")
+                         variable_string], "../data/" + data_type + "/cmds/" + "pipeline" +str(c) + ".sh")
 
 print("")
 args = sys.argv[1:]
@@ -766,20 +774,10 @@ if len(args) > 0:
     arcca = args[43]
     largest_cluster = args[44]
     skip_nn = args[45]
+    max_score = args[46]
 
 
-min_score = 0.6
-largest_cluster = 2
-breakoff = True
-score_limit = 0.95
-cluster_multiplier =2
-kappa = False
-dt_dev = True
-add_all_terms = False
-average_ppmi = False
-use_pruned = False
-svm_classify = False
-rewrite_files = False
+
 
 if  __name__ =='__main__':main(data_type, classification_task, file_name, init_vector_path, hidden_activation,
                                is_identity, amount_of_finetune, breakoff, kappa, score_limit, rewrite_files,
@@ -787,4 +785,5 @@ if  __name__ =='__main__':main(data_type, classification_task, file_name, init_v
                                output_activation, cutoff_start, deep_size, classification_task, highest_amt,
                                lowest_amt, loss, nnet_dev, add_all_terms, average_ppmi, trainer, class_weight,
                                amount_to_start, chunk_amt, chunk_id, lr, vector_path_replacement, dt_dev, use_pruned, max_depth,
-                               min_score, min_size, limit_entities, svm_classify, get_nnet_vectors_path, arcca, loc, largest_cluster, skip_nn)
+                               min_score, min_size, limit_entities, svm_classify, get_nnet_vectors_path, arcca, loc,
+                               largest_cluster, skip_nn, max_score)

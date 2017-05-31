@@ -33,6 +33,11 @@ def createMDS(dm, depth):
     return npos
 
 def createSVD(tf, depth):
+    svd = TruncatedSVD(n_components=depth)
+    pos = svd.fit_transform(tf)
+    return pos
+
+def createPCA(tf, depth):
     pca = PCA(n_components=depth)
     pos = pca.fit_transform(tf)
     return pos
@@ -62,8 +67,8 @@ def getDissimilarityMatrix(tf):
             norm_multiplied[ei][ej] = norms[ei] * norms[ej]
         print("dp", ei)
 
-    norm_multiplied = dt.shorten2dFloats(norm_multiplied)
-    dot_product = dt.shorten2dFloats(dot_product)
+    norm_multiplied = dt.shortenFloatsNoFn(norm_multiplied)
+    dot_product = dt.shortenFloatsNoFn(dot_product)
 
     #Get angular differences
     for ei in range(len(tf)):
@@ -82,7 +87,7 @@ def main(data_type, clf, min, max, depth):
                                            + "-" + clf+ "d" + str(depth)
     svd_fn = "../data/"+data_type+"/svd/class-all-" + str(min) + "-" + str(max) \
                                            + "-" + clf + "d" + str(depth)
-    svd_fn = "../data/"+data_type+"/svd/class-all-" + str(min) + "-" + str(max) \
+    pca_fn = "../data/"+data_type+"/pca/class-all-" + str(min) + "-" + str(max) \
                                            + "-" + clf + "d" + str(depth)
     shorten_fn = "../data/" + data_type + "/bow/ppmi/class-all-" + str(min) + "-" + str(max) \
                                            + "-" + clf+ "round"
@@ -120,8 +125,7 @@ def main(data_type, clf, min, max, depth):
                      dm_shorten_fn)
         dm = dt.import2dArray(dm_shorten_fn)
         print("wrote shorten")
-
-
+    """
     if dt.allFnsAlreadyExist([mds_fn]):
         dm = dt.import2dArray(mds_fn)
     else:
@@ -130,11 +134,11 @@ def main(data_type, clf, min, max, depth):
         mds = createMDS(dm, depth)
         dt.write2dArray(mds, mds_fn)
         print("wrote mds")
-
+    """
     # Create SVD
-
     if dt.allFnsAlreadyExist([shorten_fn]):
-        tf = dt.import2dArray(shorten_fn)
+        short = dt.import2dArray(shorten_fn)
+        short = np.asarray(short).transpose()
     else:
         print("starting svd")
         short = dt.shorten2dFloats(term_frequency_fn)
@@ -143,24 +147,30 @@ def main(data_type, clf, min, max, depth):
         print("wrote shorten")
 
     if dt.allFnsAlreadyExist([svd_fn]):
-        dm = dt.import2dArray(svd_fn)
+        svd = dt.import2dArray(svd_fn)
     else:
+        print("begin svd")
         svd = createSVD(short, depth)
         dt.write2dArray(svd, svd_fn)
         print("wrote svd")
 
+    if dt.allFnsAlreadyExist([pca_fn]):
+        pca = dt.import2dArray(pca_fn)
+    else:
+        print("begin pca")
+        pca = createPCA(short, depth)
+        dt.write2dArray(pca, pca_fn)
+        print("wrote pca")
 
-data_type = "movies"
-clf = "genres"
-min=100
+data_type = "placetypes"
+clf = "all"
+min=50
 max=10
-depth = 10
+depth = 100
 
 
 main(data_type, clf, min, max, depth)
 
-depth=5
-main(data_type, clf, min, max, depth)
 
 
 if  __name__ =='__main__':main(data_type, clf, min, max, depth)
