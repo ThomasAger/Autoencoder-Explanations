@@ -10,7 +10,7 @@ from theano.tensor.shared_randomstreams import RandomStreams
 import pandas as pd
 
 def  getVectors(input_folder, file_names_fn, extension, output_folder, only_words_in_x_entities,
-               words_without_x_entities, cut_first_line=False, get_all=False, additional_name="", make_individual=True,
+               words_without_x_entities, cut_first_line=False, get_all=False, additional_name="", use_all_files=None, make_individual=True,
                classification=""):
     file_names = dt.import1dArray(file_names_fn)
     phrase_dict = defaultdict(int)
@@ -405,7 +405,10 @@ def match_entities(entity_fn, t_entity_fn, entities_fn, classification):
 # So the algorithm will add things to a class until that indentation changes recursively
 # For each indented class inside of the main class "site"
 
-def parseTree(tree_fn, output_fn):
+def parseTree(tree_fn, output_fn, entity_names_fn):
+    data_type = "placetypes"
+    class_name = "opencyc"
+    entity_names = dt.import1dArray(entity_names_fn)
     with open(tree_fn, "r") as infile:
         tree = [line for line in infile]
     tree = tree[1:]
@@ -452,13 +455,59 @@ def parseTree(tree_fn, output_fn):
                     entities_classes[entity].append(inner_entity)
                     print("found", inner_entity, "added to", entity)
 
+    found_entities = []
+    found_arrays = []
+    class_names = []
     for key, value in list(entities_classes.items()):
-        if len(value) <= 0:
+        if len(value) < 30:
             del entities_classes[key]
+            continue
+        """ Removing entities that aren't in a list
+        found = False
+        for e in entity_names:
+            if key == e:
+                found = True
+        if not found:
+            del entities_classes[key]
+            continue
+        """
+        for v in value:
+            found_entities.append(v)
+        found_arrays.append(value)
+        class_names.append(key)
+    found_entities = np.unique(np.asarray(found_entities))
+    dt.write1dArray(found_entities, "../data/"+data_type+"/classify/"+class_name+"/available_entities.txt")
 
-    #Now create the 2d matrix versions
+    # Sort keys and values
+    index = np.argsort(class_names)
+    sorted_class_names = []
+    sorted_value_names = []
+    for i in index:
+        sorted_class_names.append(class_names[i])
+        sorted_value_names.append(found_arrays[i])
+    value_indexes = []
+    # Convert values to indexes
+    for v in range(len(sorted_value_names)):
+        value_index = []
+        for g in range(len(sorted_value_names[v])):
+            for e in range(len(found_entities)):
+                if sorted_value_names[v][g] == found_entities[e]:
+                    value_index.append(e)
+        value_indexes.append(value_index)
 
-    print("k")
+    matrix = np.asarray([[0]* len(entities_classes)]*len(found_entities))
+    for c in range(len(sorted_class_names)):
+        print(c)
+        print("-------------------")
+        for v in value_indexes[c]:
+            print(v)
+            matrix[v, c] = 1
+        dt.write1dArray(matrix[c], "../data/placetypes/classify/opencyc/class-" + sorted_class_names[c])
+
+    matrix = np.asarray(matrix)
+
+    dt.write2dArray(matrix, "../data/placetypes/classify/opencyc/class-all")
+
 
 import pickle
 def importCertificates(cert_fn, entity_name_fn):
@@ -697,7 +746,8 @@ convertEntityNamesToIDS("../data/raw/previous work/filmIds.txt", entity_name_fn,
 """
 
 
-#parseTree("../data/raw/previous work/placeclasses/CYCClasses.txt", "../data/placetypes/classify/OpenCYC/")
+parseTree("../data/raw/previous work/placeclasses/CYCClasses.txt", "../data/placetypes/classify/OpenCYC/",
+          "../data/placetypes/classify/OpenCYC/names.txt")
 
 
 """
@@ -769,10 +819,11 @@ get_all = False
 additional_name = ""
 make_individual = True
 """
-def main(min, max, class_type, classification, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn):
+def main(min, max, class_type, classification, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn,
+         use_all_files):
 
     getVectors(raw_fn, entity_name_fn, extension, "../data/"+class_type+"/bow/",
-           min, max, cut_first_line, get_all, additional_name, make_individual, classification)
+           min, max, cut_first_line, get_all, additional_name, use_all_files, make_individual, classification)
 
     bow = sp.csr_matrix(dt.import2dArray("../data/"+class_type+"/bow/frequency/phrases/class-all-"+str(min)+"-" + str(max)+"-"+classification))
     dt.write2dArray(convertPPMI( bow), "../data/"+class_type+"/bow/ppmi/class-all-"+str(min)+"-"+str(max)+"-" + classification)
@@ -790,12 +841,12 @@ min=100
 max=10
 
 class_type = "movies"
-classification = "ratings"
+classification = "all"
 raw_fn = "../data/raw/previous work/movievectors/tokens/"
 extension = "film"
 cut_first_line = True
-entity_name_fn = "../data/"+class_type+"/classify/"+classification+"/entity_ids.txt"
-
+entity_name_fn = "../data/raw/previous work/filmIds.txt"
+use_all_files = False
 """
 class_type = "wines"
 classification = "all"
@@ -816,7 +867,7 @@ additional_name = ""
 #make_individual = True
 make_individual = True
 print("??")
-if  __name__ =='__main__':main(min, max, class_type, classification, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn)
+#if  __name__ =='__main__':main(min, max, class_type, classification, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn, use_all_files)
 
 
 """

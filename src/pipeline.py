@@ -537,14 +537,15 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
         print("GETTING FNS")
         for a in range(len(csv_fns_dt)):
             csv_fns_dt_a[a].append(csv_fns_dt[a])
-        for a in range(len(csv_fns_nn)):
-            csv_fns_nn_a[a].append(csv_fns_nn[a])
+        if not skip_nn:
+            for a in range(len(csv_fns_nn)):
+                csv_fns_nn_a[a].append(csv_fns_nn[a])
 
     for a in range(len(csv_fns_dt_a)):
         dt.averageCSVs(csv_fns_dt_a[a])
-
-    for a in range(len(csv_fns_nn_a)):
-        dt.averageCSVs(csv_fns_nn_a[a])
+    if not skip_nn:
+        for a in range(len(csv_fns_nn_a)):
+            dt.averageCSVs(csv_fns_nn_a[a])
     #jvm.stop()
 
 
@@ -562,7 +563,7 @@ lowest_amt = 50
 highest_amt = 10
 init_vector_path = loc+data_type+"/nnet/spaces/wines100-"+classification_task+".txt"
 """
-
+"""
 data_type = "movies"
 classification_task = "ratings"
 file_name = "movies mds"
@@ -572,23 +573,21 @@ init_vector_path = loc+data_type+"/nnet/spaces/films100-ratings.txt"
 #init_vector_path = loc+data_type+"/nnet/spaces/films200-"+classification_task+".txt"
 #file_name = "films200-genres100ndcg0.85200 tdev3004FTL0"
 #init_vector_path = loc+data_type+"/nnet/spaces/"+file_name+".txt"
-
 """
 data_type = "placetypes"
-classification_task = "geonames"
+classification_task = "opencyc"
 lowest_amt = 50
 highest_amt = 10
 #init_vector_path = "../data/"+data_type+"/bow/ppmi/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+classification_task
 #file_name = "placetypes bow"
 init_vector_path = "../data/"+data_type+"/nnet/spaces/places100-"+classification_task+".txt"
-vector_path_replacement = "places100-"+classification_task
-file_name = "places100-geonames"
+vector_path_replacement = loc+data_type+"/nnet/spaces/places100.txt"
+file_name = "places100"
 limit_entities = False
 if limit_entities:
     get_nnet_vectors_path = None
 else:
     get_nnet_vectors_path = loc+data_type+"/nnet/spaces/places100.txt"
-"""
 """
 hidden_activation = "tanh"
 dropout_noise = 0.6
@@ -603,7 +602,6 @@ vector_path_replacement = "films100-ratings"
 nnet_dev = False
 """
 
-"""
 hidden_activation = "tanh"
 dropout_noise = 0.2
 output_activation = "softmax"
@@ -630,10 +628,11 @@ ep =100
 lr = 0.01
 rewrite_files = False
 vector_path_replacement = loc+data_type+"/nnet/spaces/films100-ratings.txt"
+
+"""
 nnet_dev = False
 
 limit_entities = False
-get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100.txt"
 
 cutoff_start = 0.2
 is_identity = True
@@ -665,7 +664,7 @@ skip_nn = True
 cross_val = 1
 
 
-threads=50
+threads=20
 chunk_amt = 0
 chunk_id = 0
 for c in range(chunk_amt):

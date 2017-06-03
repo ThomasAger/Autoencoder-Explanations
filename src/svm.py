@@ -40,11 +40,9 @@ class SVM:
 
     x_train, x_test, get_kappa, get_f1, data_type, classification, lowest_amt, higher_amt, y_train, y_test = None, None, False, False, "", "", 0, 0, None, None
     def runSVM(self, property_name):
-        if self.classification == "all":
-            y = dt.import1dArray("../data/" + self.data_type + "/bow/binary/phrases/class-" + property_name)
-        else:
-            y = dt.import1dArray("../data/" + self.data_type + "/bow/binary/phrases/class-" + property_name + "-" + str(
-            self.lowest_amt) + "-" + str(self.higher_amt) + "-" + self.classification)
+
+        y = dt.import1dArray("../data/" + self.data_type + "/bow/binary/phrases/class-" + property_name + "-" + str(
+        self.lowest_amt) + "-" + str(self.higher_amt) + "-" + self.classification)
 
         #x_train, y_train = dt.balanceClasses(x_train, y_train)
         clf = svm.LinearSVC(class_weight="balanced")
@@ -210,7 +208,7 @@ def main(vectors_fn, classes_fn, property_names, training_size, file_name, lowes
     SVM(vectors_fn, classes_fn, property_names, lowest_count=lowest_count,
         training_size=training_size, file_name=file_name, largest_count=largest_count)
 
-
+"""
 data_type = "movies"
 classify = "ratings"
 file_name = "films100-ratings"
@@ -224,6 +222,7 @@ rewrite_files = True
 classification = classify
 chunk_amt = 0
 chunk_id = 0
+"""
 """
 createSVM(vector_path, classification_path, class_names_fn, file_name, lowest_count=lowest_amt,
                                   highest_count=highest_count, data_type=data_type, get_kappa=False,
