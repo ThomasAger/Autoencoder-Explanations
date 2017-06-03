@@ -62,9 +62,6 @@ def  getVectors(input_folder, file_names_fn, extension, output_folder, only_word
 
     phrase_sets.append(phrase_list)
     phrase_sets.append(all_phrases)
-
-
-
     counter = 0
     for phrase_list in phrase_sets:
         if not get_all and counter > 0:
@@ -232,13 +229,18 @@ def convertToTfIDF(data_type, lowest_count, highest_count, freq_arrays_fn, class
                      "../data/"+data_type+"/bow/tfidf/class-all-"+str(lowest_count)+"-"+str(highest_count)+"-"+str(class_type))
 
 
-def printIndividualFromAll(data_type, type, lowest_count, max,classification):
+def printIndividualFromAll(data_type, type, lowest_count, max, class_type, classification):
     fn = "../data/" + data_type + "/bow/"
-    all = np.asarray(dt.import2dArray(fn + type + "/class-all-"+str(lowest_count)+"-"+str(max)+"-"+str(classification)))
+
+    all_fn = fn + type + "/class-all-"+str(lowest_count)+"-"+str(max)+"-"+str(classification)
     names = dt.import1dArray(fn + "names/"+str(lowest_count)+"-"+str(max)+"-"+str(classification)+".txt")
-    for c in range(len(all)):
-        dt.write1dArray(all[c], fn+ type+"/class-"+str(names[c]+"-"+str(lowest_count)+"-"+str(max)+"-"+str(classification)))
-        print("Wrote " + str(names[c]))
+    with open(all_fn) as all:
+        c = 0
+        for la in all:
+            convert = dt.convertLine(la)
+            dt.write1dArray(convert, fn+ type+"/class-"+str(names[c]+"-"+str(lowest_count)+"-"+str(max)+"-"+str(classification)))
+            print("Wrote " + str(names[c]))
+            c+=1
 
 def writeClassesFromNames(folder_name, file_names, output_folder):
     names = dt.getFolder(folder_name)
@@ -407,7 +409,10 @@ def match_entities(entity_fn, t_entity_fn, entities_fn, classification):
 # So the algorithm will add things to a class until that indentation changes recursively
 # For each indented class inside of the main class "site"
 
-def parseTree(tree_fn, output_fn):
+def parseTree(tree_fn, output_fn, entity_names_fn):
+    data_type = "placetypes"
+    class_name = "opencyc"
+    entity_names = dt.import1dArray(entity_names_fn)
     with open(tree_fn, "r") as infile:
         tree = [line for line in infile]
     tree = tree[1:]
@@ -454,31 +459,82 @@ def parseTree(tree_fn, output_fn):
                     entities_classes[entity].append(inner_entity)
                     print("found", inner_entity, "added to", entity)
 
+    found_entities = []
+    found_arrays = []
+    class_names = []
     for key, value in list(entities_classes.items()):
-        if len(value) <= 0:
+        if len(value) < 30:
             del entities_classes[key]
+            continue
+        """ Removing entities that aren't in a list
+        found = False
+        for e in entity_names:
+            if key == e:
+                found = True
+        if not found:
+            del entities_classes[key]
+            continue
+        """
+        for v in value:
+            found_entities.append(v)
+        found_arrays.append(value)
+        class_names.append(key)
+    found_entities = np.unique(np.asarray(found_entities))
+    dt.write1dArray(found_entities, "../data/"+data_type+"/classify/"+class_name+"/available_entities.txt")
 
-    #Now create the 2d matrix versions
+    # Sort keys and values
+    index = np.argsort(class_names)
+    sorted_class_names = []
+    sorted_value_names = []
+    for i in index:
+        sorted_class_names.append(class_names[i])
+        sorted_value_names.append(found_arrays[i])
+    value_indexes = []
+    # Convert values to indexes
+    for v in range(len(sorted_value_names)):
+        value_index = []
+        for g in range(len(sorted_value_names[v])):
+            for e in range(len(found_entities)):
+                if sorted_value_names[v][g] == found_entities[e]:
+                    value_index.append(e)
+        value_indexes.append(value_index)
 
-    print("k")
+    matrix = np.asarray([[0]* len(entities_classes)]*len(found_entities))
+    for c in range(len(sorted_class_names)):
+        print(c)
+        print("-------------------")
+        for v in value_indexes[c]:
+            print(v)
+            matrix[v, c] = 1
+        dt.write1dArray(matrix[c], "../data/placetypes/classify/opencyc/class-" + sorted_class_names[c])
+
+    matrix = np.asarray(matrix)
+
+    dt.write2dArray(matrix, "../data/placetypes/classify/opencyc/class-all")
+
 
 import pickle
 def importCertificates(cert_fn, entity_name_fn):
     all_lines = dt.import1dArray(cert_fn)[14:]
     en = dt.import1dArray(entity_name_fn)
+    original_en = dt.import1dArray(entity_name_fn)
     en_name = []
     en_year = []
     for e in range(len(en)):
         split = en[e].split()
         en_year.append(split[len(split)-1])
         name = "".join(split[:len(split)-1])
-        en_name.append(dt.lowercaseSplit(name))
+        en_name.append(dt.removeEverythingFromString(name))
 
+
+    # Initialize ratings dict
     ratings = {
         "UK:PG": [],
         "UK:12": [],
         "UK:12A": [],
+        "UK:15": [],
         "UK:18": [],
+        "USA:G": [],
         "USA:PG": [],
         "USA:PG-13": [],
         "USA:R": []
@@ -486,6 +542,7 @@ def importCertificates(cert_fn, entity_name_fn):
     all_ratings = defaultdict(list)
     recently_found_name = ""
     recently_found_year = ""
+    recently_found_found = False
     counter = 0
 
     temp_fn = "../data/temp/cert_dict.pickle"
@@ -493,37 +550,49 @@ def importCertificates(cert_fn, entity_name_fn):
     if dt.fileExists(temp_fn) is False:
         for line in all_lines:
             line = line.split("\t")
-            name_and_year = line[0]
             split_ny = line[0].split("{")[0]
             split_ny = split_ny.split()
             for i in range(len(split_ny)-1, -1, -1):
                 if "{" in split_ny[i]:
                     del split_ny[i]
             entity_year_bracketed = split_ny[len(split_ny)-1]
-            entity_year = entity_year_bracketed[1:len(entity_year_bracketed)-1]
-            entity_name = dt.lowercaseSplit("".join(split_ny[:len(split_ny)-1]))
 
-            found = False
-            skip = False
-            if recently_found_name == entity_name and recently_found_year == entity_year:
-                skip = True
-            if not skip:
-                if not found:
-                    for n in range(len(en_name)):
-                        if entity_name == en_name[n] and entity_year == en_year[n]:
-                            found = True
-                            break
+            if "(V)" in entity_year_bracketed or "(TV)" in entity_year_bracketed or "(VG)" in entity_year_bracketed:
+                entity_year_bracketed = split_ny[len(split_ny) - 2]
+            try:
+                entity_year = dt.keepNumbers(entity_year_bracketed)[0]
+                entity_name = dt.removeEverythingFromString("".join(split_ny[:len(split_ny)-1]))
+                found = False
+                skip = False
+                if recently_found_name == entity_name and recently_found_year == entity_year:
+                    skip = True
+                    found = recently_found_found
+                if not skip:
+                    if not found:
+                        for n in range(len(en_name)):
+                            if entity_name == en_name[n] and entity_year == en_year[n]:
+                                found = True
+                                break
                 if found:
-                    entity_rating = line[len(line)-1]
+                    if("(" not in line[len(line)-1]):
+                        entity_rating = line[len(line)-1]
+                    else:
+                        entity_rating = line[len(line)-2]
                     print("found", entity_name, entity_year, entity_rating)
                     all_ratings[entity_rating].append(entity_name)
                     if entity_rating in ratings:
                         ratings[entity_rating].append(entity_name)
+            except IndexError:
+                print("IndexError")
+                print(line)
+                print(split_ny)
+                print(entity_year_bracketed)
             recently_found_name = entity_name
             recently_found_year = entity_year
+            recently_found_found = found
             counter += 1
             if counter % 1000 == 0:
-                print(counter)
+                    print(counter)
         # Store data (serialize)
         with open(temp_fn, 'wb') as handle:
             pickle.dump(ratings, handle, protocol=pickle.HIGHEST_PROTOCOL)        # Store data (serialize)
@@ -537,17 +606,152 @@ def importCertificates(cert_fn, entity_name_fn):
         with open("../data/temp/cert_all_dict.pickle", 'rb') as handle:
             all_ratings = pickle.load(handle)
 
-    total = 0
+    top_size = 0
+    for key, value in all_ratings.items():
+        top_size += len(value)
+    print(top_size)
+    top_size = 0
 
-    print(total)
+    new_ratings = defaultdict(list)
+    real_name_dict_fn = "../data/temp/real_name_dict.dict"
+    if dt.fileExists(real_name_dict_fn) is False:
+        # Match the names back to the original names
+        for key, value in all_ratings.items():
+            for r in ratings:
+                if r == key:
+                    top_size += len(value)
+                    for v in range(len(value)):
+                        found = False
+                        for n in range(len(en_name)):
+                            if value[v] == en_name[n]:
+                                found = True
+                                value[v] = original_en[n]
+                                break
+                        if found:
+                            new_ratings[key].append(value[v])
+                    break
+        with open(real_name_dict_fn, 'wb') as handle:
+            pickle.dump(new_ratings, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    else:
+        with open(real_name_dict_fn, 'rb') as handle:
+            new_ratings = pickle.load(handle)
+                # Get the final dict setup
+    final_dict = {
+        "UK-PG": [],
+        "UK-12-12A": [],
+        "UK-18": [],
+        "USA-G": [],
+        "USA-PG-PG13": [],
+        "USA-R": [],
+    }
+
+    # Append the final dict ratings
+    final_dict["UK-PG"].extend(all_ratings["UK:PG"])
+    final_dict["UK-12-12A"].extend(all_ratings["UK:12"])
+    final_dict["UK-12-12A"].extend(all_ratings["UK:12A"])
+    final_dict["UK-12-12A"].extend(all_ratings["UK:15"])
+    final_dict["UK-18"].extend(all_ratings["UK:18"])
+    final_dict["USA-G"].extend(all_ratings["USA:G"])
+    final_dict["USA-PG-PG13"].extend(all_ratings["USA:PG"])
+    final_dict["USA-PG-PG13"].extend(all_ratings["USA:PG13"])
+    final_dict["USA-R"].extend(all_ratings["USA:R"])
+
+    final_name_dict = {
+        "UK-PG": [],
+        "UK-12-12A": [],
+        "UK-18": [],
+        "USA-G": [],
+        "USA-PG-PG13": [],
+        "USA-R": [],
+    }
+
+    # Append the final dict good names
+    final_name_dict["UK-PG"].extend(new_ratings["UK:PG"])
+    final_name_dict["UK-12-12A"].extend(new_ratings["UK:12"])
+    final_name_dict["UK-12-12A"].extend(new_ratings["UK:12A"])
+    final_name_dict["UK-12-12A"].extend(new_ratings["UK:15"])
+    final_name_dict["UK-18"].extend(new_ratings["UK:18"])
+    final_name_dict["USA-G"].extend(new_ratings["USA:G"])
+    final_name_dict["USA-PG-PG13"].extend(new_ratings["USA:PG"])
+    final_name_dict["USA-PG-PG13"].extend(new_ratings["USA:PG13"])
+    final_name_dict["USA-R"].extend(new_ratings["USA:R"])
+
+    # Create a unique list of the entities found
+    entities_found = []
+    for key, items in new_ratings.items():
+        for i in items:
+            entities_found.append(i)
+    entities_found = np.unique(entities_found)
+    print(len(entities_found))
+
+
+    # Get the en_names back...
+    jacked_up_entities_found = []
+    for n in entities_found:
+        new_n = n.split()[:-1]
+        jacked_up_entities_found.append(dt.removeEverythingFromString(" ".join(new_n)))
+
+    classes = [[0]*len(entities_found),[0]*len(entities_found),[0]*len(entities_found),[0]*len(entities_found),
+               [0] * len(entities_found),[0]*len(entities_found)]
+    counter = 0
+    class_names = []
+    for key, items in final_dict.items():
+        for i in items:
+            for e in range(len(jacked_up_entities_found)):
+                if i == jacked_up_entities_found[e]:
+                    classes[counter][e] = 1
+        class_names.append(key)
+        dt.write1dArray(classes[counter], "../data/movies/classify/ratings/class-" +key)
+        counter += 1
+
+    classes = np.asarray(classes).transpose()
+
+    indexes_to_delete = []
+
+    for c in range(len(classes)):
+        found = False
+        for i in classes[c]:
+            if i == 1:
+                found = True
+                break
+        if not found:
+            indexes_to_delete.append(c)
+
+
+    classes = np.delete(classes, indexes_to_delete, axis=0)
+    entities_found = np.delete(entities_found, indexes_to_delete)
+
+    dt.write2dArray(classes, "../data/movies/classify/ratings/class-all")
+    dt.write1dArray(entities_found, "../data/movies/classify/ratings/available_entities.txt")
+    dt.write1dArray(class_names, "../data/movies/classify/ratings/names.txt")
+    print("k")
 
     #Merge 12/12A
+
+def convertEntityNamesToIDS(ID_fn, all_names_fn, individual_names_fn, output_fn):
+    ID_fn = dt.import1dArray(ID_fn)
+    all_names_fn = dt.import1dArray(all_names_fn)
+    individual_names_fn = dt.import1dArray(individual_names_fn)
+    indexes = []
+
+    for n in range(len(all_names_fn)):
+        for name in individual_names_fn:
+            if all_names_fn[n] == name:
+                indexes.append(n)
+    dt.write1dArray(np.asarray(ID_fn)[indexes], output_fn)
+
 
 cert_fn = "../data/raw/imdb/certs/certificates.list"
 entity_name_fn = "../data/movies/nnet/spaces/entitynames.txt"
 #importCertificates(cert_fn, entity_name_fn)
+"""
+convertEntityNamesToIDS("../data/raw/previous work/filmIds.txt", entity_name_fn, "../data/movies/classify/ratings/available_entities.txt",
+                        "../data/movies/classify/ratings/entity_ids.txt")
+"""
 
-#parseTree("../data/raw/previous work/placeclasses/CYCClasses.txt", "../data/placetypes/classify/OpenCYC/")
+
+parseTree("../data/raw/previous work/placeclasses/CYCClasses.txt", "../data/placetypes/classify/OpenCYC/",
+          "../data/placetypes/classify/OpenCYC/names.txt")
 
 
 """
@@ -572,6 +776,8 @@ match_entities("../data/"+data_type+"/nnet/spaces/entitynames.txt",
     "../data/"+data_type+"/classify/"+classification+"/available_entities.txt",
                "../data/"+data_type+"/rank/numeric/places100projected.txt", classification)
 """
+classification = "ratings"
+data_type = "movies"
 """
 writeFromMultiClass("../data/raw/previous work/placeclasses/GeonamesClasses.txt", "../data/placetypes/classify/Geonames/",
                     "../data/raw/previous work/placeNames.txt", data_type="placetypes", classify_name="Geonames")
@@ -617,58 +823,55 @@ get_all = False
 additional_name = ""
 make_individual = True
 """
-def main(min, max, data_type, classification, raw_fn, extension, cut_first_line, additional_name, make_individual,
-         entity_name_fn, use_all_files, minimum_words):
+def main(min, max, class_type, classification, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn,
+         use_all_files):
 
-    getVectors(raw_fn, entity_name_fn, extension, "../data/"+data_type+"/bow/",
-           min, max, cut_first_line, get_all, additional_name, make_individual, classification, use_all_files, minimum_words)
+    getVectors(raw_fn, entity_name_fn, extension, "../data/"+class_type+"/bow/",
+           min, max, cut_first_line, get_all, additional_name, use_all_files, make_individual, classification)
 
-    bow = sp.csr_matrix(dt.import2dArray("../data/"+data_type+"/bow/frequency/phrases/class-all-"+str(min)+"-" + str(max)+"-"+classification))
-    dt.write2dArray(convertPPMI( bow), "../data/"+data_type+"/bow/ppmi/class-all-"+str(min)+"-"+str(max)+"-" + classification)
+    bow = sp.csr_matrix(dt.import2dArray("../data/"+class_type+"/bow/frequency/phrases/class-all-"+str(min)+"-" + str(max)+"-"+classification))
+    dt.write2dArray(convertPPMI( bow), "../data/"+class_type+"/bow/ppmi/class-all-"+str(min)+"-"+str(max)+"-" + classification)
 
-    printIndividualFromAll(data_type, "ppmi", min, max, classification)
-    #printIndividualFromAll(class_type, "bieenary/phrases", min, max, class_type, classification)
+    print("indiviual from all")
+    printIndividualFromAll(class_type, "ppmi", min, max, class_type, classification)
+    #printIndividualFromAll(class_type, "binary/phrases", min, max, class_type, classification)
 
-    convertToTfIDF(data_type, min, max, "../data/"+data_type+"/bow/frequency/phrases/class-all-"+str(min)+"-"+str(max)+"-"+classification, classification)
+    convertToTfIDF(class_type, min, max, "../data/"+class_type+"/bow/frequency/phrases/class-all-"+str(min)+"-"+str(max)+"-"+classification, classification)
 
-    printIndividualFromAll(data_type, "tfidf", min, max, classification)
+    printIndividualFromAll(class_type, "tfidf", min, max, class_type, classification)
 
 
-min=50
+min=100
 max=10
-"""
-data_type = "movies"
+
+class_type = "movies"
 classification = "all"
 raw_fn = "../data/raw/previous work/movievectors/tokens/"
 extension = "film"
 cut_first_line = True
 entity_name_fn = "../data/raw/previous work/filmIds.txt"
-use_all_files = None
+use_all_files = False
 """
-data_type = "wines"
+class_type = "wines"
 classification = "all"
 raw_fn = "../data/raw/previous work/winevectors/"
 extension = ""
 cut_first_line = True
-entity_name_fn = "../data/wines/nnet/spaces/entitynames.txt"
-use_all_files = "../data/raw/previous work/winevectors/"
-minimum_words = 1000
 """
-data_type = "placetypes"
-classification = "all"
+"""
+class_type = "placetypes"
+classification = "foursquare"
 raw_fn = "../data/raw/previous work/placevectors/"
 extension = "photos"
 cut_first_line = False
-entity_name_fn = "../data/"+data_type+"/nnet/spaces/entitynames.txt"
-use_all_files = None
+entity_name_fn = "../data/"+class_type+"/nnet/spaces/entitynames.txt"
 """
 get_all = False
 additional_name = ""
 #make_individual = True
 make_individual = True
-
-if  __name__ =='__main__':main(min, max, data_type, classification, raw_fn, extension, cut_first_line, additional_name,
-                               make_individual, entity_name_fn, use_all_files, minimum_words)
+print("??")
+#if  __name__ =='__main__':main(min, max, class_type, classification, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn, use_all_files)
 
 
 """
