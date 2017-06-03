@@ -190,20 +190,17 @@ def getNDCG(rankings_fn, fn, data_type, lowest_count, rewrite_files=False, highe
     names = dt.import1dArray("../data/" + data_type + "/bow/names/"+str(lowest_count)+"-" + str(highest_count)+"-" +classification+".txt")
     ndcg_a = []
     r = 0
-    with open(rankings_fn) as rankings:
+    with open(rankings_fn) as rankings, open(ppmi_fn) as ppmi:
+        r = 0
         for lr in rankings:
-            c = 0
-            with open(ppmi_fn) as ppmi:
                 for lp in ppmi:
-                    if c == r:
-                        sorted_indices = np.argsort(list(map(float, lr.strip().split())))[::-1]
-                        ndcg = ndcg_from_ranking(list(map(float, lp.strip().split())), sorted_indices)
-                        ndcg_a.append(ndcg)
-                        print(ndcg, names[r], r)
-                        break
-                    c+=1
-            r += 1
-
+                    sorted_indices = np.argsort(list(map(float, lr.strip().split())))[::-1]
+                    ndcg = ndcg_from_ranking(list(map(float, lp.strip().split())), sorted_indices)
+                    ndcg_a.append(ndcg)
+                    print(ndcg, names[r], r)
+                    r+=1
+                    break
+    dt.write1dArray(ndcg_a, ndcg_fn)
 
 class Gini:
     def __init__(self, rankings_fn, ppmi_fn, fn):

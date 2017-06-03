@@ -4,7 +4,6 @@ from collections import OrderedDict
 import unicodedata
 import nltk
 from sklearn.preprocessing import MinMaxScaler
-import seaborn as sns
 
 """
 
