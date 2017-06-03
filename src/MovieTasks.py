@@ -11,8 +11,12 @@ import pandas as pd
 
 def  getVectors(input_folder, file_names_fn, extension, output_folder, only_words_in_x_entities,
                words_without_x_entities, cut_first_line=False, get_all=False, additional_name="", make_individual=True,
-               classification=""):
-    file_names = dt.import1dArray(file_names_fn)
+               classification="", use_all_files="", minimum_words=0):
+    if use_all_files is None:
+        file_names = dt.import1dArray(file_names_fn)
+    else:
+        file_names = dt.getFns(use_all_files)
+
     phrase_dict = defaultdict(int)
     failed_indexes = []
     failed_filenames = []
@@ -24,15 +28,22 @@ def  getVectors(input_folder, file_names_fn, extension, output_folder, only_word
         try:
             full_name = input_folder + file_names[f] + "." + extension
             phrase_list = dt.import2dArray(full_name, "s")
-
             if cut_first_line:
                 phrase_list = phrase_list[1:]
+            word_count = 0
             for p in phrase_list:
-                if p[0] != "all":
-                    phrase_dict[p[0]] += 1
-                else:
-                    print("found class all")
-            working_filenames.append(file_names[f])
+                word_count += int(p[1])
+            if word_count > 1000:
+                for p in phrase_list:
+                    if p[0] != "all":
+                        phrase_dict[p[0]] += 1
+                    else:
+                        print("found class all")
+                working_filenames.append(file_names[f])
+            else:
+                print("Failed, <1k words", file_names[f], f, word_count)
+                failed_filenames.append(file_names[f])
+                failed_indexes.append(f)
         except FileNotFoundError:
             print("Failed to find", file_names[f], f)
             failed_filenames.append(file_names[f])
@@ -51,6 +62,9 @@ def  getVectors(input_folder, file_names_fn, extension, output_folder, only_word
 
     phrase_sets.append(phrase_list)
     phrase_sets.append(all_phrases)
+
+
+
     counter = 0
     for phrase_list in phrase_sets:
         if not get_all and counter > 0:
@@ -531,7 +545,7 @@ def importCertificates(cert_fn, entity_name_fn):
 
 cert_fn = "../data/raw/imdb/certs/certificates.list"
 entity_name_fn = "../data/movies/nnet/spaces/entitynames.txt"
-importCertificates(cert_fn, entity_name_fn)
+#importCertificates(cert_fn, entity_name_fn)
 
 #parseTree("../data/raw/previous work/placeclasses/CYCClasses.txt", "../data/placetypes/classify/OpenCYC/")
 
@@ -603,16 +617,17 @@ get_all = False
 additional_name = ""
 make_individual = True
 """
-def main(min, max, data_type, classification, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn):
+def main(min, max, data_type, classification, raw_fn, extension, cut_first_line, additional_name, make_individual,
+         entity_name_fn, use_all_files, minimum_words):
 
     getVectors(raw_fn, entity_name_fn, extension, "../data/"+data_type+"/bow/",
-           min, max, cut_first_line, get_all, additional_name, make_individual, classification)
+           min, max, cut_first_line, get_all, additional_name, make_individual, classification, use_all_files, minimum_words)
 
     bow = sp.csr_matrix(dt.import2dArray("../data/"+data_type+"/bow/frequency/phrases/class-all-"+str(min)+"-" + str(max)+"-"+classification))
     dt.write2dArray(convertPPMI( bow), "../data/"+data_type+"/bow/ppmi/class-all-"+str(min)+"-"+str(max)+"-" + classification)
 
     printIndividualFromAll(data_type, "ppmi", min, max, classification)
-    #printIndividualFromAll(class_type, "binary/phrases", min, max, class_type, classification)
+    #printIndividualFromAll(class_type, "bieenary/phrases", min, max, class_type, classification)
 
     convertToTfIDF(data_type, min, max, "../data/"+data_type+"/bow/frequency/phrases/class-all-"+str(min)+"-"+str(max)+"-"+classification, classification)
 
@@ -622,34 +637,38 @@ def main(min, max, data_type, classification, raw_fn, extension, cut_first_line,
 min=50
 max=10
 """
-class_type = "movies"
+data_type = "movies"
 classification = "all"
 raw_fn = "../data/raw/previous work/movievectors/tokens/"
 extension = "film"
 cut_first_line = True
 entity_name_fn = "../data/raw/previous work/filmIds.txt"
+use_all_files = None
 """
-"""
-class_type = "wines"
+data_type = "wines"
 classification = "all"
 raw_fn = "../data/raw/previous work/winevectors/"
 extension = ""
 cut_first_line = True
+entity_name_fn = "../data/wines/nnet/spaces/entitynames.txt"
+use_all_files = "../data/raw/previous work/winevectors/"
+minimum_words = 1000
 """
-
 data_type = "placetypes"
-classification = "foursquare"
+classification = "all"
 raw_fn = "../data/raw/previous work/placevectors/"
 extension = "photos"
 cut_first_line = False
 entity_name_fn = "../data/"+data_type+"/nnet/spaces/entitynames.txt"
-
-get_all = Falseq
+use_all_files = None
+"""
+get_all = False
 additional_name = ""
 #make_individual = True
 make_individual = True
 
-if  __name__ =='__main__':main(min, max, data_type, classification, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn)
+if  __name__ =='__main__':main(min, max, data_type, classification, raw_fn, extension, cut_first_line, additional_name,
+                               make_individual, entity_name_fn, use_all_files, minimum_words)
 
 
 """

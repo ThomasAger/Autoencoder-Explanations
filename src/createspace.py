@@ -119,10 +119,7 @@ def main(data_type, clf, min, max, depth):
             dt.write2dArray(dm, dm_fn)
             print("wrote dm")
 
-        dm = dt.import2dArray(dm_shorten_fn)
-
-        dt.write2dArray(dt.shorten2dFloats(dm_fn),
-                     dm_shorten_fn)
+        dt.write2dArray(dt.shorten2dFloats(dm_fn), dm_shorten_fn)
         dm = dt.import2dArray(dm_shorten_fn)
         print("wrote shorten")
     """
@@ -162,12 +159,12 @@ def main(data_type, clf, min, max, depth):
         dt.write2dArray(pca, pca_fn)
         print("wrote pca")
 
-data_type = "placetypes"
+data_type = "wines"
 clf = "all"
+
 min=50
 max=10
 depth = 100
-
 
 main(data_type, clf, min, max, depth)
 

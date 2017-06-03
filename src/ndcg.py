@@ -200,7 +200,6 @@ def getNDCG(rankings_fn, fn, data_type, lowest_count, rewrite_files=False, highe
                         ndcg = ndcg_from_ranking(list(map(float, lp.strip().split())), sorted_indices)
                         ndcg_a.append(ndcg)
                         print(ndcg, names[r], r)
-                        dt.write1dArray(ndcg_a, ndcg_fn)
                         break
                     c+=1
             r += 1

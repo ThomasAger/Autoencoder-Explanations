@@ -41,8 +41,8 @@ class SVM:
     x_train, x_test, get_kappa, get_f1, data_type, classification, lowest_amt, higher_amt, y_train, y_test = None, None, False, False, "", "", 0, 0, None, None
     def runSVM(self, property_name):
         if self.classification == "all":
-            y = dt.import1dArray("../data/" + self.data_type + "/bow/binary/phrases/class-" + property_name)
-        else:
+            y = dt.import1dArray("../data/" + self.data_type + "/bow/binary/phrases/class-" + property_name+ "-" + str(
+            self.lowest_amt) + "-" + str(self.higher_amt) + "-all")
             y = dt.import1dArray("../data/" + self.data_type + "/bow/binary/phrases/class-" + property_name + "-" + str(
             self.lowest_amt) + "-" + str(self.higher_amt) + "-" + self.classification)
 

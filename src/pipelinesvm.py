@@ -224,7 +224,6 @@ init_vector_path = "../data/"+data_type+"/nnet/spaces/wines100trimmed.txt"
 
 data_type = "movies"
 classification_task = "genres"
-file_name = "movies mds"
 lowest_amt = 100
 highest_amt = 10
 #init_vector_path = "../data/"+data_type+"/nnet/spaces/films200-"+classification_task+".txt"
@@ -257,7 +256,6 @@ class_weight = None
 trainer = "adagrad"
 loss="binary_crossentropy"
 
-
 is_identity = True
 amount_of_finetune = 1
 
@@ -273,7 +271,7 @@ average_ppmi = False
 amount_to_start = 1000
 
 cross_val = 1
-loc = "/scratch/c1214824/"
+loc = "/scratch/c1214824/data/"
 vector_path_replacement = loc+ data_type + "/pca/class-all-100-10-genresd100"
 rewrite_files = False
 arcca = True

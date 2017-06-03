@@ -1,0 +1,35 @@
+diff a/src/ndcg.py b/src/ndcg.py	(rejected hunks)
+@@ -186,17 +186,24 @@
+         return
+     else:
+         print("Running task", getNDCG.__name__)
+-
+-    rankings = dt.import2dArray(rankings_fn, "f")
+-    ppmi = np.asarray(dt.import2dArray("../data/" + data_type + "/bow/ppmi/class-all-"+str(lowest_count)+"-" + str(highest_count)+"-" +classification))
++    ppmi_fn = "../data/" + data_type + "/bow/ppmi/class-all-"+str(lowest_count)+"-" + str(highest_count)+"-" +classification
+     names = dt.import1dArray("../data/" + data_type + "/bow/names/"+str(lowest_count)+"-" + str(highest_count)+"-" +classification+".txt")
+     ndcg_a = []
+-    for r in range(len(rankings)):
+-        sorted_indices = np.argsort(rankings[r])[::-1]
+-        ndcg = ndcg_from_ranking(ppmi[r], sorted_indices)
+-        ndcg_a.append(ndcg)
+-        print(ndcg, names[r], r)
+-    dt.write1dArray(ndcg_a, ndcg_fn)
++    r = 0
++    with open(rankings_fn) as rankings:
++        for lr in rankings:
++            c = 0
++            with open(ppmi_fn) as ppmi:
++                for lp in ppmi:
++                    if c == r:
++                        sorted_indices = np.argsort(list(map(float, lr.strip().split())))[::-1]
++                        ndcg = ndcg_from_ranking(list(map(float, lp.strip().split())), sorted_indices)
++                        ndcg_a.append(ndcg)
++                        print(ndcg, names[r], r)
++                        dt.write1dArray(ndcg_a, ndcg_fn)
++                        break
++                    c+=1
++            r += 1
+ 
+ 
+ class Gini:
