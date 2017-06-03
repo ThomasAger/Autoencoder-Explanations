@@ -11,7 +11,7 @@ import time
 def main(data_type, classification_task, file_name, init_vector_path, hidden_activation, is_identity, amount_of_finetune,
          breakoff, kappa, score_limit, rewrite_files, cluster_multiplier, threads, dropout_noise, learn_rate, epochs, cross_val, ep,
          output_activation, cs, deep_size, classification, direction_count, lowest_amt, loss, development, add_all_terms,
-         average_ppmi, optimizer_name, class_weight, amount_to_start, chunk_amt, chunk_id, arcca):
+         average_ppmi, optimizer_name, class_weight, amount_to_start, chunk_amt, chunk_id, arcca, vector_path_replacement):
 
     if arcca:
         loc = "/scratch/c1214824/data/"
@@ -146,7 +146,6 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
             for x in range(len(deep_size)):
             #for x in range(len([0])):
                 file_name = new_file_names[x]
-                vector_path_replacement = "films100-genres"
                 #file_name = vector_path_replacement
                 """ Begin Filename """
 
@@ -162,7 +161,8 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
                 highest_count = direction_count
 
                 #vector_path = loc + data_type + "/nnet/spaces/"+new_file_names[x]+".txt"
-                vector_path = loc+ data_type + "/nnet/spaces/"+vector_path_replacement+".txt"
+                vector_path = vector_path_replacement
+
                 bow_path =loc+ data_type + "/bow/binary/phrases/class-all-"+str(lowest_amt)+"-"+str(highest_count)+"-"+classification_task
                 property_names_fn = loc+ data_type + "/bow/names/" + str(lowest_amt) + "-" +str(highest_count)+"-"+ classification_task +".txt"
                 directions_fn = loc + data_type + "/svm/directions/" + file_name + ".txt"
@@ -224,17 +224,16 @@ init_vector_path = "../data/"+data_type+"/nnet/spaces/wines100trimmed.txt"
 
 data_type = "movies"
 classification_task = "genres"
-file_name = "movies mds"
 lowest_amt = 100
 highest_amt = 10
 #init_vector_path = "../data/"+data_type+"/nnet/spaces/films200-"+classification_task+".txt"
-file_name = "films100-genres"
+file_name = "movies pca 100"
 init_vector_path = "../data/"+data_type+"/nnet/spaces/"+file_name+".txt"
 """
 data_type = "placetypes"
 classification_task = "foursquare"
 file_name = "placetypes ppmi"
-lowest_amt = 50
+lowest_amt = 50t
 highest_amt = 10
 init_vector_path = "../data/"+data_type+"/nnet/spaces/places100-"+classification_task+".txt"
 """
@@ -257,7 +256,6 @@ class_weight = None
 trainer = "adagrad"
 loss="binary_crossentropy"
 
-
 is_identity = True
 amount_of_finetune = 1
 
@@ -273,9 +271,10 @@ average_ppmi = False
 amount_to_start = 1000
 
 cross_val = 1
-
+loc = "/scratch/c1214824/data/"
+vector_path_replacement = loc+ data_type + "/pca/class-all-100-10-genresd100"
 rewrite_files = False
-arcca = False
+arcca = True
 threads=3
 chunk_amt = 20
 chunk_id = 0
@@ -360,4 +359,4 @@ if  __name__ =='__main__':main(data_type, classification_task, file_name, init_v
                                cluster_multiplier, threads, dropout_noise, learn_rate, epochs, cross_val, ep,
                                output_activation, cutoff_start, deep_size, classification_task, highest_amt,
                                lowest_amt, loss, development, add_all_terms, average_ppmi, trainer, class_weight,
-                               amount_to_start, chunk_amt, chunk_id, arcca)
+                               amount_to_start, chunk_amt, chunk_id, arcca, vector_path_replacement)

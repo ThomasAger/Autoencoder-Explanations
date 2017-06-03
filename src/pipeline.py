@@ -563,16 +563,17 @@ lowest_amt = 50
 highest_amt = 10
 init_vector_path = loc+data_type+"/nnet/spaces/wines100-"+classification_task+".txt"
 """
-"""
+
 data_type = "movies"
 classification_task = "ratings"
-file_name = "movies mds"
+file_name = "movies pca 100"
 lowest_amt = 100
 highest_amt = 10
-init_vector_path = loc+data_type+"/nnet/spaces/films100-ratings.txt"
+init_vector_path = loc+data_type+"/pca/class-all-100-10-genresd100"
 #init_vector_path = loc+data_type+"/nnet/spaces/films200-"+classification_task+".txt"
 #file_name = "films200-genres100ndcg0.85200 tdev3004FTL0"
 #init_vector_path = loc+data_type+"/nnet/spaces/"+file_name+".txt"
+vector_path_replacement = loc+data_type+"/pca/class-all-100-10-genresd100"
 """
 data_type = "placetypes"
 classification_task = "opencyc"
@@ -581,13 +582,16 @@ highest_amt = 10
 #init_vector_path = "../data/"+data_type+"/bow/ppmi/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+classification_task
 #file_name = "placetypes bow"
 init_vector_path = "../data/"+data_type+"/nnet/spaces/places100-"+classification_task+".txt"
-vector_path_replacement = loc+data_type+"/nnet/spaces/places100.txt"
-file_name = "places100"
+
+vector_path_replacement = loc+data_type+"/pca/spaces/class-all-50-10-alld100.txt"
+
+file_name = "places pca 100"
 limit_entities = False
 if limit_entities:
     get_nnet_vectors_path = None
 else:
-    get_nnet_vectors_path = loc+data_type+"/nnet/spaces/places100.txt"
+    get_nnet_vectors_path = loc + data_type +"/pca/class-all-50-10-alld100"
+"""
 """
 hidden_activation = "tanh"
 dropout_noise = 0.6
@@ -602,6 +606,7 @@ vector_path_replacement = "films100-ratings"
 nnet_dev = False
 """
 
+"""
 hidden_activation = "tanh"
 dropout_noise = 0.2
 output_activation = "softmax"
@@ -627,9 +632,6 @@ deep_size = [200]
 ep =100
 lr = 0.01
 rewrite_files = False
-vector_path_replacement = loc+data_type+"/nnet/spaces/films100-ratings.txt"
-
-"""
 nnet_dev = False
 
 limit_entities = False
@@ -643,9 +645,9 @@ min_size = 1
 min_score = 0.6
 largest_cluster = 2
 breakoff = True
-score_limit = 0.95
-cluster_multiplier =500000
-kappa = True
+score_limit = 0.94
+cluster_multiplier =2
+kappa = False
 dt_dev = True
 add_all_terms = False
 average_ppmi = False
@@ -656,15 +658,15 @@ epochs=3002
 learn_rate=0.001
 max_depth = 3
 
-#limit_entities = False
-#get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
+limit_entities = False
+get_nnet_vectors_path = loc+data_type+"/pca/class-all-100-10-genresd100"
 
 amount_to_start = 0
 skip_nn = True
 cross_val = 1
 
 
-threads=20
+threads=30
 chunk_amt = 0
 chunk_id = 0
 for c in range(chunk_amt):
@@ -761,18 +763,7 @@ if len(args) > 0:
     skip_nn = args[45]
 
 
-min_score = 0.6
-largest_cluster = 2
-breakoff = True
-score_limit = 0.95
-cluster_multiplier =2
-kappa = False
-dt_dev = True
-add_all_terms = False
-average_ppmi = False
-use_pruned = False
-svm_classify = False
-rewrite_files = False
+
 
 if  __name__ =='__main__':main(data_type, classification_task, file_name, init_vector_path, hidden_activation,
                                is_identity, amount_of_finetune, breakoff, kappa, score_limit, rewrite_files,

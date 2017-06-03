@@ -479,16 +479,13 @@ def nameClustersRemoveOutliersWeightDistance(cluster_directions):
 # Splitting into high and low directions based on threshold
 def splitDirections(directions_fn, scores_fn, names_fn, is_gini, amt_high_directions, amt_low_directions, high_threshold, low_threshold):
     directions = dt.import2dArray(directions_fn)
-    scores = dt.import1dArray(scores_fn)
+    scores = dt.import1dArray(scores_fn, "f")
     names = dt.import1dArray(names_fn)
 
-    for s in range(len(scores)):
-        scores[s] = float(scores[s].strip())
-
-    scores = np.argsort(scores)
-
-    if is_gini is False:
-        scores = np.flipud(scores)
+    high_direction_names = []
+    low_direction_names = []
+    high_directions = []
+    low_directions = []
 
     if amt_high_directions > 0 and amt_low_directions > 0:
         hi = scores[:amt_high_directions]
@@ -496,26 +493,17 @@ def splitDirections(directions_fn, scores_fn, names_fn, is_gini, amt_high_direct
     elif high_threshold > 0 and low_threshold > 0:
         hi = []
         li = []
-        for s in scores:
-            if s >= high_threshold:
-                hi.append(s)
-            elif s >= low_threshold:
-                hi.append(s)
+        for s in range(len(scores)):
+            if scores[s] >= high_threshold:
+                high_directions.append(directions[s])
+                high_direction_names.append(names[s])
+            elif scores[s] >= low_threshold:
+                low_directions.append(directions[s])
+                low_direction_names.append(names[s])
     else:
         print("no thresholds or direction amounts")
         hi = [None]
         li = [None]
-
-    high_direction_names = []
-    low_direction_names = []
-    high_directions = []
-    low_directions = []
-    for h in hi:
-        high_directions.append(directions[h])
-        high_direction_names.append(names[h])
-    for l in li:
-        low_directions.append(directions[l])
-        low_direction_names.append(names[l])
 
     return high_direction_names, low_direction_names, high_directions, low_directions
 
@@ -597,7 +585,8 @@ def getClusters(directions_fn, scores_fn, names_fn, is_gini, amt_high_directions
     hdn, ldn, hd, ld = splitDirections(directions_fn,
                                             scores_fn,
                                             names_fn, is_gini,
-                                       amt_high_directions, amt_low_directions, high_threshold, low_threshold)
+                                       0, 0, amt_high_directions, amt_low_directions)
+
 
     cluster_center_directions, least_similar_cluster_names, cluster_name_dict, least_similar_clusters = createTermClusters(hd, ld, hdn, ldn, amt_of_clusters)
 
