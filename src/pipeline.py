@@ -557,15 +557,14 @@ if arcca:
 else:
     loc = "../data/"
 
-"""
 data_type = "wines"
 classification_task = "types"
-file_name = "wines ppmi"
+file_name = "wines pca 100"
 lowest_amt = 50
 highest_amt = 10
-init_vector_path = loc+data_type+"/nnet/spaces/wines100-"+classification_task+".txt"
+init_vector_path = loc+data_type+"/pca/class-all-50-10-alld100"
+vector_path_replacement = loc+data_type+"/pca/class-all-50-10-alld100"
 """
-
 data_type = "movies"
 classification_task = "ratings"
 file_name = "movies pca 100"
@@ -576,6 +575,7 @@ init_vector_path = loc+data_type+"/pca/class-all-100-10-genresd100"
 #file_name = "films200-genres100ndcg0.85200 tdev3004FTL0"
 #init_vector_path = loc+data_type+"/nnet/spaces/"+file_name+".txt"
 vector_path_replacement = loc+data_type+"/pca/class-all-100-10-genresd100"
+"""
 """
 data_type = "placetypes"
 classification_task = "opencyc"
@@ -661,7 +661,7 @@ learn_rate=0.001
 max_depth = 3
 
 limit_entities = False
-get_nnet_vectors_path = loc+data_type+"/pca/class-all-100-10-genresd100"
+get_nnet_vectors_path = loc+data_type+"/pca/class-all-50-10-alld100"
 
 amount_to_start = 0
 skip_nn = True

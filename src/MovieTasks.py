@@ -11,7 +11,7 @@ import pandas as pd
 
 def  getVectors(input_folder, file_names_fn, extension, output_folder, only_words_in_x_entities,
                words_without_x_entities, cut_first_line=False, get_all=False, additional_name="", make_individual=True,
-               classification="", use_all_files="", minimum_words=0):
+               classification="", use_all_files="", minimum_words=0, data_type=""):
     if use_all_files is None:
         file_names = dt.import1dArray(file_names_fn)
     else:
@@ -53,6 +53,28 @@ def  getVectors(input_folder, file_names_fn, extension, output_folder, only_word
     phrase_sets = []
     # Convert to array so we can sort it
     phrase_list = []
+
+
+    entity_names = dt.import1dArray(file_names_fn)
+    matching_filenames = []
+    failed_fns = []
+    for e in entity_names:
+        found = False
+        for f in working_filenames:
+
+            if "zz" in f:
+                new_f = f[2:]
+            else:
+                new_f = f
+            if dt.removeEverythingFromString(e) == dt.removeEverythingFromString(new_f):
+                matching_filenames.append(f)
+                found = True
+                break
+        if not found:
+            failed_fns.append(e)
+
+    working_filenames = np.unique(np.asarray(matching_filenames))
+
     for key, value in phrase_dict.items():
         if value >= only_words_in_x_entities:
             phrase_list.append(key)
@@ -88,10 +110,33 @@ def  getVectors(input_folder, file_names_fn, extension, output_folder, only_word
         for f in working_filenames:
             all_phrases_complete.append([0]*len(phrase_list))
 
+        all_phrases_complete = np.asarray(all_phrases_complete)
+
         print("Each entity is length", len(all_phrases_complete[0]))
         print("The overall matrix is", len(all_phrases_complete))
 
         # Then, populate the overall bag of words for each film (with all other phrases already set to 0
+
+        completed_index = []
+
+        if data_type == "wines":
+
+            print("wines")
+            """
+            merge_indexes = []
+            for f in range(len(working_filenames)):
+                print(working_filenames[f])
+                for i in range(len(working_filenames)):
+                    if i == f:
+                        continue
+                    for ci in completed_index:
+                        if i == ci:
+                            continue
+                    if "~" in working_filenames[i]:
+                        if working_filenames[f] == working_filenames[i][:-1] or working_filenames[f] == working_filenames[i][2:-1]:
+                            completed_index.append(i)
+                            merge_indexes.append((f, i))
+            """
 
         for f in range(len(working_filenames)):
             n_phrase_list = dt.import2dArray(input_folder + working_filenames[f] + "." + extension, "s")
@@ -107,12 +152,25 @@ def  getVectors(input_folder, file_names_fn, extension, output_folder, only_word
                     continue
                     #print("Deleted phrase", phrase)
 
+        cols_to_delete = []
+        """
+        if data_type == "wines":
+            for mt in merge_indexes:
+                for v in range(len(all_phrases_complete)):
+                    all_phrases_complete[v][mt[0]] += all_phrases_complete[v][mt[1]]
+                cols_to_delete.append(mt[1])
+        """
+        all_phrases_complete = np.delete(all_phrases_complete, cols_to_delete, 1)
+        working_filenames = np.delete(working_filenames, cols_to_delete)
+
         # Import entities specific to the thing
         # Trim the phrases of entities that aren't included in the classfication
         if classification != "all" and classification != "mixed" and classification != "genres" and classification != "ratings":
             classification_entities = dt.import1dArray("../data/" + data_type + "/classify/" + classification + "/available_entities.txt")
             all_phrases_complete = dt.match_entities(all_phrases_complete, classification_entities, file_names)
-
+        elif classification == "all":
+            print("All~~~~~~~~~~~~~~")
+            dt.write1dArray(working_filenames, "../data/"+data_type+"/classify/"+classification+"/available_entities.txt")
         all_phrases_complete = np.asarray(all_phrases_complete).transpose()
 
 
@@ -749,10 +807,10 @@ convertEntityNamesToIDS("../data/raw/previous work/filmIds.txt", entity_name_fn,
                         "../data/movies/classify/ratings/entity_ids.txt")
 """
 
-
+"""
 parseTree("../data/raw/previous work/placeclasses/CYCClasses.txt", "../data/placetypes/classify/OpenCYC/",
           "../data/placetypes/classify/OpenCYC/names.txt")
-
+"""
 
 """
 fns = "../data/movies/classify/genres/class-all"
@@ -823,27 +881,27 @@ get_all = False
 additional_name = ""
 make_individual = True
 """
-def main(min, max, class_type, classification, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn,
+def main(min, max, data_type, class_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn,
          use_all_files):
+    """
+    getVectors(raw_fn, entity_name_fn, extension, "../data/"+data_type+"/bow/",
+           min, max, cut_first_line, get_all, additional_name,  make_individual, class_type, use_all_files, 1000, data_type)
 
-    getVectors(raw_fn, entity_name_fn, extension, "../data/"+class_type+"/bow/",
-           min, max, cut_first_line, get_all, additional_name, use_all_files, make_individual, classification)
-
-    bow = sp.csr_matrix(dt.import2dArray("../data/"+class_type+"/bow/frequency/phrases/class-all-"+str(min)+"-" + str(max)+"-"+classification))
-    dt.write2dArray(convertPPMI( bow), "../data/"+class_type+"/bow/ppmi/class-all-"+str(min)+"-"+str(max)+"-" + classification)
-
+    bow = sp.csr_matrix(dt.import2dArray("../data/"+data_type+"/bow/frequency/phrases/class-all-"+str(min)+"-" + str(max)+"-"+class_type))
+    dt.write2dArray(convertPPMI( bow), "../data/"+data_type+"/bow/ppmi/class-all-"+str(min)+"-"+str(max)+"-" + class_type)
+    """
     print("indiviual from all")
-    printIndividualFromAll(class_type, "ppmi", min, max, class_type, classification)
+    #printIndividualFromAll(data_type, "ppmi", min, max, data_type, class_type)
     #printIndividualFromAll(class_type, "binary/phrases", min, max, class_type, classification)
 
-    convertToTfIDF(class_type, min, max, "../data/"+class_type+"/bow/frequency/phrases/class-all-"+str(min)+"-"+str(max)+"-"+classification, classification)
+    convertToTfIDF(data_type, min, max, "../data/"+data_type+"/bow/frequency/phrases/class-all-"+str(min)+"-"+str(max)+"-"+class_type, class_type)
 
-    printIndividualFromAll(class_type, "tfidf", min, max, class_type, classification)
+    printIndividualFromAll(data_type, "tfidf", min, max, data_type, class_type)
 
 
-min=100
+min=50
 max=10
-
+"""
 class_type = "movies"
 classification = "all"
 raw_fn = "../data/raw/previous work/movievectors/tokens/"
@@ -852,12 +910,13 @@ cut_first_line = True
 entity_name_fn = "../data/raw/previous work/filmIds.txt"
 use_all_files = False
 """
-class_type = "wines"
-classification = "all"
+data_type = "wines"
+class_type = "all"
 raw_fn = "../data/raw/previous work/winevectors/"
 extension = ""
 cut_first_line = True
-"""
+use_all_files =  "../data/raw/previous work/winevectors/"
+entity_name_fn = "../data/"+data_type+"/nnet/spaces/entitynames.txt"
 """
 class_type = "placetypes"
 classification = "foursquare"
@@ -871,7 +930,7 @@ additional_name = ""
 #make_individual = True
 make_individual = True
 print("??")
-#if  __name__ =='__main__':main(min, max, class_type, classification, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn, use_all_files)
+if  __name__ =='__main__':main(min, max, data_type, class_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn, use_all_files)
 
 
 """
