@@ -78,7 +78,7 @@ def getDissimilarityMatrix(tf):
         print(ei)
     return dm
 
-def main(data_type, clf, min, max, depth):
+def main(data_type, clf, min, max, depth, rewrite_files):
     dm_fn = "../data/" + data_type + "/mds/class-all-" + str(min) + "-" + str(max) \
                     + "-" + clf  + "dm"
     dm_shorten_fn = "../data/" + data_type + "/mds/class-all-" + str(min) + "-" + str(max) \
@@ -103,7 +103,7 @@ def main(data_type, clf, min, max, depth):
     #Get MDS
 
     if dt.allFnsAlreadyExist([dm_shorten_fn]) is False:
-        if dt.allFnsAlreadyExist([shorten_fn]):
+        if dt.allFnsAlreadyExist([shorten_fn]) and not rewrite_files:
             tf = dt.import2dArray(shorten_fn)
         else:
             short = dt.shorten2dFloats(term_frequency_fn)
@@ -111,7 +111,7 @@ def main(data_type, clf, min, max, depth):
             tf = np.asarray(short).transpose()
             print("wrote shorten")
 
-        if dt.allFnsAlreadyExist([dm_fn]):
+        if dt.allFnsAlreadyExist([dm_fn]) and not rewrite_files:
             dm = dt.import2dArray(dm_fn)
             print("read dm")
         else:
@@ -133,7 +133,7 @@ def main(data_type, clf, min, max, depth):
         print("wrote mds")
     """
     # Create SVD
-    if dt.allFnsAlreadyExist([shorten_fn]):
+    if dt.allFnsAlreadyExist([shorten_fn]) and not rewrite_files:
         short = dt.import2dArray(shorten_fn)
         short = np.asarray(short).transpose()
     else:
@@ -143,7 +143,7 @@ def main(data_type, clf, min, max, depth):
         tf = np.asarray(short).transpose()
         print("wrote shorten")
 
-    if dt.allFnsAlreadyExist([svd_fn]):
+    if dt.allFnsAlreadyExist([svd_fn]) and not rewrite_files:
         svd = dt.import2dArray(svd_fn)
     else:
         print("begin svd")
@@ -151,7 +151,7 @@ def main(data_type, clf, min, max, depth):
         dt.write2dArray(svd, svd_fn)
         print("wrote svd")
 
-    if dt.allFnsAlreadyExist([pca_fn]):
+    if dt.allFnsAlreadyExist([pca_fn]) and not rewrite_files:
         pca = dt.import2dArray(pca_fn)
     else:
         print("begin pca")
@@ -167,7 +167,7 @@ max=10
 depth = 100
 
 main(data_type, clf, min, max, depth)
+rewrite_files = True
 
 
-
-if  __name__ =='__main__':main(data_type, clf, min, max, depth)
+if  __name__ =='__main__':main(data_type, clf, min, max, depth, rewrite_files)
