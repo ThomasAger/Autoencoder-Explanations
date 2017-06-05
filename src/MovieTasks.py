@@ -83,7 +83,6 @@ def  getVectors(input_folder, file_names_fn, extension, output_folder, only_word
         all_phrases.append(key)
 
     phrase_sets.append(phrase_list)
-    phrase_sets.append(all_phrases)
     counter = 0
     for phrase_list in phrase_sets:
         if not get_all and counter > 0:
@@ -587,17 +586,17 @@ def importCertificates(cert_fn, entity_name_fn):
 
     # Initialize ratings dict
     ratings = {
-        "UK:PG": [],
-        "UK:12": [],
-        "UK:12A": [],
-        "UK:15": [],
-        "UK:18": [],
+        "USA:G": [],
+        "USA:PG": [],
+        "USA:PG-13": [],
+        "USA:R": []
     }
     """
-    "USA:G": [],
-    "USA:PG": [],
-    "USA:PG-13": [],
-    "USA:R": []
+    "UK:PG": [],
+    "UK:12": [],
+    "UK:12A": [],
+    "UK:15": [],
+    "UK:18": [],
     """
     all_ratings = defaultdict(list)
     recently_found_name = ""
@@ -605,7 +604,7 @@ def importCertificates(cert_fn, entity_name_fn):
     recently_found_found = False
     counter = 0
 
-    temp_fn = "../data/temp/uk_cert_dict.pickle"
+    temp_fn = "../data/temp/us_cert_dict.pickle"
 
     if dt.fileExists(temp_fn) is False:
         for line in all_lines:
@@ -657,14 +656,14 @@ def importCertificates(cert_fn, entity_name_fn):
         # Store data (serialize)
         with open(temp_fn, 'wb') as handle:
             pickle.dump(ratings, handle, protocol=pickle.HIGHEST_PROTOCOL)        # Store data (serialize)
-        with open("../data/temp/uk_cert_dict_all.pickle", 'wb') as handle:
+        with open("../data/temp/us_cert_dict_all.pickle", 'wb') as handle:
             pickle.dump(all_ratings, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     # Load data (deserialize)
     with open(temp_fn, 'rb') as handle:
         ratings = pickle.load(handle)
-    if dt.fileExists("../data/temp/uk_cert_dict_all.pickle"):
-        with open("../data/temp/uk_cert_dict_all.pickle", 'rb') as handle:
+    if dt.fileExists("../data/temp/us_cert_dict_all.pickle"):
+        with open("../data/temp/us_cert_dict_all.pickle", 'rb') as handle:
             all_ratings = pickle.load(handle)
 
     top_size = 0
@@ -674,7 +673,7 @@ def importCertificates(cert_fn, entity_name_fn):
     top_size = 0
 
     new_ratings = defaultdict(list)
-    real_name_dict_fn = "../data/temp/uk_real_name_dict.dict"
+    real_name_dict_fn = "../data/temp/us_real_name_dict.dict"
     if dt.fileExists(real_name_dict_fn) is False:
         # Match the names back to the original names
         for key, value in all_ratings.items():
@@ -698,12 +697,18 @@ def importCertificates(cert_fn, entity_name_fn):
             new_ratings = pickle.load(handle)
                 # Get the final dict setup
     final_dict = {
-        "UK-PG": [],
-        "UK-12-12A": [],
-        "UK-18": [],
+        "USA-G": [],
+        "USA-PG-PG13": [],
+        "USA-R": [],
     }
+    """
+    "UK-PG": [],
+    "UK-12-12A": [],
+    "UK-18": [],
+    """
 
     # Append the final dict ratings
+    """
     final_dict["UK-PG"].extend(all_ratings["UK:PG"])
     final_dict["UK-12-12A"].extend(all_ratings["UK:12"])
     final_dict["UK-12-12A"].extend(all_ratings["UK:12A"])
@@ -714,20 +719,22 @@ def importCertificates(cert_fn, entity_name_fn):
     final_dict["USA-PG-PG13"].extend(all_ratings["USA:PG"])
     final_dict["USA-PG-PG13"].extend(all_ratings["USA:PG13"])
     final_dict["USA-R"].extend(all_ratings["USA:R"])
-    """
+
     final_name_dict = {
-        "UK-PG": [],
-        "UK-12-12A": [],
-        "UK-18": [],
+        "USA-G": [],
+        "USA-PG-PG13": [],
+        "USA-R": [],
 
     }
 
     """
-    "USA-G": [],
-    "USA-PG-PG13": [],
-    "USA-R": [],
+    "UK-PG": [],
+    "UK-12-12A": [],
+    "UK-18": [],
     """
+
     # Append the final dict good names
+    """
     final_name_dict["UK-PG"].extend(new_ratings["UK:PG"])
     final_name_dict["UK-12-12A"].extend(new_ratings["UK:12"])
     final_name_dict["UK-12-12A"].extend(new_ratings["UK:12A"])
@@ -738,7 +745,7 @@ def importCertificates(cert_fn, entity_name_fn):
     final_name_dict["USA-PG-PG13"].extend(new_ratings["USA:PG"])
     final_name_dict["USA-PG-PG13"].extend(new_ratings["USA:PG13"])
     final_name_dict["USA-R"].extend(new_ratings["USA:R"])
-    """
+
 
     # Create a unique list of the entities found
     entities_found = []
@@ -755,8 +762,7 @@ def importCertificates(cert_fn, entity_name_fn):
         new_n = n.split()[:-1]
         jacked_up_entities_found.append(dt.removeEverythingFromString(" ".join(new_n)))
 
-    classes = [[0]*len(entities_found),[0]*len(entities_found),[0]*len(entities_found),[0]*len(entities_found),
-               [0] * len(entities_found),[0]*len(entities_found)]
+    classes = [[0]*len(entities_found),[0]*len(entities_found),[0]*len(entities_found)]
     counter = 0
     class_names = []
     for key, items in final_dict.items():
@@ -765,7 +771,7 @@ def importCertificates(cert_fn, entity_name_fn):
                 if i == jacked_up_entities_found[e]:
                     classes[counter][e] = 1
         class_names.append(key)
-        dt.write1dArray(classes[counter], "../data/movies/classify/uk-ratings/class-" +key)
+        dt.write1dArray(classes[counter], "../data/movies/classify/us-ratings/class-" +key)
         counter += 1
 
     classes = np.asarray(classes).transpose()
@@ -784,9 +790,9 @@ def importCertificates(cert_fn, entity_name_fn):
     classes = np.delete(classes, indexes_to_delete, axis=0)
     entities_found = np.delete(entities_found, indexes_to_delete)
 
-    dt.write2dArray(classes, "../data/movies/classify/uk-ratings/class-all")
-    dt.write1dArray(entities_found, "../data/movies/classify/uk-ratings/available_entities.txt")
-    dt.write1dArray(class_names, "../data/movies/classify/uk-ratings/names.txt")
+    dt.write2dArray(classes, "../data/movies/classify/us-ratings/class-all")
+    dt.write1dArray(entities_found, "../data/movies/classify/us-ratings/available_entities.txt")
+    dt.write1dArray(class_names, "../data/movies/classify/us-ratings/names.txt")
     print("k")
 
     #Merge 12/12A
@@ -811,10 +817,11 @@ importCertificates(cert_fn, entity_name_fn)
 convertEntityNamesToIDS("../data/raw/previous work/filmIds.txt", entity_name_fn, "../data/movies/classify/ratings/available_entities.txt",
                         "../data/movies/classify/ratings/entity_ids.txt")
 
-
+"""
 """
 parseTree("../data/raw/previous work/placeclasses/CYCClasses.txt", "../data/placetypes/classify/OpenCYC/",
           "../data/placetypes/classify/OpenCYC/names.txt")
+"""
 """
 
 fns = "../data/movies/classify/genres/class-all"
@@ -887,13 +894,13 @@ make_individual = True
 """
 def main(min, max, data_type, class_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn,
          use_all_files):
-    """
+
     getVectors(raw_fn, entity_name_fn, extension, "../data/"+data_type+"/bow/",
            min, max, cut_first_line, get_all, additional_name,  make_individual, class_type, use_all_files, 1000, data_type)
 
     bow = sp.csr_matrix(dt.import2dArray("../data/"+data_type+"/bow/frequency/phrases/class-all-"+str(min)+"-" + str(max)+"-"+class_type))
     dt.write2dArray(convertPPMI( bow), "../data/"+data_type+"/bow/ppmi/class-all-"+str(min)+"-"+str(max)+"-" + class_type)
-    """
+
     print("indiviual from all")
     #printIndividualFromAll(data_type, "ppmi", min, max, data_type, class_type)
     #printIndividualFromAll(class_type, "binary/phrases", min, max, class_type, classification)
@@ -903,9 +910,9 @@ def main(min, max, data_type, class_type, raw_fn, extension, cut_first_line, add
     printIndividualFromAll(data_type, "tfidf", min, max, data_type, class_type)
 
 
-min=50
+min=100
 max=10
-"""
+
 class_type = "movies"
 classification = "all"
 raw_fn = "../data/raw/previous work/movievectors/tokens/"
@@ -921,6 +928,7 @@ extension = ""
 cut_first_line = True
 use_all_files =  "../data/raw/previous work/winevectors/"
 entity_name_fn = "../data/"+data_type+"/nnet/spaces/entitynames.txt"
+"""
 """
 class_type = "placetypes"
 classification = "foursquare"

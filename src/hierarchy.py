@@ -304,7 +304,8 @@ def getBreakOffClustersMaxScoring(vectors, directions, scores, names, score_limi
 # New method, instead of averaging, compare each individual direction. Start with one cluster and then add more.
 def getBreakOffClusters(vectors, directions, scores, names, score_limit, dissimilarity_threshold, max_clusters,
                             file_name, kappa, similarity_threshold, add_all_terms, data_type, largest_clusters,
-                 rewrite_files=False, lowest_amt=0, highest_amt=0, classification="genres", min_size=1):
+                 rewrite_files=False, lowest_amt=0, highest_amt=0, classification="genres", min_size=1, dissim=0.0,
+                        dissim_amt=0):
 
 
     output_directions_fn =  "../data/" + data_type + "/cluster/hierarchy_directions/"+file_name+".txt"
@@ -312,23 +313,58 @@ def getBreakOffClusters(vectors, directions, scores, names, score_limit, dissimi
     all_directions_fn = "../data/" + data_type + "/cluster/all_directions/" + file_name + ".txt"
     all_names_fn = "../data/" + data_type + "/cluster/all_names/" + file_name + ".txt"
 
+    reached_max = False
+
     clusters = []
     # Initialize a list of indexes to keep track of which directions have been combined
-    clusters.append(Cluster([scores[0]], [directions[0]], [names[0]], data_type, lowest_amt, highest_amt, classification))
-    clusters = np.asarray(clusters)
     all_subsets = []
-    clustersExist = True
-    reached_max = False
-    clusters_to_take = max_clusters
+    # Select cluster centers by how dissimilar they are
+    if dissim > 0:
+        top_dir = []
+        top_ids = []
+        for s in range(len(scores)):
+            if scores[s] >= dissim:
+                top_dir.append(directions[s])
+                top_ids.append(s)
+            if len(top_dir) == dissim_amt:
+                break
+
+        dissim_dir = [directions[0]]
+        dissim_ids = [0]
+        ids_to_ignore = [0]
+
+        while(len(dissim_ids) < max_clusters):
+            ti = st.getNextClusterTerm(dissim_dir, top_dir, ids_to_ignore, 1)
+            print("most dissimilar", names[top_ids[ti]])
+            dissim_dir.append(directions[top_ids[ti]])
+            dissim_ids.append(top_ids[ti])
+
+        reached_max = True
+        for d in dissim_ids:
+            clusters.append(Cluster([scores[d]], [directions[d]], [names[d]], data_type, lowest_amt, highest_amt, classification))
+        directions = np.delete(directions, dissim_ids, 0)
+        names = np.delete(names, dissim_ids)
+        scores = np.delete(scores, dissim_ids)
+    else:
+        clusters.append(Cluster([scores[0]], [directions[0]], [names[0]], data_type, lowest_amt, highest_amt, classification))
+
+    clusters = np.asarray(clusters)
     c = 0
     # Find the most similar direction and check if its combination has a kappa score loss larger than the score limit
     failed_array = []
-    for d in range(1, len(directions)):
+    if dissim > 0 or dissim_amt > 0:
+        start = 0
+    else:
+        start = 1
+    for d in range(start, len(directions)):
         dont_add = False
         print(d, "/", len(directions))
         failed = True
         current_direction = Cluster([scores[d]], [directions[d]], [names[d]], data_type, lowest_amt, highest_amt, classification)
-        if len(clusters) >= max_clusters and reached_max is False:
+
+
+
+        if len(clusters) >= max_clusters and reached_max is False and dissim == 0.0 and dissim_amt == 0:
             print("REACHED MAX CLUSTERS")
             if add_all_terms:
                 reached_max = True
@@ -477,7 +513,8 @@ def getBreakOffClusters(vectors, directions, scores, names, score_limit):
 def initClustering(vector_fn, directions_fn, scores_fn, names_fn, amt_to_start, profiling, dissimilarity_threshold,
                    max_clusters, score_limit, file_name, kappa, similarity_threshold, add_all_terms=False,
                    data_type="movies", largest_clusters=1,
-                 rewrite_files=False, lowest_amt=0, highest_amt=0, classification="genres", min_score=0, min_size = 1):
+                 rewrite_files=False, lowest_amt=0, highest_amt=0, classification="genres", min_score=0, min_size = 1,
+                   dissim=0.0, dissim_amt=0):
 
     output_directions_fn =  "../data/" + data_type + "/cluster/hierarchy_directions/"+file_name+".txt"
     output_names_fn = "../data/" + data_type + "/cluster/hierarchy_names/" + file_name +".txt"
@@ -515,7 +552,7 @@ def initClustering(vector_fn, directions_fn, scores_fn, names_fn, amt_to_start, 
         getBreakOffClusters(vectors, top_directions, top_scores, top_names, score_limit, dissimilarity_threshold,
                                 max_clusters, file_name, kappa, similarity_threshold, add_all_terms, data_type,
                             largest_clusters, rewrite_files=rewrite_files, lowest_amt=lowest_amt, highest_amt=highest_amt,
-                            classification=classification, min_size = min_size)
+                            classification=classification, min_size = min_size, dissim=dissim, dissim_amt=dissim_amt)
 
 
 file_name = "films100"

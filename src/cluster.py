@@ -478,9 +478,9 @@ def nameClustersRemoveOutliersWeightDistance(cluster_directions):
 
 # Splitting into high and low directions based on threshold
 def splitDirections(directions_fn, scores_fn, names_fn, is_gini, amt_high_directions, amt_low_directions, high_threshold, low_threshold):
-    directions = dt.import2dArray(directions_fn)
-    scores = dt.import1dArray(scores_fn, "f")
-    names = dt.import1dArray(names_fn)
+    directions = np.asarray(dt.import2dArray(directions_fn))
+    scores = np.asarray(dt.import1dArray(scores_fn, "f"))
+    names = np.asarray(dt.import1dArray(names_fn))
 
     high_direction_names = []
     low_direction_names = []
@@ -488,11 +488,18 @@ def splitDirections(directions_fn, scores_fn, names_fn, is_gini, amt_high_direct
     low_directions = []
 
     if amt_high_directions > 0 and amt_low_directions > 0:
-        hi = scores[:amt_high_directions]
-        li = scores[amt_high_directions:amt_low_directions+amt_high_directions]
+        ids = np.flipud(np.argsort(scores))
+        names = names[ids]
+        directions = directions[ids]
+        high_directions = directions[:amt_high_directions]
+        low_directions = directions[amt_high_directions:amt_low_directions]
+        high_direction_names = names[:amt_high_directions]
+        low_direction_names = names[amt_high_directions:amt_low_directions]
+        high_directions = high_directions.tolist()
+        low_directions = low_directions.tolist()
+        high_direction_names = high_direction_names.tolist()
+        low_direction_names = low_direction_names.tolist()
     elif high_threshold > 0 and low_threshold > 0:
-        hi = []
-        li = []
         for s in range(len(scores)):
             if scores[s] >= high_threshold:
                 high_directions.append(directions[s])
@@ -512,8 +519,6 @@ def createTermClusters(hv_directions, lv_directions, hv_names, lv_names, amt_of_
     least_similar_clusters = []
     least_similar_cluster_ids = []
     least_similar_cluster_names = []
-    directions_to_add = []
-    names_to_add = []
 
     print("Overall amount of HV directions: ", len(hv_directions))
     # Create high-valued clusters
@@ -521,24 +526,30 @@ def createTermClusters(hv_directions, lv_directions, hv_names, lv_names, amt_of_
     least_similar_clusters.append(hv_directions[0])
     least_similar_cluster_names.append(hv_names[0])
     print("Least Similar Term", hv_names[0])
+
+    hv_to_delete = [0]
     for i in range(len(hv_directions)):
         if i >= amt_of_clusters-1:
-            directions_to_add.append(hv_directions[i])
-            names_to_add.append(hv_names[i])
-            print("Added", hv_names[i], "To the remaining directions to add")
+            break
         else:
             ti = st.getNextClusterTerm(least_similar_clusters, hv_directions, least_similar_cluster_ids, 1)
             least_similar_cluster_ids.append(ti)
             least_similar_clusters.append(hv_directions[ti])
             least_similar_cluster_names.append(hv_names[ti])
+            hv_to_delete.append(ti)
             print(str(i + 1) + "/" + str(amt_of_clusters), "Least Similar Term", hv_names[ti])
 
             # Add remaining high value directions to the low value direction list
-    directions_to_add.reverse()
-    names_to_add.reverse()
-    for i in range(len(directions_to_add)):
-        lv_directions.insert(0, directions_to_add[i])
-        lv_names.insert(0, names_to_add[i])
+
+    hv_directions = np.asarray(hv_directions)
+    hv_names = np.asarray(hv_names)
+
+    hv_directions = np.delete(hv_directions, hv_to_delete, 0)
+    hv_names = np.delete(hv_names, hv_to_delete, 0)
+
+    for i in range(len(hv_directions)):
+        lv_directions.insert(0, hv_directions[i])
+        lv_names.insert(0, hv_names[i])
 
     # Initialize dictionaries for printing / visualizing
     cluster_name_dict = OrderedDict()
@@ -585,7 +596,7 @@ def getClusters(directions_fn, scores_fn, names_fn, is_gini, amt_high_directions
     hdn, ldn, hd, ld = splitDirections(directions_fn,
                                             scores_fn,
                                             names_fn, is_gini,
-                                       0, 0, amt_high_directions, amt_low_directions)
+                                       amt_high_directions, amt_low_directions, high_threshold, low_threshold )
 
 
     cluster_center_directions, least_similar_cluster_names, cluster_name_dict, least_similar_clusters = createTermClusters(hd, ld, hdn, ldn, amt_of_clusters)
