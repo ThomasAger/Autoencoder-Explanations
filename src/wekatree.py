@@ -209,8 +209,6 @@ class DecisionTree:
             dist = cls.distribution_for_instance(inst)
             y_pred.append(pred)
 
-        if save_details:
-            print("Totes saving details now")
 
         return y_pred
 

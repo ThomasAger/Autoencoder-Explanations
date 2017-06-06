@@ -31,8 +31,9 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
          output_activation, cs, deep_size, classification, direction_count, lowest_amt, loss, development, add_all_terms,
          average_ppmi, optimizer_name, class_weight, amount_to_start_a, chunk_amt, chunk_id, lr, vector_path_replacement, dt_dev,
          use_pruned, max_depth, min_score, min_size, limit_entities, svm_classify, get_nnet_vectors_path, arcca, loc, largest_cluster,
-         skip_nn, dissim, dissim_amt_a, hp_opt):
+         skip_nn, dissim, dissim_amt_a, hp_opt, find_most_similar):
 
+    average_csv_fn = file_name
 
     if isinstance(deep_size, str):
         if not hp_opt:
@@ -88,6 +89,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
             get_nnet_vectors_path = None
         skip_nn = dt.toBool(skip_nn)
         dissim = float(dissim)
+        find_most_similar = dt.toBool(find_most_similar)
 
     elif not isinstance(deep_size, str) and not hp_opt:
         dissim_amt_a = [dissim_amt_a[0]]
@@ -110,6 +112,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                 variables_to_execute.append((d, b, s, a, c, k, ct))
 
     for vt in variables_to_execute:
+        file_name = average_csv_fn
         dissim_amt = vt[0]
         breakoff = vt[1]
         score_limit = vt[2]
@@ -408,7 +411,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
     
                         wekatree.DecisionTree(ranking_fn, classification_path, label_names_fn , cluster_names_fn , file_name,
                            save_details=True, data_type=data_type,split_to_use=splits,
-                                          limited_label_fn=limited_label_fn,
+                                          limited_label_fn=limited_label_fn, rewrite_files=rewrite_files,
                            csv_fn=csv_name, cv_splits=cv_splits, limit_entities=limit_entities, vector_names_fn=vector_names_fn)
     
                         break
@@ -453,8 +456,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                         """ Testing consistency
                         tree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_names_fn,
                                           file_name, 10000,
-                                          max_depth=max_depth, balance="balanced", criterion="entropy", save_details=False,
-                                          cv_splits=cv_splits, split_to_use=splits,
+                                          max_dep=max_depth, balance="balanced", criterion="entropy", save_details=False,
+                                          cv_spli=cv_splits, split_to_use=splits,
                                           data_type=data_type, csv_fn=csv_name, rewrite_files=True,
                                           development=dt_dev)
                         """
@@ -532,7 +535,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                               limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn)
 
                             wekatree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name,
-                                                  save_details=True, data_type=data_type,split_to_use=splits,
+                                                  save_details=True, data_type=data_type,split_to_use=splits,  rewrite_files=rewrite_files,
                                                   csv_fn=csv_name, cv_splits=cv_splits, limit_entities=limit_entities,
                                                   limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn)
 
@@ -591,6 +594,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
         if not skip_nn:
             for a in range(len(csv_fns_nn_a)):
                 dt.averageCSVs(csv_fns_nn_a[a])
+        for a in range(len(csv_fns_dt_a)):
+            dt.addToAverageCSV(csv_fns_dt_a[a], average_csv_fn)
     jvm.stop()
 
 
@@ -599,9 +604,9 @@ if arcca:
     loc = "/scratch/c1214824/data/"
 else:
     loc = "../data/"
-
+"""
 data_type = "wines"
-classification_task = "types"
+classification_task = ["types"]
 file_name = "wines pca 100"
 lowest_amt = 50
 highest_amt = 10
@@ -610,13 +615,14 @@ init_vector_path = loc+data_type+"/nnet/spaces/wines100.txt"
 vector_path_replacement = loc+data_type+"/nnet/spaces/wines100.txt"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/wines100.txt"
 """
+"""
 init_vector_path = loc+data_type+"/pca/class-all-50-10-alld100"
 vector_path_replacement = loc+data_type+"/pca/class-all-50-10-alld100"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 """
-"""
+
 data_type = "movies"
-classification_task = ["us-ratings", "genres", "keywords", "us-ratings"]
+classification_task = ["genres", "keywords", "us-ratings", "us-ratings"]
 file_name = "movies mds"
 lowest_amt = 100
 highest_amt = 10
@@ -626,24 +632,24 @@ init_vector_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 #init_vector_path = loc+data_type+"/nnet/spaces/"+file_name+".txt"
 vector_path_replacement = loc+data_type+"/nnet/spaces/films100-genres.txt"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
-"""
+
 """
 data_type = "placetypes"
-classification_task = "opencyc"
+classification_task = ["opencyc", "foursquare", "geonames"]
 lowest_amt = 50
 highest_amt = 10
 #init_vector_path = "../data/"+data_type+"/bow/ppmi/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+classification_task
 #file_name = "placetypes bow"
-init_vector_path = "../data/"+data_type+"/nnet/spaces/places100-"+classification_task+".txt"
+init_vector_path = "../data/"+data_type+"/nnet/spaces/places100.txt"
 
-vector_path_replacement = loc+data_type+"/pca/spaces/class-all-50-10-alld100.txt"
+vector_path_replacement = loc+data_type+"/nnet/spaces/places100.txt"
 
-file_name = "places pca 100"
+file_name = "places mds 100"
 limit_entities = False
 if limit_entities:
     get_nnet_vectors_path = None
 else:
-    get_nnet_vectors_path = loc + data_type +"/pca/class-all-50-10-alld100"
+    get_nnet_vectors_path = loc + data_type +"/nnet/spaces/places100.txt"
 """
 """
 hidden_activation = "tanh"
@@ -698,14 +704,15 @@ min_size = 1
 min_score = 0.4
 largest_cluster = 1
 dissim = 0.48
-dissim_amt = [400,600,800]
-breakoff = [False, True]
+dissim_amt = [400]
+find_most_similar = True
+breakoff = [True]
 score_limit = [0.85, 0.9, 0.95]
 amount_to_start = [1000,2000,3000]
-cluster_multiplier = [1,2,3]
+cluster_multiplier = [2]
 kappa = [True, False]
 
-hp_opt = False
+hp_opt = True
 
 dt_dev = True
 add_all_terms = False
@@ -720,7 +727,7 @@ max_depth = 3
 limit_entities = False
 
 skip_nn = True
-cross_val = 1
+cross_val = 5
 
 
 threads=30
@@ -735,7 +742,7 @@ for c in range(chunk_amt):
                                    lowest_amt, loss, nnet_dev, add_all_terms, average_ppmi, trainer, class_weight,
                                    amount_to_start, chunk_amt, chunk_id, lr, vector_path_replacement, dt_dev, use_pruned, max_depth,
                                    min_score, min_size, limit_entities, svm_classify, get_nnet_vectors_path, arcca, largest_cluster,
-                 skip_nn, dissim, dissim_amt, hp_opt]
+                 skip_nn, dissim, dissim_amt, hp_opt, find_most_similar]
 
     sys.stdout.write("python pipeline.py ")
     variable_string = "python $SRCPATH/pipeline.py "
@@ -821,6 +828,7 @@ if len(args) > 0:
     dissim = args[46]
     dissim_amt = args[47]
     hp_opt = args[48]
+    find_most_similar = args[49]
 
 
 
@@ -831,4 +839,4 @@ if  __name__ =='__main__':main(data_type, classification_task, file_name, init_v
                                lowest_amt, loss, nnet_dev, add_all_terms, average_ppmi, trainer, class_weight,
                                amount_to_start, chunk_amt, chunk_id, lr, vector_path_replacement, dt_dev, use_pruned, max_depth,
                                min_score, min_size, limit_entities, svm_classify, get_nnet_vectors_path, arcca, loc, largest_cluster,
-                               skip_nn, dissim, dissim_amt, hp_opt)
+                               skip_nn, dissim, dissim_amt, hp_opt, find_most_similar)

@@ -850,6 +850,9 @@ def averageCSVs(csv_array_fns):
 
     csv_array[0].to_csv(csv_array_fns[0][:len(csv_array_fns[0])-4] + "AVG.csv")
 
+def addToAverageCSV(csv_array_fns, average_csv_fn):
+    print("a")
+
 def stringToArray(string):
     array = string.split()
     for e in range(len(array)):
