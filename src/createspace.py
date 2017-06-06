@@ -122,16 +122,16 @@ def main(data_type, clf, min, max, depth, rewrite_files):
         dt.write2dArray(dt.shorten2dFloats(dm_fn), dm_shorten_fn)
         dm = dt.import2dArray(dm_shorten_fn)
         print("wrote shorten")
-    """
-    if dt.allFnsAlreadyExist([mds_fn]):
-        dm = dt.import2dArray(mds_fn)
+
+    if dt.allFnsAlreadyExist([mds_fn]) and not rewrite_files:
+        mds = dt.import2dArray(mds_fn)
     else:
         print("starting mds")
-        dm = dt.import2dArray(dm_shorten_fn)
+        dm = np.asarray(dt.import2dArray(dm_shorten_fn)).transpose()
         mds = createMDS(dm, depth)
         dt.write2dArray(mds, mds_fn)
         print("wrote mds")
-    """
+
     # Create SVD
     if dt.allFnsAlreadyExist([shorten_fn]) and not rewrite_files:
         short = dt.import2dArray(shorten_fn)
@@ -166,7 +166,6 @@ min=50
 max=10
 depth = 100
 
-main(data_type, clf, min, max, depth)
 rewrite_files = True
 
 
