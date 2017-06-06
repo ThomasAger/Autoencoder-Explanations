@@ -305,8 +305,7 @@ def getBreakOffClustersMaxScoring(vectors, directions, scores, names, score_limi
 def getBreakOffClusters(vectors, directions, scores, names, score_limit, dissimilarity_threshold, max_clusters,
                             file_name, kappa, similarity_threshold, add_all_terms, data_type, largest_clusters,
                  rewrite_files=False, lowest_amt=0, highest_amt=0, classification="genres", min_size=1, dissim=0.0,
-                        dissim_amt=0):
-
+                        dissim_amt=0, find_most_similar=False):
 
     output_directions_fn =  "../data/" + data_type + "/cluster/hierarchy_directions/"+file_name+".txt"
     output_names_fn = "../data/" + data_type + "/cluster/hierarchy_names/" + file_name +".txt"
@@ -375,7 +374,15 @@ def getBreakOffClusters(vectors, directions, scores, names, score_limit, dissimi
 
         too_similar = False
         s = 0
-        for c in range(len(clusters)):
+
+        cl_ind = []
+        if find_most_similar:
+            inds = st.getXMostSimilarIndex(directions[d], directions, [], len(directions))
+            cl_ind.extend(inds)
+        else:
+            cl_ind.append()
+
+        for c in cl_ind:
 
             passed = True
 
