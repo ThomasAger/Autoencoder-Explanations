@@ -5,6 +5,7 @@ from sklearn.metrics import cohen_kappa_score
 from sklearn import svm
 import cProfile
 import ndcg
+from collections import OrderedDict
 
 class Cluster:
     kappa_scores = []
@@ -305,7 +306,7 @@ def getBreakOffClustersMaxScoring(vectors, directions, scores, names, score_limi
 def getBreakOffClusters(vectors, directions, scores, names, score_limit, dissimilarity_threshold, max_clusters,
                             file_name, kappa, similarity_threshold, add_all_terms, data_type, largest_clusters,
                  rewrite_files=False, lowest_amt=0, highest_amt=0, classification="genres", min_size=1, dissim=0.0,
-                        dissim_amt=0, find_most_similar=False):
+                        dissim_amt=0, find_most_similar=False, get_all=False):
 
     output_directions_fn =  "../data/" + data_type + "/cluster/hierarchy_directions/"+file_name+".txt"
     output_names_fn = "../data/" + data_type + "/cluster/hierarchy_names/" + file_name +".txt"
@@ -376,11 +377,15 @@ def getBreakOffClusters(vectors, directions, scores, names, score_limit, dissimi
         s = 0
 
         cl_ind = []
+
         if find_most_similar:
-            inds = st.getXMostSimilarIndex(directions[d], directions, [], len(directions))
-            cl_ind.extend(inds)
+            cl_ind_dir = [None] * len(clusters)
+            for c in range(len(clusters)):
+                cl_ind_dir[c] = clusters[c].getClusterDirection()
+            inds = st.getXMostSimilarIndex(directions[d], cl_ind_dir, [], len(clusters))
+            cl_ind = inds
         else:
-            cl_ind.append()
+            cl_ind.extend(list(range(len(clusters))))
 
         for c in cl_ind:
 
@@ -403,10 +408,16 @@ def getBreakOffClusters(vectors, directions, scores, names, score_limit, dissimi
             # Use the combined direction to see if the Kappa scores are not decreased an unreasonable amount
             if kappa:
                 new_cluster.rankVectors(vectors)
-                cluster_scores = new_cluster.obtainKappaFirstAndLast()
+                if not get_all:
+                    cluster_scores = new_cluster.obtainKappaFirstAndLast()
+                else:
+                    cluster_scores = new_cluster.obtainKappaOnClusteredDirection()
             else:
                 new_cluster.rankVectorsNDCG(vectors)
-                cluster_scores = new_cluster.obtainNDCGFirstAndLast()
+                if not get_all:
+                    cluster_scores = new_cluster.obtainNDCGFirstAndLast()
+                else:
+                    cluster_scores = new_cluster.obtainNDCG()
             old_scores = new_cluster.getScores()
             #print(cluster_scores)
 
@@ -459,10 +470,18 @@ def getBreakOffClusters(vectors, directions, scores, names, score_limit, dissimi
         if all_subsets[c] is not None:
             all_directions.append(all_subsets[c].getClusterDirection())
             all_names.append(all_subsets[c].getNames())
+
+
+
     dt.write2dArray(output_directions, output_directions_fn)
     dt.write2dArray(output_names, output_names_fn)
     dt.write2dArray(all_directions, all_directions_fn)
     dt.write2dArray(all_names, all_names_fn)
+
+
+
+
+
 
 """
 # New method, instead of averaging, compare each individual direction. Start with one cluster and then add more.
@@ -521,7 +540,7 @@ def initClustering(vector_fn, directions_fn, scores_fn, names_fn, amt_to_start, 
                    max_clusters, score_limit, file_name, kappa, similarity_threshold, add_all_terms=False,
                    data_type="movies", largest_clusters=1,
                  rewrite_files=False, lowest_amt=0, highest_amt=0, classification="genres", min_score=0, min_size = 1,
-                   dissim=0.0, dissim_amt=0):
+                   dissim=0.0, dissim_amt=0, find_most_similar=False, get_all=False):
 
     output_directions_fn =  "../data/" + data_type + "/cluster/hierarchy_directions/"+file_name+".txt"
     output_names_fn = "../data/" + data_type + "/cluster/hierarchy_names/" + file_name +".txt"
@@ -559,7 +578,8 @@ def initClustering(vector_fn, directions_fn, scores_fn, names_fn, amt_to_start, 
         getBreakOffClusters(vectors, top_directions, top_scores, top_names, score_limit, dissimilarity_threshold,
                                 max_clusters, file_name, kappa, similarity_threshold, add_all_terms, data_type,
                             largest_clusters, rewrite_files=rewrite_files, lowest_amt=lowest_amt, highest_amt=highest_amt,
-                            classification=classification, min_size = min_size, dissim=dissim, dissim_amt=dissim_amt)
+                            classification=classification, min_size = min_size, dissim=dissim, dissim_amt=dissim_amt,
+                            find_most_similar=find_most_similar, get_all=get_all)
 
 
 file_name = "films100"

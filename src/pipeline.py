@@ -31,7 +31,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
          output_activation, cs, deep_size, classification, direction_count, lowest_amt, loss, development, add_all_terms,
          average_ppmi, optimizer_name, class_weight, amount_to_start_a, chunk_amt, chunk_id, lr, vector_path_replacement, dt_dev,
          use_pruned, max_depth, min_score, min_size, limit_entities, svm_classify, get_nnet_vectors_path, arcca, loc, largest_cluster,
-         skip_nn, dissim, dissim_amt_a, hp_opt, find_most_similar):
+         skip_nn, dissim, dissim_amt_a, hp_opt, find_most_similar, use_breakoff_dissim_a, get_all_a):
 
     average_csv_fn = file_name
 
@@ -44,6 +44,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
             cluster_multiplier_a = [dt.stringToArray(cluster_multiplier_a)[0]]
             kappa_a = dt.stringToArray(kappa_a)[0]
             classification_task_a = dt.stringToArray(classification_task_a)[0]
+            use_breakoff_dissim_a = dt.stringToArray(use_breakoff_dissim_a)[0]
+            get_all_a = dt.stringToArray(get_all_a)[0]
         else:
             dissim_amt_a = dt.stringToArray(dissim_amt_a)
             breakoff_a = dt.stringToArray(breakoff_a)
@@ -52,6 +54,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
             cluster_multiplier_a = dt.stringToArray(cluster_multiplier_a)
             kappa_a = dt.stringToArray(kappa_a)
             classification_task_a = dt.stringToArray(classification_task_a)
+            use_breakoff_dissim_a = dt.stringToArray(use_breakoff_dissim_a)
+            get_all_a = dt.stringToArray(get_all_a)
         epochs = int(epochs)
         ep = int(ep)
         dropout_noise = float(dropout_noise)
@@ -99,6 +103,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
         cluster_multiplier_a = [cluster_multiplier_a[0]]
         kappa_a = [kappa_a[0]]
         classification_task_a = [classification_task_a[0]]
+        use_breakoff_dissim_a = [use_breakoff_dissim_a[0]]
+        get_all_a = [get_all_a[0]]
     
     variables_to_execute = []
     
@@ -109,7 +115,9 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                     for c in cluster_multiplier_a:
                         for k in kappa_a:
                             for ct in classification_task_a:
-                                variables_to_execute.append((d, b, s, a, c, k, ct))
+                                for ub in use_breakoff_dissim_a:
+                                    for ga in get_all_a:
+                                        variables_to_execute.append((d, b, s, a, c, k, ct, ub, ga))
 
     for vt in variables_to_execute:
         file_name = average_csv_fn
@@ -120,6 +128,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
         cluster_multiplier = vt[4]
         kappa = vt[5]
         classification_task = vt[6]
+        use_breakoff_dissim = vt[7]
+        get_all = vt[8]
 
         cv_splits = cross_val
         csv_fns_dt_a = []
@@ -340,22 +350,32 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                             score_limit = score_limit
     
                             file_name = file_name + str(score_limit)
+                            if get_all:
+                                file_name = file_name + " GA"
                             if add_all_terms:
-                                file_name = file_name + "AllTerms"
+                                file_name = file_name + " AllTerms"
                             file_name = file_name + " Breakoff"
                         else:
                             file_name = file_name + " KMeans"
+
+                        if not use_breakoff_dissim and breakoff:
+                            dissim = 0
+                            dissim_amt = 0
+                            cluster_multiplier = 2000000
                         file_name = file_name + " CA" +  str(cluster_amt)
                         file_name = file_name + " MC" + str(min_size) + " MS" + str(min_score)
                         names_fn = property_names_fn
                         file_name = file_name + " ATS" + str(amount_to_start) + " DS" + str(dissim_amt)
                         if breakoff:
+                            if find_most_similar:
+                                file_name = file_name + " FMS"
                             similarity_threshold = 0.5
                             amount_to_start = amount_to_start
                             dissimilarity_threshold = 0.9
                             add_all_terms = add_all_terms
                             clusters_fn = loc + data_type + "/cluster/hierarchy_directions/" + file_name + ".txt"
                             cluster_names_fn = loc + data_type + "/cluster/hierarchy_names/" + file_name + ".txt"
+
                         else:
                             high_threshold = 0.5
                             low_threshold = 0.1
@@ -368,7 +388,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                          add_all_terms=add_all_terms, data_type=data_type, rewrite_files=rewrite_files,
                                                      lowest_amt=lowest_amt, highest_amt=highest_count, classification=new_classification_task,
                                                      min_score=min_score, min_size = min_size, largest_clusters=largest_cluster, dissim=dissim,
-                                                     dissim_amt=dissim_amt)
+                                                     dissim_amt=dissim_amt, find_most_similar=find_most_similar, get_all=get_all)
                         else:
                             cluster.getClusters(directions_fn, scores_fn, names_fn, False, dissim_amt, amount_to_start, file_name, cluster_amt,
                                                 dissim, min_score, data_type, rewrite_files=rewrite_files)
@@ -703,14 +723,16 @@ min_size = 1
 
 min_score = 0.4
 largest_cluster = 1
-dissim = 0.48
+dissim = 0.0
 dissim_amt = [400]
 find_most_similar = True
 breakoff = [True]
-score_limit = [0.85, 0.9, 0.95]
-amount_to_start = [1000,2000,3000]
+score_limit = [0.5, 0.6,0.7,0.8,0.9]
+amount_to_start = [1000,3000]
 cluster_multiplier = [2]
-kappa = [True, False]
+kappa = [ False, True]
+use_breakoff_dissim = [False, True]
+get_all = [True, False]
 
 hp_opt = True
 
@@ -727,10 +749,10 @@ max_depth = 3
 limit_entities = False
 
 skip_nn = True
-cross_val = 5
+cross_val = 1
 
 
-threads=30
+threads=1
 chunk_amt = 0
 chunk_id = 0
 for c in range(chunk_amt):
@@ -742,7 +764,7 @@ for c in range(chunk_amt):
                                    lowest_amt, loss, nnet_dev, add_all_terms, average_ppmi, trainer, class_weight,
                                    amount_to_start, chunk_amt, chunk_id, lr, vector_path_replacement, dt_dev, use_pruned, max_depth,
                                    min_score, min_size, limit_entities, svm_classify, get_nnet_vectors_path, arcca, largest_cluster,
-                 skip_nn, dissim, dissim_amt, hp_opt, find_most_similar]
+                 skip_nn, dissim, dissim_amt, hp_opt, find_most_similar, use_breakoff_dissim, get_all]
 
     sys.stdout.write("python pipeline.py ")
     variable_string = "python $SRCPATH/pipeline.py "
@@ -829,6 +851,7 @@ if len(args) > 0:
     dissim_amt = args[47]
     hp_opt = args[48]
     find_most_similar = args[49]
+    get_all = args[50]
 
 
 
@@ -839,4 +862,4 @@ if  __name__ =='__main__':main(data_type, classification_task, file_name, init_v
                                lowest_amt, loss, nnet_dev, add_all_terms, average_ppmi, trainer, class_weight,
                                amount_to_start, chunk_amt, chunk_id, lr, vector_path_replacement, dt_dev, use_pruned, max_depth,
                                min_score, min_size, limit_entities, svm_classify, get_nnet_vectors_path, arcca, loc, largest_cluster,
-                               skip_nn, dissim, dissim_amt, hp_opt, find_most_similar)
+                               skip_nn, dissim, dissim_amt, hp_opt, find_most_similar, use_breakoff_dissim, get_all)

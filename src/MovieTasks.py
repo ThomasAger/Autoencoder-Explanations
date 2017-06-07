@@ -8,10 +8,10 @@ import random
 import theano
 from theano.tensor.shared_randomstreams import RandomStreams
 import pandas as pd
-
+import scipy.sparse as sp
 def  getVectors(input_folder, file_names_fn, extension, output_folder, only_words_in_x_entities,
                words_without_x_entities, cut_first_line=False, get_all=False, additional_name="", make_individual=True,
-               classification="", use_all_files="", minimum_words=0, data_type=""):
+               classification="", use_all_files="", minimum_words=0, data_type="", sparse_matrix=False):
     if use_all_files is None:
         file_names = dt.import1dArray(file_names_fn)
     else:
@@ -104,7 +104,6 @@ def  getVectors(input_folder, file_names_fn, extension, output_folder, only_word
             phrase_index_dict[phrase_list[p]] = p
 
         # Create an empty 2d array to store a matrix of movies and phrases
-
         all_phrases_complete = []
         for f in working_filenames:
             all_phrases_complete.append([0]*len(phrase_list))
@@ -113,6 +112,9 @@ def  getVectors(input_folder, file_names_fn, extension, output_folder, only_word
 
         print("Each entity is length", len(all_phrases_complete[0]))
         print("The overall matrix is", len(all_phrases_complete))
+        if sparse_matrix:
+            all_phrases_complete = sp.csr_matrix(all_phrases_complete)
+
 
         # Then, populate the overall bag of words for each film (with all other phrases already set to 0
 
@@ -145,22 +147,26 @@ def  getVectors(input_folder, file_names_fn, extension, output_folder, only_word
                 phrase = p[0]
                 try:
                     phrase_index = phrase_index_dict[phrase]
-                    all_phrases_complete[f][phrase_index] = int(p[1])
+                    if not sparse_matrix:
+                        all_phrases_complete[f][phrase_index] = int(p[1])
+                    else:
+                        all_phrases_complete[f, phrase_index] = int(p[1])
+
                     #print("Kept", phrase)
                 except KeyError:
                     continue
                     #print("Deleted phrase", phrase)
+        """
 
         cols_to_delete = []
-        """
         if data_type == "wines":
             for mt in merge_indexes:
                 for v in range(len(all_phrases_complete)):
                     all_phrases_complete[v][mt[0]] += all_phrases_complete[v][mt[1]]
                 cols_to_delete.append(mt[1])
-        """
         all_phrases_complete = np.delete(all_phrases_complete, cols_to_delete, 1)
         working_filenames = np.delete(working_filenames, cols_to_delete)
+        """
 
         # Import entities specific to the thing
         # Trim the phrases of entities that aren't included in the classfication
@@ -170,10 +176,19 @@ def  getVectors(input_folder, file_names_fn, extension, output_folder, only_word
         elif classification == "all":
             print("All~~~~~~~~~~~~~~")
             dt.write1dArray(working_filenames, "../data/"+data_type+"/classify/"+classification+"/available_entities.txt")
-        all_phrases_complete = np.asarray(all_phrases_complete).transpose()
+        if not sparse_matrix:
+            all_phrases_complete = np.asarray(all_phrases_complete).transpose()
+        else:
+            all_phrases_complete = all_phrases_complete.transpose()
 
+        if sparse_matrix:
+            cx = sp.coo_matrix(all_phrases_complete)
 
-        indexes_to_delete = []
+            indexes_to_delete = []
+
+            for i, j, v in zip(cx.row, cx.col, cx.data):
+                print
+                "(%d, %d), %s" % (i, j, v)
         for a in range(len(all_phrases_complete)):
             if np.count_nonzero(all_phrases_complete[a]) > len(all_phrases_complete[a]) - (words_without_x_entities):
                 print("Recorded an entity " + str(phrase_list[a]) + " with too little difference")
@@ -247,7 +262,7 @@ def getAvailableEntities(entity_names_fns, data_type, classification):
 
 
 from sklearn.feature_extraction.text import TfidfTransformer
-import scipy.sparse as sp
+
 def convertPPMI(mat):
     """
      Compute the PPMI values for the raw co-occurrence matrix.
@@ -893,10 +908,11 @@ additional_name = ""
 make_individual = True
 """
 def main(min, max, data_type, class_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn,
-         use_all_files):
+         use_all_files, sparse_matrix):
 
     getVectors(raw_fn, entity_name_fn, extension, "../data/"+data_type+"/bow/",
-           min, max, cut_first_line, get_all, additional_name,  make_individual, class_type, use_all_files, 1000, data_type)
+           min, max, cut_first_line, get_all, additional_name,  make_individual, class_type, use_all_files, 1000, data_type,
+               sparse_matrix)
 
     bow = sp.csr_matrix(dt.import2dArray("../data/"+data_type+"/bow/frequency/phrases/class-all-"+str(min)+"-" + str(max)+"-"+class_type))
     dt.write2dArray(convertPPMI( bow), "../data/"+data_type+"/bow/ppmi/class-all-"+str(min)+"-"+str(max)+"-" + class_type)
@@ -910,8 +926,8 @@ def main(min, max, data_type, class_type, raw_fn, extension, cut_first_line, add
     printIndividualFromAll(data_type, "tfidf", min, max, data_type, class_type)
 
 
-min=100
-max=10
+min=0
+max=0
 
 class_type = "movies"
 classification = "all"
@@ -920,6 +936,7 @@ extension = "film"
 cut_first_line = True
 entity_name_fn = "../data/raw/previous work/filmIds.txt"
 use_all_files = False
+sparse_matrix = False
 """
 data_type = "wines"
 class_type = "all"
@@ -942,7 +959,8 @@ additional_name = ""
 #make_individual = True
 make_individual = True
 print("??")
-if  __name__ =='__main__':main(min, max, data_type, class_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn, use_all_files)
+if  __name__ =='__main__':main(min, max, data_type, class_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn, use_all_files,
+                               sparse_matrix)
 
 
 """

@@ -8,7 +8,7 @@ def getSimilarity(vector1, vector2):
 def getXMostSimilarIndex(term, terms_to_match, terms_to_ignore, amt):
     most_similar_term_indexes = []
     for a in range(amt):
-        highest_term = 0
+        highest_term = -500
         term_index = 0
         for t in range(len(terms_to_match)):
             if dt.checkIfInArray(terms_to_ignore, t) is False:
