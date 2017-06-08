@@ -598,7 +598,7 @@ def createTermClusters(hv_directions, lv_directions, hv_names, lv_names, amt_of_
 
 
 def getClusters(directions_fn, scores_fn, names_fn, is_gini, amt_high_directions, amt_low_directions, filename,
-                amt_of_clusters, high_threshold, low_threshold, data_type, rewrite_files=False, half_kappa_half_ndcg = []):
+                amt_of_clusters, high_threshold, low_threshold, data_type, rewrite_files=False, half_kappa_half_ndcg = ""):
 
     cluster_names_fn = "../data/" + data_type + "/cluster/names/" + filename + ".txt"
     clusters_fn = "../data/" + data_type + "/cluster/clusters/" + filename + ".txt"
