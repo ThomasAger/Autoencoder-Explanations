@@ -31,7 +31,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
          output_activation, cs, deep_size, classification, direction_count, lowest_amt, loss, development, add_all_terms,
          average_ppmi, optimizer_name, class_weight, amount_to_start_a, chunk_amt, chunk_id, lr, vector_path_replacement, dt_dev,
          use_pruned, max_depth, min_score, min_size, limit_entities, svm_classify, get_nnet_vectors_path, arcca, loc, largest_cluster,
-         skip_nn, dissim, dissim_amt_a, hp_opt, find_most_similar, use_breakoff_dissim_a, get_all_a):
+         skip_nn, dissim, dissim_amt_a, hp_opt, find_most_similar, use_breakoff_dissim_a, get_all_a, half_ndcg_half_kappa_a):
 
     average_csv_fn = file_name
 
@@ -46,6 +46,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
             classification_task_a = dt.stringToArray(classification_task_a)[0]
             use_breakoff_dissim_a = dt.stringToArray(use_breakoff_dissim_a)[0]
             get_all_a = dt.stringToArray(get_all_a)[0]
+            half_ndcg_half_kappa_a = dt.stringToArray(half_ndcg_half_kappa_a)[0]
         else:
             dissim_amt_a = dt.stringToArray(dissim_amt_a)
             breakoff_a = dt.stringToArray(breakoff_a)
@@ -55,6 +56,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
             kappa_a = dt.stringToArray(kappa_a)
             classification_task_a = dt.stringToArray(classification_task_a)
             use_breakoff_dissim_a = dt.stringToArray(use_breakoff_dissim_a)
+            half_ndcg_half_kappa_a = dt.stringToArray(half_ndcg_half_kappa_a)
             get_all_a = dt.stringToArray(get_all_a)
         epochs = int(epochs)
         ep = int(ep)
@@ -105,6 +107,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
         classification_task_a = [classification_task_a[0]]
         use_breakoff_dissim_a = [use_breakoff_dissim_a[0]]
         get_all_a = [get_all_a[0]]
+        half_ndcg_half_kappa_a = [half_ndcg_half_kappa_a[0]]
     
     variables_to_execute = []
     
@@ -117,7 +120,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                             for ct in classification_task_a:
                                 for ub in use_breakoff_dissim_a:
                                     for ga in get_all_a:
-                                        variables_to_execute.append((d, b, s, a, c, k, ct, ub, ga))
+                                        for hnk in half_ndcg_half_kappa_a:
+                                            variables_to_execute.append((d, b, s, a, c, k, ct, ub, ga, hnk))
 
     for vt in variables_to_execute:
         file_name = average_csv_fn
@@ -130,6 +134,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
         classification_task = vt[6]
         use_breakoff_dissim = vt[7]
         get_all = vt[8]
+        half_ndcg_half_kappa = vt[9]
 
         cv_splits = cross_val
         csv_fns_dt_a = []
@@ -337,7 +342,11 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                             ndcg.getNDCG(loc + data_type + "/rank/numeric/" + file_name + "ALL.txt", file_name,
                                      data_type=data_type, lowest_count=lowest_amt, rewrite_files=rewrite_files,
                                          highest_count=highest_count, classification=new_classification_task)
-                        if kappa is False:
+                        if half_ndcg_half_kappa:
+                            scores_fn = loc + data_type + "/ndcg/" + file_name + ".txt"
+                            half_ndcg_half_kappa = loc + data_type + "/svm/kappa/" + file_name + ".txt"
+                            file_name = file_name + "halfnk"
+                        elif kappa is False:
                             scores_fn = loc + data_type + "/ndcg/" + file_name + ".txt"
                             file_name = file_name + "ndcg"
                         else:
@@ -381,17 +390,19 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                             low_threshold = 0.1
                             clusters_fn = loc + data_type + "/cluster/clusters/" + file_name + ".txt"
                             cluster_names_fn = loc + data_type + "/cluster/names/" + file_name + ".txt"
-    
+
                         if breakoff:
                             hierarchy.initClustering(vector_path, directions_fn, scores_fn, names_fn, amount_to_start, False,
                                  similarity_threshold,  cluster_amt, score_limit, file_name, kappa, dissimilarity_threshold,
                                          add_all_terms=add_all_terms, data_type=data_type, rewrite_files=rewrite_files,
                                                      lowest_amt=lowest_amt, highest_amt=highest_count, classification=new_classification_task,
                                                      min_score=min_score, min_size = min_size, largest_clusters=largest_cluster, dissim=dissim,
-                                                     dissim_amt=dissim_amt, find_most_similar=find_most_similar, get_all=get_all)
+                                                     dissim_amt=dissim_amt, find_most_similar=find_most_similar, get_all=get_all,
+                                                     half_ndcg_half_kappa=half_ndcg_half_kappa)
                         else:
                             cluster.getClusters(directions_fn, scores_fn, names_fn, False, dissim_amt, amount_to_start, file_name, cluster_amt,
-                                                dissim, min_score, data_type, rewrite_files=rewrite_files)
+                                                dissim, min_score, data_type, rewrite_files=rewrite_files,
+                                                     half_kappa_half_ndcg=half_ndcg_half_kappa)
     
                         """ CLUSTER RANKING """
                         if limit_entities is False:
@@ -481,7 +492,6 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                           data_type=data_type, csv_fn=csv_name, rewrite_files=True,
                                           development=dt_dev)
                         """
-    
                         # Decision tree
     
                         if average_ppmi:
@@ -527,7 +537,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                         csv_name = loc + data_type + "/rules/tree_csv/" + file_name + ".csv"
 
                         file_name = file_name + "FT"
-                        if  arcca is False:
+                        if arcca is False:
 
                             SDA = nnet.NeuralNetwork(noise=0, fine_tune_weights_fn=fine_tune_weights_fn, optimizer_name=optimizer_name,
                                         past_model_bias_fn=past_model_bias_fn, save_outputs=True,
@@ -642,7 +652,7 @@ get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 """
 
 data_type = "movies"
-classification_task = ["genres", "keywords", "us-ratings", "us-ratings"]
+classification_task = ["genres", "keywords", "uk-ratings", "us-ratings"]
 file_name = "movies mds"
 lowest_amt = 100
 highest_amt = 10
@@ -724,15 +734,16 @@ min_size = 1
 min_score = 0.4
 largest_cluster = 1
 dissim = 0.0
-dissim_amt = [400]
+dissim_amt = [300,400,500]
 find_most_similar = True
-breakoff = [True]
-score_limit = [0.5, 0.6,0.7,0.8,0.9]
-amount_to_start = [1000,3000]
+breakoff = [False]
+score_limit = [0.8, 0.9]
+amount_to_start = [1000, 2000, 3000]
 cluster_multiplier = [2]
 kappa = [ False, True]
-use_breakoff_dissim = [False, True]
-get_all = [True, False]
+use_breakoff_dissim = [False]
+get_all = [True]
+half_ndcg_half_kappa = [True, False]
 
 hp_opt = True
 
@@ -764,7 +775,7 @@ for c in range(chunk_amt):
                                    lowest_amt, loss, nnet_dev, add_all_terms, average_ppmi, trainer, class_weight,
                                    amount_to_start, chunk_amt, chunk_id, lr, vector_path_replacement, dt_dev, use_pruned, max_depth,
                                    min_score, min_size, limit_entities, svm_classify, get_nnet_vectors_path, arcca, largest_cluster,
-                 skip_nn, dissim, dissim_amt, hp_opt, find_most_similar, use_breakoff_dissim, get_all]
+                 skip_nn, dissim, dissim_amt, hp_opt, find_most_similar, use_breakoff_dissim, get_all, half_ndcg_half_kappa]
 
     sys.stdout.write("python pipeline.py ")
     variable_string = "python $SRCPATH/pipeline.py "
@@ -852,7 +863,7 @@ if len(args) > 0:
     hp_opt = args[48]
     find_most_similar = args[49]
     get_all = args[50]
-
+    half_ndcg_half_kappa = args[51]
 
 
 if  __name__ =='__main__':main(data_type, classification_task, file_name, init_vector_path, hidden_activation,
@@ -862,4 +873,5 @@ if  __name__ =='__main__':main(data_type, classification_task, file_name, init_v
                                lowest_amt, loss, nnet_dev, add_all_terms, average_ppmi, trainer, class_weight,
                                amount_to_start, chunk_amt, chunk_id, lr, vector_path_replacement, dt_dev, use_pruned, max_depth,
                                min_score, min_size, limit_entities, svm_classify, get_nnet_vectors_path, arcca, loc, largest_cluster,
-                               skip_nn, dissim, dissim_amt, hp_opt, find_most_similar, use_breakoff_dissim, get_all)
+                               skip_nn, dissim, dissim_amt, hp_opt, find_most_similar, use_breakoff_dissim, get_all,
+                               half_ndcg_half_kappa)

@@ -477,7 +477,7 @@ def nameClustersRemoveOutliersWeightDistance(cluster_directions):
     return words
 
 # Splitting into high and low directions based on threshold
-def splitDirections(directions_fn, scores_fn, names_fn, is_gini, amt_high_directions, amt_low_directions, high_threshold, low_threshold):
+def splitDirections(directions_fn, scores_fn, names_fn, is_gini, amt_high_directions, amt_low_directions, high_threshold, low_threshold, half_kappa_half_ndcg):
     directions = np.asarray(dt.import2dArray(directions_fn))
     scores = np.asarray(dt.import1dArray(scores_fn, "f"))
     names = np.asarray(dt.import1dArray(names_fn))
@@ -486,9 +486,28 @@ def splitDirections(directions_fn, scores_fn, names_fn, is_gini, amt_high_direct
     low_direction_names = []
     high_directions = []
     low_directions = []
+    if len(half_kappa_half_ndcg) > 0:
+        kappa_scores = dt.import1dArray(half_kappa_half_ndcg, "f")
+
 
     if amt_high_directions > 0 and amt_low_directions > 0:
-        ids = np.flipud(np.argsort(scores))
+        if len(half_kappa_half_ndcg) == 0:
+            ids = np.flipud(np.argsort(scores))
+        else:
+            ind1 = np.flipud(np.argsort(scores))[:amt_low_directions/2]
+            ind2 = np.zeros(len(ind1), dtype="int")
+            kappa_scores = np.flipud(np.argsort(kappa_scores))
+            count = 0
+            added = 0
+            for i in kappa_scores:
+                if i not in ind1:
+                    ind2[added] = i
+                    added += 1
+                if added >= amt_low_directions/2:
+                    break
+                count += 1
+            shuffle_ind = np.asarray(list(range(0, len(ind1))))
+            ids = np.insert(ind1, shuffle_ind, ind2)
         names = names[ids]
         directions = directions[ids]
         high_directions = directions[:amt_high_directions]
@@ -579,7 +598,7 @@ def createTermClusters(hv_directions, lv_directions, hv_names, lv_names, amt_of_
 
 
 def getClusters(directions_fn, scores_fn, names_fn, is_gini, amt_high_directions, amt_low_directions, filename,
-                amt_of_clusters, high_threshold, low_threshold, data_type, rewrite_files=False):
+                amt_of_clusters, high_threshold, low_threshold, data_type, rewrite_files=False, half_kappa_half_ndcg = []):
 
     cluster_names_fn = "../data/" + data_type + "/cluster/names/" + filename + ".txt"
     clusters_fn = "../data/" + data_type + "/cluster/clusters/" + filename + ".txt"
@@ -596,7 +615,7 @@ def getClusters(directions_fn, scores_fn, names_fn, is_gini, amt_high_directions
     hdn, ldn, hd, ld = splitDirections(directions_fn,
                                             scores_fn,
                                             names_fn, is_gini,
-                                       amt_high_directions, amt_low_directions, high_threshold, low_threshold )
+                                       amt_high_directions, amt_low_directions, high_threshold, low_threshold, half_kappa_half_ndcg)
 
 
     cluster_center_directions, least_similar_cluster_names, cluster_name_dict, least_similar_clusters = createTermClusters(hd, ld, hdn, ldn, amt_of_clusters)

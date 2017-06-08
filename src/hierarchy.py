@@ -12,13 +12,14 @@ class Cluster:
     directions = []
     cluster_direction = []
     names = []
+    types = []
     ranks = None
     data_type = "movies"
     lowest_amt = 0
     highest_amt = 0
     classification = 0
 
-    def __init__(self, kappa_scores, directions, names, data_type, lowest_amt, highest_amt, classification):
+    def __init__(self, kappa_scores, directions, names, data_type, lowest_amt, highest_amt, classification, types):
         self.kappa_scores = np.asarray(kappa_scores)
         self.directions = np.asarray(directions)
         self.names = np.asarray(names)
@@ -27,6 +28,7 @@ class Cluster:
         self.lowest_amt = lowest_amt
         self.highest_amt = highest_amt
         self.classification = classification
+        self.types = types
 
     def combineDirections(self):
         if len(self.directions) > 1:
@@ -47,6 +49,9 @@ class Cluster:
 
     def getNames(self):
         return self.names
+
+    def getTypes(self):
+        return self.types
 
     def getRanks(self):
         return self.ranks
@@ -78,6 +83,30 @@ class Cluster:
         return kappas
 
 
+    def obtainKappaOrNDCG(self):
+        # For each discrete rank, obtain the Kappa score compared to the word occ
+        scores = np.empty(len(self.names))
+        for n in range(len(self.names)):
+            if self.types[n] == 0:
+                clf = svm.LinearSVC()
+                ppmi = np.asarray(
+                    dt.import1dArray("../data/" + self.data_type + "/bow/binary/phrases/class-" + self.names[n] + "-"
+                                     + str(self.lowest_amt) + "-" + str(self.highest_amt) + "-" + str(
+                        self.classification), "f"))
+                clf.fit(self.ranks, ppmi)
+                y_pred = clf.predict(self.ranks)
+                score = cohen_kappa_score(ppmi, y_pred)
+                scores[n] = score
+            else:
+                ppmi = np.asarray(
+                    dt.import1dArray("../data/" + self.data_type + "/bow/ppmi/class-" + self.names[n] + "-"
+                                     + str(self.lowest_amt) + "-" + str(self.highest_amt) + "-" + str(
+                        self.classification), "f"))
+                sorted_indices = np.argsort(self.ranks)[::-1]
+                score = ndcg.ndcg_from_ranking(ppmi, sorted_indices)
+                scores[n] = score
+        return scores
+
     def obtainNDCGFirstAndLast(self):
         # For each discrete rank, obtain the Kappa score compared to the word occ
         ndcgs = np.empty(2)
@@ -88,7 +117,6 @@ class Cluster:
             sorted_indices = np.argsort(self.ranks)[::-1]
             score = ndcg.ndcg_from_ranking(ppmi, sorted_indices)
             ndcgs[c] = score
-            #print("NDCG", self.names[n], score)
             c += 1
         return ndcgs
     def obtainNDCGFirst5(self):
@@ -129,8 +157,10 @@ class Cluster:
         kappas = np.empty(len(self.names))
         for n in range(len(self.names)):
             clf = svm.LinearSVC()
-            ppmi = np.asarray(dt.import1dArray("../data/" + self.data_type + "/bow/ppmi/class-" + self.names[n] + "-"
-                                               + str(self.lowest_amt) + "-" + str(self.highest_amt) + "-" + str(self.classification), "f"))
+            ppmi = np.asarray(
+                dt.import1dArray("../data/" + self.data_type + "/bow/binary/phrases/class-" + self.names[n] + "-"
+                                 + str(self.lowest_amt) + "-" + str(self.highest_amt) + "-" + str(
+                    self.classification), "f"))
             clf.fit(self.ranks, ppmi)
             y_pred = clf.predict(self.ranks)
             score = cohen_kappa_score(ppmi, y_pred)
@@ -306,13 +336,19 @@ def getBreakOffClustersMaxScoring(vectors, directions, scores, names, score_limi
 def getBreakOffClusters(vectors, directions, scores, names, score_limit, dissimilarity_threshold, max_clusters,
                             file_name, kappa, similarity_threshold, add_all_terms, data_type, largest_clusters,
                  rewrite_files=False, lowest_amt=0, highest_amt=0, classification="genres", min_size=1, dissim=0.0,
-                        dissim_amt=0, find_most_similar=False, get_all=False):
+                        dissim_amt=0, find_most_similar=False, get_all=False, half_ndcg_half_kappa=[]):
 
     output_directions_fn =  "../data/" + data_type + "/cluster/hierarchy_directions/"+file_name+".txt"
     output_names_fn = "../data/" + data_type + "/cluster/hierarchy_names/" + file_name +".txt"
     all_directions_fn = "../data/" + data_type + "/cluster/all_directions/" + file_name + ".txt"
     all_names_fn = "../data/" + data_type + "/cluster/all_names/" + file_name + ".txt"
 
+
+    is_half = False
+    if len(half_ndcg_half_kappa) > 0:
+        half_ndcg_half_kappa = np.zeros(len(directions))
+    else:
+        is_half = True
     reached_max = False
 
     clusters = []
@@ -341,12 +377,12 @@ def getBreakOffClusters(vectors, directions, scores, names, score_limit, dissimi
 
         reached_max = True
         for d in dissim_ids:
-            clusters.append(Cluster([scores[d]], [directions[d]], [names[d]], data_type, lowest_amt, highest_amt, classification))
+            clusters.append(Cluster([scores[d]], [directions[d]], [names[d]], data_type, lowest_amt, highest_amt, classification, [half_ndcg_half_kappa[d]]))
         directions = np.delete(directions, dissim_ids, 0)
         names = np.delete(names, dissim_ids)
         scores = np.delete(scores, dissim_ids)
     else:
-        clusters.append(Cluster([scores[0]], [directions[0]], [names[0]], data_type, lowest_amt, highest_amt, classification))
+        clusters.append(Cluster([scores[0]], [directions[0]], [names[0]], data_type, lowest_amt, highest_amt, classification, [half_ndcg_half_kappa[0]]))
 
     clusters = np.asarray(clusters)
     c = 0
@@ -360,8 +396,7 @@ def getBreakOffClusters(vectors, directions, scores, names, score_limit, dissimi
         dont_add = False
         print(d, "/", len(directions))
         failed = True
-        current_direction = Cluster([scores[d]], [directions[d]], [names[d]], data_type, lowest_amt, highest_amt, classification)
-
+        current_direction = Cluster([scores[d]], [directions[d]], [names[d]], data_type, lowest_amt, highest_amt, classification, [half_ndcg_half_kappa[d]])
 
 
         if len(clusters) >= max_clusters and reached_max is False and dissim == 0.0 and dissim_amt == 0:
@@ -403,10 +438,13 @@ def getBreakOffClusters(vectors, directions, scores, names, score_limit, dissimi
             new_cluster = Cluster(
                 np.concatenate([clusters[c].getScores(), current_direction.getScores()]),
                 np.concatenate([clusters[c].getDirections(), current_direction.getDirections()]),
-                np.concatenate([clusters[c].getNames(), current_direction.getNames()]), data_type, lowest_amt, highest_amt, classification)
+                np.concatenate([clusters[c].getNames(), current_direction.getNames()]), data_type, lowest_amt,
+                highest_amt, classification, np.concatenate([clusters[c].getTypes(), current_direction.getTypes()]))
 
             # Use the combined direction to see if the Kappa scores are not decreased an unreasonable amount
-            if kappa:
+            if is_half:
+                cluster_scores = new_cluster.obtainKappaOrNDCG()
+            elif kappa:
                 new_cluster.rankVectors(vectors)
                 if not get_all:
                     cluster_scores = new_cluster.obtainKappaFirstAndLast()
@@ -429,7 +467,6 @@ def getBreakOffClusters(vectors, directions, scores, names, score_limit, dissimi
                     passed = False
                     break
                 co += 1
-
             if passed:
                 np.put(clusters, c, new_cluster)
                 print("Success", new_cluster.getNames())
@@ -540,13 +577,15 @@ def initClustering(vector_fn, directions_fn, scores_fn, names_fn, amt_to_start, 
                    max_clusters, score_limit, file_name, kappa, similarity_threshold, add_all_terms=False,
                    data_type="movies", largest_clusters=1,
                  rewrite_files=False, lowest_amt=0, highest_amt=0, classification="genres", min_score=0, min_size = 1,
-                   dissim=0.0, dissim_amt=0, find_most_similar=False, get_all=False):
+                   dissim=0.0, dissim_amt=0, find_most_similar=False, get_all=False, half_ndcg_half_kappa = ""):
 
     output_directions_fn =  "../data/" + data_type + "/cluster/hierarchy_directions/"+file_name+".txt"
     output_names_fn = "../data/" + data_type + "/cluster/hierarchy_names/" + file_name +".txt"
     all_directions_fn = "../data/" + data_type + "/cluster/all_directions/" + file_name + ".txt"
     all_names_fn = "../data/" + data_type + "/cluster/all_names/" + file_name + ".txt"
     all_fns = [output_directions_fn, output_names_fn, all_directions_fn, all_names_fn]
+
+
     if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
         print("Skipping task", getBreakOffClusters.__name__)
         return
@@ -557,12 +596,36 @@ def initClustering(vector_fn, directions_fn, scores_fn, names_fn, amt_to_start, 
     directions = dt.import2dArray(directions_fn)
     scores = dt.import1dArray(scores_fn, "f")
     names = dt.import1dArray(names_fn)
+    type1 = np.ones(len(names)/2)
+    type2 = np.zeros(len(names)/2)
+    shuffle_ind = np.asarray(list(range(0, len(type1))))
+    type = np.insert(type1, shuffle_ind, type2) # Kappa = 0, NDCG = 1
+
+    if len(half_ndcg_half_kappa) > 0:
+        kappa_scores = dt.import1dArray(half_ndcg_half_kappa, "f")
 
     if amt_to_start > 0:
-        ind = np.flipud(np.argsort(scores))[:amt_to_start] #Top X scoring
+        if len(half_ndcg_half_kappa) == 0:
+            ind = np.flipud(np.argsort(scores))[:amt_to_start] #Top X scoring
+        else:
+            ind1 = np.flipud(np.argsort(scores))[:amt_to_start/2]
+            ind2 = np.zeros(len(ind1), dtype="int")
+            kappa_scores = np.flipud(np.argsort(kappa_scores))
+            count = 0
+            added = 0
+            for i in kappa_scores:
+                if i not in ind1:
+                    ind2[added] = i
+                    added += 1
+                if added >= amt_to_start/2:
+                    break
+                count += 1
+            shuffle_ind = np.asarray(list(range(0, len(ind1))))
+            ind = np.insert(ind1, shuffle_ind, ind2)
     else:
         ind = np.flipud(np.argsort(scores))
         ind = [i for i in ind if scores[i] > min_score]
+
     top_directions = []
     top_scores = []
     top_names = []
@@ -579,7 +642,7 @@ def initClustering(vector_fn, directions_fn, scores_fn, names_fn, amt_to_start, 
                                 max_clusters, file_name, kappa, similarity_threshold, add_all_terms, data_type,
                             largest_clusters, rewrite_files=rewrite_files, lowest_amt=lowest_amt, highest_amt=highest_amt,
                             classification=classification, min_size = min_size, dissim=dissim, dissim_amt=dissim_amt,
-                            find_most_similar=find_most_similar, get_all=get_all)
+                            find_most_similar=find_most_similar, get_all=get_all, half_ndcg_half_kappa=type)
 
 
 file_name = "films100"
