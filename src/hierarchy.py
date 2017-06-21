@@ -333,7 +333,7 @@ def getBreakOffClustersMaxScoring(vectors, directions, scores, names, score_limi
 """
 
 # New method, instead of averaging, compare each individual direction. Start with one cluster and then add more.
-def getBreakOffClusters(vectors, directions, scores, names, score_limit, dissimilarity_threshold, max_clusters,
+def getBreakOffClusters(vectors, directions, scores, names, score_limit, max_clusters,
                             file_name, kappa, similarity_threshold, add_all_terms, data_type, largest_clusters,
                  rewrite_files=False, lowest_amt=0, highest_amt=0, classification="genres", min_size=1, dissim=0.0,
                         dissim_amt=0, find_most_similar=False, get_all=False, half_ndcg_half_kappa=[]):
@@ -387,7 +387,6 @@ def getBreakOffClusters(vectors, directions, scores, names, score_limit, dissimi
     clusters = np.asarray(clusters)
     c = 0
     # Find the most similar direction and check if its combination has a kappa score loss larger than the score limit
-    failed_array = []
     if dissim > 0 or dissim_amt > 0:
         start = 0
     else:
@@ -425,14 +424,11 @@ def getBreakOffClusters(vectors, directions, scores, names, score_limit, dissimi
         for c in cl_ind:
 
             passed = True
+            # Just here to do a janky skip
+            if similarity_threshold == 0.0:
+                passed = False
+                break
 
-            s = 1 - cosine(clusters[c].getClusterDirection(), current_direction.getClusterDirection())
-
-            if s > similarity_threshold:
-                too_similar = True
-
-            if s < dissimilarity_threshold:
-                continue
 
             # Get the most similar direction to the current key
             new_cluster = Cluster(
@@ -474,7 +470,6 @@ def getBreakOffClusters(vectors, directions, scores, names, score_limit, dissimi
                 all_subsets = np.append(all_subsets, new_cluster)
                 break
         if failed and not reached_max or failed and min_size > 1:
-            failed_array.append(s)
             if too_similar is True:
                 print("Skipped", current_direction.getNames()[0], "Too similar to", clusters[c].getNames()[0])
                 continue
@@ -482,7 +477,6 @@ def getBreakOffClusters(vectors, directions, scores, names, score_limit, dissimi
             all_subsets = np.append(all_subsets, current_direction)
             print("Failed", current_direction.getNames())
 
-    dt.write1dArray(failed_array, "../data/temp/failed_array.txt")
 
 
     output_directions = []
@@ -573,7 +567,7 @@ def getBreakOffClusters(vectors, directions, scores, names, score_limit):
     dt.write2dArray(output_names, "../data/movies/cluster/hierarchy_dict/" + file_name + str(score_limit)+".txt")
     dt.write2dArray(output_first_names, "../data/movies/cluster/hierarchy_names/" + file_name + str(score_limit)+".txt")
 """
-def initClustering(vector_fn, directions_fn, scores_fn, names_fn, amt_to_start, profiling, dissimilarity_threshold,
+def initClustering(vector_fn, directions_fn, scores_fn, names_fn, amt_to_start, profiling,
                    max_clusters, score_limit, file_name, kappa, similarity_threshold, add_all_terms=False,
                    data_type="movies", largest_clusters=1,
                  rewrite_files=False, lowest_amt=0, highest_amt=0, classification="genres", min_score=0, min_size = 1,
@@ -636,9 +630,14 @@ def initClustering(vector_fn, directions_fn, scores_fn, names_fn, amt_to_start, 
         top_scores.append(scores[i])
 
     if profiling:
-        cProfile.runctx('getBreakOffClusters(vectors, top_directions, top_scores, top_names, score_limit, similarity_threshold, max_clusters, file_name, kappa)', globals(), locals())
+        cProfile.runctx('getBreakOffClusters(vectors, top_directions, top_scores, top_names, score_limit, \
+          max_clusters, file_name, kappa, similarity_threshold, add_all_terms, data_type, \
+                            largest_clusters, rewrite_files=rewrite_files, lowest_amt=lowest_amt, highest_amt=highest_amt, \
+                            classification=classification, min_size = min_size, dissim=dissim, dissim_amt=dissim_amt, \
+                            find_most_similar=find_most_similar, get_all=get_all, half_ndcg_half_kappa=type)', globals(), locals())
     else:
-        getBreakOffClusters(vectors, top_directions, top_scores, top_names, score_limit, dissimilarity_threshold,
+
+        getBreakOffClusters(vectors, top_directions, top_scores, top_names, score_limit,
                                 max_clusters, file_name, kappa, similarity_threshold, add_all_terms, data_type,
                             largest_clusters, rewrite_files=rewrite_files, lowest_amt=lowest_amt, highest_amt=highest_amt,
                             classification=classification, min_size = min_size, dissim=dissim, dissim_amt=dissim_amt,

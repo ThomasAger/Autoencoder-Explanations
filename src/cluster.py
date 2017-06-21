@@ -625,8 +625,18 @@ def getClusters(directions_fn, scores_fn, names_fn, is_gini, amt_high_directions
     #if is_gini:
     #    additional_text = "gini"
 
+    """
+    directions = np.asarray(dt.import2dArray(directions_fn))
+    names = np.asarray(dt.import1dArray(names_fn))
 
-    dt.write1dArray(least_similar_cluster_names, cluster_names_fn)
+    least_similar_cluster_names.extend(hdn)
+    least_similar_cluster_names.extend(ldn)
+    least_similar_clusters.extend(hd)
+    least_similar_clusters.extend(ld)
+    cluster_center_directions.extend(ld)
+    cluster_center_directions.extend(directions)
+    """
+    dt.write1dArray(least_similar_cluster_names,cluster_names_fn)
     dt.write2dArray(least_similar_clusters, clusters_fn)
     dt.writeArrayDict(cluster_name_dict, dict_fn)
     #dt.write1dArray(word_vector_names, word_vector_names_fn)

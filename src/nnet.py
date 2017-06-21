@@ -63,7 +63,7 @@ class NeuralNetwork:
                  optimizer_name="rmsprop", noise=0.0, fine_tune_weights_fn=None, past_model_weights_fn=None,
                  from_ae=True, save_outputs=False, label_names_fn="",
                  rewrite_files=False, cv_splits=1,cutoff_start=0.2, development=False,
-                 class_weight=None, csv_fn=None, tune_vals=False, get_nnet_vectors_path=None):
+                 class_weight=None, csv_fn=None, tune_vals=False, get_nnet_vectors_path=None, classification_name="all"):
 
         total_file_name = "../data/" + data_type + "/nnet/spaces/" + file_name
         space_fn = total_file_name + "L0.txt"

@@ -26,12 +26,13 @@ import time
 
 jvm.start(max_heap_size="512m")
 
-def main(data_type, classification_task_a, file_name, init_vector_path, hidden_activation, is_identity, amount_of_finetune,
-         breakoff_a, kappa_a, score_limit_a, rewrite_files, cluster_multiplier_a, threads, dropout_noise, learn_rate, epochs, cross_val, ep,
+def main(data_type, classification_task_a, file_name, init_vector_path, hidden_activation, is_identity_a, amount_of_finetune_a,
+         breakoff_a, kappa_a, score_limit_a, rewrite_files, cluster_multiplier_a, threads, dropout_noise, learn_rate_a, epochs_a, cross_val, ep,
          output_activation, cs, deep_size, classification, direction_count, lowest_amt, loss, development, add_all_terms,
          average_ppmi, optimizer_name, class_weight, amount_to_start_a, chunk_amt, chunk_id, lr, vector_path_replacement, dt_dev,
          use_pruned, max_depth, min_score, min_size, limit_entities, svm_classify, get_nnet_vectors_path, arcca, loc, largest_cluster,
-         skip_nn, dissim, dissim_amt_a, hp_opt, find_most_similar, use_breakoff_dissim_a, get_all_a, half_ndcg_half_kappa_a):
+         skip_nn, dissim, dissim_amt_a, hp_opt, find_most_similar, use_breakoff_dissim_a, get_all_a, half_ndcg_half_kappa_a,
+         sim_t, one_for_all, ft_loss_a, ft_optimizer_a):
 
     average_csv_fn = file_name
 
@@ -47,6 +48,11 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
             use_breakoff_dissim_a = dt.stringToArray(use_breakoff_dissim_a)[0]
             get_all_a = dt.stringToArray(get_all_a)[0]
             half_ndcg_half_kappa_a = dt.stringToArray(half_ndcg_half_kappa_a)[0]
+            learn_rate_a = dt.stringToArray(learn_rate_a)[0]
+            ft_loss_a = dt.stringToArray(ft_loss_a)[0]
+            ft_optimizer_a = dt.stringToArray(ft_optimizer_a)[0]
+            is_identity_a = dt.stringToArray(is_identity_a)[0]
+            amount_of_finetune = dt.stringToArray(amount_of_finetune_a)[0]
         else:
             dissim_amt_a = dt.stringToArray(dissim_amt_a)
             breakoff_a = dt.stringToArray(breakoff_a)
@@ -58,10 +64,13 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
             use_breakoff_dissim_a = dt.stringToArray(use_breakoff_dissim_a)
             half_ndcg_half_kappa_a = dt.stringToArray(half_ndcg_half_kappa_a)
             get_all_a = dt.stringToArray(get_all_a)
-        epochs = int(epochs)
+            learn_rate_a = dt.stringToArray(learn_rate_a)
+            ft_loss_a = dt.stringToArray(ft_loss_a)
+            ft_optimizer_a = dt.stringToArray(ft_optimizer_a)
+            is_identity_a = dt.stringToArray(is_identity_a)
+            amount_of_finetune = dt.stringToArray(amount_of_finetune_a)
         ep = int(ep)
         dropout_noise = float(dropout_noise)
-        learn_rate = float(learn_rate)
         cross_val = int(cross_val)
         lowest_amt = int(lowest_amt)
         threads = int(threads)
@@ -72,9 +81,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
             class_weight = None
         rewrite_files = dt.toBool(rewrite_files)
         development = dt.toBool(development)
-        is_identity = dt.toBool(is_identity)
         average_ppmi = dt.toBool(average_ppmi)
-        amount_of_finetune = int(amount_of_finetune)
         svm_classify = dt.toBool(svm_classify)
         limit_entities = dt.toBool(limit_entities)
         min_size = int(min_size)
@@ -108,9 +115,15 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
         use_breakoff_dissim_a = [use_breakoff_dissim_a[0]]
         get_all_a = [get_all_a[0]]
         half_ndcg_half_kappa_a = [half_ndcg_half_kappa_a[0]]
-    
+        learn_rate_a = [learn_rate_a[0]]
+        ft_loss_a = [ft_loss_a[0]]
+        ft_optimizer_a = [ft_optimizer_a[0]]
+        is_identity_a = [is_identity_a[0]]
+        amount_of_finetune = [amount_of_finetune_a[0]]
+
+
     variables_to_execute = []
-    
+
     for d in dissim_amt_a:
         for b in breakoff_a:
             for s in score_limit_a:
@@ -122,6 +135,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                     for ga in get_all_a:
                                         for hnk in half_ndcg_half_kappa_a:
                                             variables_to_execute.append((d, b, s, a, c, k, ct, ub, ga, hnk))
+
 
     for vt in variables_to_execute:
         file_name = average_csv_fn
@@ -135,497 +149,488 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
         use_breakoff_dissim = vt[7]
         get_all = vt[8]
         half_ndcg_half_kappa = vt[9]
+        if one_for_all and not skip_nn:
+            classification_names = dt.import1dArray(loc + data_type + "/classify/" + classification_task + "/names.txt")
+        else:
+            classification_names = ["all"]
+        for classification_name in classification_names:
+            cv_splits = cross_val
+            csv_fns_dt_a = []
+            csv_fns_nn_a = []
 
-        cv_splits = cross_val
-        csv_fns_dt_a = []
-        csv_fns_nn_a = []
-    
-        copy_size = np.copy(deep_size)
-        while len(copy_size) is not 1:
-            for d in range(len(copy_size)):
-                csv_fns_dt_a.append([])
-            copy_size = copy_size[1:]
-        csv_fns_dt_a.append([])
-    
-    
-        for d in range(len(deep_size)):
-            csv_fns_nn_a.append([])
-    
-        split_fns = []
-        for s in range(cv_splits):
-            if skip_nn is False:
-                fn = file_name + " E" + str(ep) + " DS" + str(deep_size) + " DN" + str(dropout_noise) + " CT" + classification_task + \
-                            " HA" + str(hidden_activation) + " CV" + str(cv_splits)  +  " S" + str(s) + " Dev" + str(development) + " LE" + str(limit_entities)
-            else:
-                fn = file_name  + " CV" + str(cv_splits)  +  " S" + str(s) + " LE" + str(limit_entities)
-    
-            split_fns.append(fn)
-        original_deep_size = deep_size
-        for splits in range(cv_splits):
-            deep_size = original_deep_size
-            file_name = split_fns[0]
-            csv_fns_dt = []
-            csv_fns_nn = []
             copy_size = np.copy(deep_size)
-            nn_counter = 0
             while len(copy_size) is not 1:
                 for d in range(len(copy_size)):
-                    csv_fns_dt.append("")
+                    csv_fns_dt_a.append([])
                 copy_size = copy_size[1:]
-            csv_fns_dt.append("")
+            csv_fns_dt_a.append([])
+
+
             for d in range(len(deep_size)):
-                csv_fns_nn.append([])
-            data_type = data_type
-            threads = threads
-            classification_task = classification_task
-            if data_type == "wines" or data_type == "placetypes":
-                lowest_amt = 50
-            else:
-                lowest_amt = 100
-            print(file_name)
-            print("SPLIT", str(splits), rewrite_files, arcca)
-    
-            deep_fns = []
-            for s in range(len(deep_size)):
-                deep_fns.append(split_fns[splits] + " SFT" + str(s))
-            csv_fns = []
-            counter = 0
-            for d in range(len(deep_size)):
-                file_name = deep_fns[d]
-                print(deep_size, init_vector_path)
-                loss = loss
-                output_activation = output_activation
-                optimizer_name = optimizer_name
-                hidden_activation = hidden_activation
-                classification_path = loc + data_type + "/classify/" + classification_task + "/class-all"
-                label_names_fn = loc + data_type + "/classify/" + classification_task + "/names.txt"
-                fine_tune_weights_fn = None
-                ep = ep
-                batch_size = 200
-                save_outputs = True
-                dropout_noise = dropout_noise
-                identity_swap = False
-                from_ae = False
-                past_model_weights_fn = None
-                past_model_bias_fn = None
-                randomize_finetune_weights = False
-                hidden_layer_size = 100
-                output_size = 10
-                randomize_finetune_weights = False
-                corrupt_finetune_weights = False
-                get_scores = True
-    
-                csv_fns_nn[nn_counter] = loc + data_type + "/nnet/csv/" + file_name + ".csv"
-                nn_counter+=1
-                print("nnet hi", arcca)
-                if not arcca and not skip_nn:
-                    print ("nnet hello?")
-                    SDA = nnet.NeuralNetwork(noise=0, fine_tune_weights_fn=fine_tune_weights_fn, optimizer_name=optimizer_name,
-                        get_scores=get_scores, past_model_bias_fn=past_model_bias_fn, deep_size=deep_size,  cutoff_start=cs,
-                        randomize_finetune_weights=randomize_finetune_weights, amount_of_finetune=amount_of_finetune,
-                        vector_path=init_vector_path, hidden_layer_size=hidden_layer_size, class_path=classification_path,
-                        identity_swap=identity_swap, dropout_noise=dropout_noise, save_outputs=save_outputs,
-                        hidden_activation=hidden_activation, output_activation=output_activation, epochs=ep,
-                        learn_rate=lr, is_identity=is_identity, output_size=output_size, split_to_use=splits, label_names_fn=label_names_fn,
-                        batch_size=batch_size, past_model_weights_fn=past_model_weights_fn, loss=loss, cv_splits=cv_splits, csv_fn = file_name,
-                        file_name=file_name, from_ae=from_ae, data_type=data_type, rewrite_files=rewrite_files, development=development,
-                                             class_weight=class_weight, get_nnet_vectors_path=get_nnet_vectors_path)
-    
-                new_file_names = []
-    
-                name_amt = len(deep_size)
-                if dropout_noise is not None and dropout_noise > 0.0:
-                    for j in range(0, name_amt*2, 2):
-                        new_fn = file_name + "L" + str(j)
-                        new_file_names.append(new_fn)
+                csv_fns_nn_a.append([])
+
+            split_fns = []
+            for s in range(cv_splits):
+                if skip_nn is False:
+                    fn = file_name + " E" + str(ep) + " DS" + str(deep_size) + " DN" + str(dropout_noise) + " CT" + classification_task + \
+                                " HA" + str(hidden_activation) + " CV" + str(cv_splits)  +  " S" + str(s) + " Dev" + str(development) + " LE" + str(limit_entities)
                 else:
-                    for j in range(0, name_amt + 1):
-                        new_fn = file_name + "L" + str(j)
-                        new_file_names.append(new_fn)
-    
-                #for j in range(len(new_file_names)):
-                for x in range(len(deep_size)):
-                #for x in range(len([0])):
-    
-                    if limit_entities is False:
-                        new_classification_task = "all"
+                    fn = file_name  + " CV" + str(cv_splits)  +  " S" + str(s) + " LE" + str(limit_entities)
+
+                split_fns.append(fn)
+            original_deep_size = deep_size
+            for splits in range(cv_splits):
+                deep_size = original_deep_size
+                file_name = split_fns[0]
+                csv_fns_dt = []
+                csv_fns_nn = []
+                copy_size = np.copy(deep_size)
+                nn_counter = 0
+                while len(copy_size) is not 1:
+                    for d in range(len(copy_size)):
+                        csv_fns_dt.append("")
+                    copy_size = copy_size[1:]
+                csv_fns_dt.append("")
+                for d in range(len(deep_size)):
+                    csv_fns_nn.append([])
+                data_type = data_type
+                threads = threads
+                classification_task = classification_task
+                if data_type == "wines" or data_type == "placetypes":
+                    lowest_amt = 50
+                else:
+                    lowest_amt = 100
+                print(file_name)
+                print("SPLIT", str(splits), rewrite_files, arcca)
+
+                deep_fns = []
+                for s in range(len(deep_size)):
+                    deep_fns.append(split_fns[splits] + " SFT" + str(s))
+                csv_fns = []
+                counter = 0
+
+                for d in range(len(deep_size)):
+                    file_name = deep_fns[d]
+                    print(deep_size, init_vector_path)
+                    loss = loss
+                    output_activation = output_activation
+                    optimizer_name = optimizer_name
+                    hidden_activation = hidden_activation
+                    classification_path = loc + data_type + "/classify/" + classification_task + "/class-"+classification_name
+                    label_names_fn = loc + data_type + "/classify/" + classification_task + "/names.txt"
+                    fine_tune_weights_fn = None
+                    ep = ep
+                    batch_size = 200
+                    save_outputs = True
+                    dropout_noise = dropout_noise
+                    identity_swap = False
+                    from_ae = False
+                    past_model_weights_fn = None
+                    past_model_bias_fn = None
+                    randomize_finetune_weights = False
+                    hidden_layer_size = 100
+                    output_size = 10
+                    randomize_finetune_weights = False
+                    corrupt_finetune_weights = False
+                    get_scores = True
+
+                    csv_fns_nn[nn_counter] = loc + data_type + "/nnet/csv/" + file_name + ".csv"
+                    nn_counter+=1
+                    print("nnet hi", arcca)
+                    if not arcca and not skip_nn:
+                        print ("nnet hello?")
+                        file_name = file_name + " " + classification_name
+                        SDA = nnet.NeuralNetwork(noise=0, fine_tune_weights_fn=fine_tune_weights_fn, optimizer_name=optimizer_name,
+                            get_scores=get_scores, past_model_bias_fn=past_model_bias_fn, deep_size=deep_size,  cutoff_start=cs,
+                            randomize_finetune_weights=randomize_finetune_weights, amount_of_finetune=amount_of_finetune_a[0],
+                            vector_path=init_vector_path, hidden_layer_size=hidden_layer_size, class_path=classification_path,
+                            identity_swap=identity_swap, dropout_noise=dropout_noise, save_outputs=save_outputs,
+                            hidden_activation=hidden_activation, output_activation=output_activation, epochs=ep,
+                            learn_rate=lr, is_identity=is_identity_a[0], output_size=output_size, split_to_use=splits, label_names_fn=label_names_fn,
+                            batch_size=batch_size, past_model_weights_fn=past_model_weights_fn, loss=loss, cv_splits=cv_splits, csv_fn = file_name,
+                            file_name=file_name, from_ae=from_ae, data_type=data_type, rewrite_files=rewrite_files, development=development,
+                                                 class_weight=class_weight, get_nnet_vectors_path=get_nnet_vectors_path)
+
+                    new_file_names = []
+
+                    name_amt = len(deep_size)
+                    if dropout_noise is not None and dropout_noise > 0.0:
+                        for j in range(0, name_amt*2, 2):
+                            new_fn = file_name + "L" + str(j)
+                            new_file_names.append(new_fn)
                     else:
-                        new_classification_task = classification_task
-                    file_name = new_file_names[x]
-    
-                    if vector_path_replacement is not None:
-                        vector_path = vector_path_replacement
-                    """ Begin Filename """
-    
-                    is_identity = is_identity
-                    breakoff = breakoff
-                    kappa = kappa
-    
-                    file_name = file_name + str(lowest_amt)
-    
-                    """ Begin Parameters """
-                    """ SVM """
-                    svm_type = "svm"
-                    highest_count = direction_count
-    
-                    if vector_path_replacement is None:
-                        vector_path = loc + data_type + "/nnet/spaces/"+new_file_names[x]+".txt"
-                    #vector_path = loc + data_type + "/nnet/spaces/"+vector_path_replacement+".txt"
-                    bow_path = loc + data_type + "/bow/binary/phrases/class-all-"+str(lowest_amt)+"-"+str(highest_count)+"-"+new_classification_task
-                    property_names_fn = loc + data_type + "/bow/names/" + str(lowest_amt) + "-" +str(highest_count)+"-"+ new_classification_task +".txt"
-                    directions_fn = loc + data_type + "/svm/directions/" + file_name + ".txt"
-    
-    
-                    """ DIRECTION RANKINGS """
-                    # Get rankings
-                    vector_names_fn = loc + data_type + "/nnet/spaces/entitynames.txt"
-                    class_names_fn = property_names_fn
-    
-                    cluster_amt = deep_size[x] * cluster_multiplier
-    
-                    """ Begin Methods """
-                    print(file_name)
-                    final_fn = ""
-                    """ CLUSTERING """
-                    # Choosing the score-type
-                    if breakoff:
-                        score_limit = score_limit
-    
-                        final_fn = file_name + str(score_limit) + str(cluster_amt)
-                        if add_all_terms:
-                            final_fn = final_fn + "AllTerms"
-                    else:
-                        final_fn = final_fn + " SimilarityClustering"
-                    names_fn = property_names_fn
-                    if skip_nn is False:
-                        if average_ppmi:
-                            final_fn = final_fn + "APPMI"
-    
-                        if is_identity:
-                            final_fn = final_fn + " IT"
-    
-                        epochs = epochs
-                        final_fn = final_fn + str(epochs)
-                        final_fn = final_fn + "FT"
-                        final_fn = final_fn + "L0"
-                    if limit_entities is False:
-                        old_vp = vector_path
-                        vector_path = get_nnet_vectors_path
-                    print(file_name)
-                    svm.createSVM(vector_path, bow_path, property_names_fn, file_name, lowest_count=lowest_amt,
-                      highest_count=highest_count, data_type=data_type, get_kappa=kappa,
-                      get_f1=False, svm_type=svm_type, getting_directions=True, threads=threads, rewrite_files=rewrite_files,
-                                  classification=new_classification_task, lowest_amt=lowest_amt, chunk_amt=chunk_amt, chunk_id=chunk_id)
-    
-    
-                    if chunk_amt > 0:
-                        if chunk_id == chunk_amt-1:
-                            dt.compileSVMResults(file_name, chunk_amt, data_type)
-    
+                        for j in range(0, name_amt + 1):
+                            new_fn = file_name + "L" + str(j)
+                            new_file_names.append(new_fn)
+
+                    #for j in range(len(new_file_names)):
+                    for x in range(len(deep_size)):
+                    #for x in range(len([0])):
+
+                        if limit_entities is False:
+                            new_classification_task = "all"
                         else:
-                            if d != len(deep_fns)-1:
-                                randomcount = 0
-                                while not dt.fileExists(loc+data_type+"/nnet/spaces/"+final_fn+".txt"):
-                                    randomcount += 1
-                                print(randomcount)
-                                time.sleep(10)
-                            else:
-                                print("exit")
-                                if d != len(deep_fns)-1:
-                                    while not dt.fileExists(loc+data_type+"/nnet/spaces/"+deep_fns[d+1]+".txt"):
-                                        time.sleep(10)
-    
-                    if chunk_id == chunk_amt -1 or chunk_amt <= 0:
-                        if not kappa:
-                            rank.getAllPhraseRankings(directions_fn, vector_path, class_names_fn, vector_names_fn, file_name,
-                                          data_type=data_type, rewrite_files=rewrite_files)
-                            ndcg.getNDCG(loc + data_type + "/rank/numeric/" + file_name + "ALL.txt", file_name,
-                                     data_type=data_type, lowest_count=lowest_amt, rewrite_files=rewrite_files,
-                                         highest_count=highest_count, classification=new_classification_task)
-                        if half_ndcg_half_kappa:
-                            scores_fn = loc + data_type + "/ndcg/" + file_name + ".txt"
-                            half_ndcg_half_kappa = loc + data_type + "/svm/kappa/" + file_name + ".txt"
-                            file_name = file_name + "halfnk"
-                        elif kappa is False:
-                            scores_fn = loc + data_type + "/ndcg/" + file_name + ".txt"
-                            file_name = file_name + "ndcg"
-                        else:
-                            scores_fn = loc + data_type + "/svm/kappa/" + file_name + ".txt"
-                            file_name = file_name + "kappa"
-    
+                            new_classification_task = classification_task
+                        file_name = new_file_names[x]
+
+                        if vector_path_replacement is not None:
+                            vector_path = vector_path_replacement
+                        """ Begin Filename """
+
+                        breakoff = breakoff
+                        kappa = kappa
+
+                        file_name = file_name + str(lowest_amt)
+
+                        """ Begin Parameters """
+                        """ SVM """
+                        svm_type = "svm"
+                        highest_count = direction_count
+
+                        if vector_path_replacement is None:
+                            vector_path = loc + data_type + "/nnet/spaces/"+new_file_names[x]+".txt"
+                        #vector_path = loc + data_type + "/nnet/spaces/"+vector_path_replacement+".txt"
+                        bow_path = loc + data_type + "/bow/binary/phrases/class-all-"+str(lowest_amt)+"-"+str(highest_count)+"-"+new_classification_task
+                        property_names_fn = loc + data_type + "/bow/names/" + str(lowest_amt) + "-" +str(highest_count)+"-"+ new_classification_task +".txt"
+                        directions_fn = loc + data_type + "/svm/directions/" + file_name + ".txt"
+
+
+                        """ DIRECTION RANKINGS """
+                        # Get rankings
+                        vector_names_fn = loc + data_type + "/nnet/spaces/entitynames.txt"
+                        class_names_fn = property_names_fn
+
+                        cluster_amt = deep_size[x] * cluster_multiplier
+
+                        """ Begin Methods """
+                        print(file_name)
                         """ CLUSTERING """
                         # Choosing the score-type
-                        if breakoff:
-                            score_limit = score_limit
-    
-                            file_name = file_name + str(score_limit)
-                            if get_all:
-                                file_name = file_name + " GA"
-                            if add_all_terms:
-                                file_name = file_name + " AllTerms"
-                            file_name = file_name + " Breakoff"
-                        else:
-                            file_name = file_name + " KMeans"
 
-                        if not use_breakoff_dissim and breakoff:
-                            dissim = 0
-                            dissim_amt = 0
-                            cluster_multiplier = 2000000
-                        file_name = file_name + " CA" +  str(cluster_amt)
-                        file_name = file_name + " MC" + str(min_size) + " MS" + str(min_score)
                         names_fn = property_names_fn
-                        file_name = file_name + " ATS" + str(amount_to_start) + " DS" + str(dissim_amt)
-                        if breakoff:
-                            if find_most_similar:
-                                file_name = file_name + " FMS"
-                            similarity_threshold = 0.5
-                            amount_to_start = amount_to_start
-                            dissimilarity_threshold = 0.9
-                            add_all_terms = add_all_terms
-                            clusters_fn = loc + data_type + "/cluster/hierarchy_directions/" + file_name + ".txt"
-                            cluster_names_fn = loc + data_type + "/cluster/hierarchy_names/" + file_name + ".txt"
 
-                        else:
-                            high_threshold = 0.5
-                            low_threshold = 0.1
-                            clusters_fn = loc + data_type + "/cluster/clusters/" + file_name + ".txt"
-                            cluster_names_fn = loc + data_type + "/cluster/names/" + file_name + ".txt"
+                        print(file_name)
+                        svm.createSVM(vector_path, bow_path, property_names_fn, file_name, lowest_count=lowest_amt,
+                          highest_count=highest_count, data_type=data_type, get_kappa=kappa,
+                          get_f1=False, svm_type=svm_type, getting_directions=True, threads=threads, rewrite_files=rewrite_files,
+                                      classification=new_classification_task, lowest_amt=lowest_amt, chunk_amt=chunk_amt, chunk_id=chunk_id)
 
-                        if breakoff:
-                            hierarchy.initClustering(vector_path, directions_fn, scores_fn, names_fn, amount_to_start, False,
-                                 similarity_threshold,  cluster_amt, score_limit, file_name, kappa, dissimilarity_threshold,
-                                         add_all_terms=add_all_terms, data_type=data_type, rewrite_files=rewrite_files,
-                                                     lowest_amt=lowest_amt, highest_amt=highest_count, classification=new_classification_task,
-                                                     min_score=min_score, min_size = min_size, largest_clusters=largest_cluster, dissim=dissim,
-                                                     dissim_amt=dissim_amt, find_most_similar=find_most_similar, get_all=get_all,
-                                                     half_ndcg_half_kappa=half_ndcg_half_kappa)
-                        else:
-                            cluster.getClusters(directions_fn, scores_fn, names_fn, False, dissim_amt, amount_to_start, file_name, cluster_amt,
-                                                dissim, min_score, data_type, rewrite_files=rewrite_files,
-                                                     half_kappa_half_ndcg=half_ndcg_half_kappa)
-    
-                        """ CLUSTER RANKING """
-                        if limit_entities is False:
-                            limited_label_fn = loc + data_type + "/classify/"+classification_task+"/available_entities.txt"
-                        else:
-                            vector_names_fn = loc + data_type + "/classify/"+classification_task+"/available_entities.txt"
-                            limited_label_fn = None
-                        ranking_fn = loc + data_type + "/rank/numeric/" + file_name + ".txt"
-    
-    
-    
-    
-                        rank.getAllRankings(clusters_fn, vector_path, cluster_names_fn , vector_names_fn, 0.2, 1, False, file_name,
-                                            False, data_type=data_type, rewrite_files=rewrite_files)
-                        if skip_nn:
-                            file_name = file_name + " " + classification_task
-    
-                        if dt_dev:
-                            file_name = file_name + " tdev"
-    
-                        csv_name = loc + data_type + "/rules/tree_csv/" + file_name + ".csv"
-    
-                        csv_fns_dt[counter] = csv_name
-                        counter += 1
-    
-                        file_name = file_name + str(max_depth)
-                        tree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name, 10000,
-                                  max_depth=max_depth, balance="balanced", criterion="entropy", save_details=True, cv_splits=cv_splits, split_to_use=splits,
-                                  data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files, development=dt_dev, limit_entities=limit_entities,
-                                          limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn)
-    
-                        tree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name + "None", 10000,
-                                              max_depth=None, balance="balanced", criterion="entropy", save_details=False,
-                                          data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
-                                          cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
-                                          limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn)
-    
-                        wekatree.DecisionTree(ranking_fn, classification_path, label_names_fn , cluster_names_fn , file_name,
-                           save_details=True, data_type=data_type,split_to_use=splits,
-                                          limited_label_fn=limited_label_fn, rewrite_files=rewrite_files,
-                           csv_fn=csv_name, cv_splits=cv_splits, limit_entities=limit_entities, vector_names_fn=vector_names_fn)
-    
-                        break
-    
-                        if use_pruned:
-                            clusters_fn = loc+ data_type + "/rules/clusters/" + file_name + ".txt"
-                            cluster_names_fn = loc+ data_type + "/rules/names/" + file_name + ".txt"
-    
-                        classes = dt.import1dArray(label_names_fn)
-                        current_fn = file_name
-    
-                        # Use an SVM to classify each of the classes
-                        if svm_classify:
-                            for c in classes:
-                                print(c)
-                                file_name = current_fn + c
-                                class_c_fn = loc+ data_type + "/rules/clusters/" + file_name + ".txt"
-                                class_n_fn = loc+ data_type + "/rules/names/" + file_name + ".txt"
-                                rank.getAllRankings(class_c_fn, vector_path, class_n_fn , vector_names_fn, 0.2, 1, False, file_name,
-                                                    False, data_type=data_type, rewrite_files=rewrite_files)
-                                class_rank_fn = loc+ data_type + "/rank/numeric/" + file_name + ".txt"
-                                class_p_fn = loc + data_type + "/classify/" +  classification_task + "/class-" + c
-                                svm.createSVM(class_rank_fn, class_p_fn, class_n_fn, file_name, lowest_count=lowest_amt,
-                                          highest_count=highest_count, data_type=data_type, get_kappa=False,
-                                          get_f1=True, single_class=True,svm_type=svm_type, getting_directions=False, threads=1,
-                                          rewrite_files=rewrite_files,
-                                          classification=classification, lowest_amt=lowest_amt, chunk_amt=chunk_amt,
-                                          chunk_id=chunk_id)
-    
-    
-                        file_name = current_fn
-    
-                        limited_rankings_fn = loc+ data_type + "/rank/numeric/" + file_name + ".txt"
-                        """
-                        svm.createSVM(limited_rankings_fn, classification_path, class_names_fn, file_name, lowest_count=lowest_amt,
-                                      highest_count=highest_count, data_type=data_type, get_kappa=False,
-                                      get_f1=True, single_class=True,svm_type=svm_type, getting_directions=False, threads=1,
-                                      rewrite_files=rewrite_files,
-                                      classification=classification, lowest_amt=lowest_amt, chunk_amt=chunk_amt,
-                                      chunk_id=chunk_id)
-                        """
-                        """ Testing consistency
-                        tree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_names_fn,
-                                          file_name, 10000,
-                                          max_dep=max_depth, balance="balanced", criterion="entropy", save_details=False,
-                                          cv_spli=cv_splits, split_to_use=splits,
-                                          data_type=data_type, csv_fn=csv_name, rewrite_files=True,
-                                          development=dt_dev)
-                        """
-                        # Decision tree
-    
-                        if average_ppmi:
-                            file_name = file_name + "APPMI"
-    
-                        class_path = loc + data_type + "/finetune/" + file_name + ".txt"
-    
-                        if average_ppmi:
-                            fto.pavPPMIAverage(cluster_names_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=rewrite_files,
-                                    classification=classification, lowest_amt=lowest_amt, limit_entities=limit_entities,highest_amt=highest_count)
-                        else:
-                                fto.pavPPMI(cluster_names_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=rewrite_files,
-                                        classification=classification, lowest_amt=lowest_amt, limit_entities=limit_entities,highest_amt=highest_count)
 
-                        """ FINETUNING """
+                        if chunk_amt > 0:
+                            if chunk_id == chunk_amt-1:
+                                dt.compileSVMResults(file_name, chunk_amt, data_type)
 
-                        if is_identity:
-                            file_name = file_name + " IT" + str(amount_of_finetune)
+                            else:
+                                if d != len(deep_fns)-1:
+                                    randomcount = 0
+                                    while not False: #NOTE, REWRITE THIS, ADD A TEMP MARKER FOR WHEN THE PROCESS RETURNS HERE, PREVIOUSLY USED EXISTENCE OF FN
+                                        randomcount += 1
+                                    print(randomcount)
+                                    time.sleep(10)
+                                else:
+                                    print("exit")
+                                    if d != len(deep_fns)-1:
+                                        while not dt.fileExists(loc+data_type+"/nnet/spaces/"+deep_fns[d+1]+".txt"):
+                                            time.sleep(10)
 
-                        epochs = epochs
-                        file_name = file_name + str(epochs)
+                        if chunk_id == chunk_amt -1 or chunk_amt <= 0:
+                            if not kappa:
+                                rank.getAllPhraseRankings(directions_fn, vector_path, class_names_fn, vector_names_fn, file_name,
+                                              data_type=data_type, rewrite_files=rewrite_files)
+                                ndcg.getNDCG(loc + data_type + "/rank/numeric/" + file_name + "ALL.txt", file_name,
+                                         data_type=data_type, lowest_count=lowest_amt, rewrite_files=rewrite_files,
+                                             highest_count=highest_count, classification=new_classification_task)
+                            if half_ndcg_half_kappa:
+                                scores_fn = loc + data_type + "/ndcg/" + file_name + ".txt"
+                                half_ndcg_half_kappa = loc + data_type + "/svm/kappa/" + file_name + ".txt"
+                                file_name = file_name + "halfnk"
+                            elif kappa is False:
+                                scores_fn = loc + data_type + "/ndcg/" + file_name + ".txt"
+                                file_name = file_name + "ndcg"
+                                half_ndcg_half_kappa = ""
+                            else:
+                                scores_fn = loc + data_type + "/svm/kappa/" + file_name + ".txt"
+                                file_name = file_name + "kappa"
+                                half_ndcg_half_kappa = ""
 
-                        fine_tune_weights_fn = [clusters_fn]
+                            """ CLUSTERING """
+                            # Choosing the score-type
+                            if breakoff:
+                                score_limit = score_limit
 
-                        batch_size = 200
-                        learn_rate = learn_rate
-                        identity_swap = False
-                        randomize_finetune_weights = False
-                        from_ae = True
-                        finetune_size = cluster_amt
+                                file_name = file_name + str(score_limit)
+                                if get_all:
+                                    file_name = file_name + " GA"
+                                if add_all_terms:
+                                    file_name = file_name + " AllTerms"
+                                file_name = file_name + " Breakoff"
+                            else:
+                                file_name = file_name + " KMeans"
 
-                        loss = "mse"
-                        optimizer_name = "sgd"
+                            if not use_breakoff_dissim and breakoff:
+                                dissim = 0
+                                dissim_amt = 0
+                                cluster_multiplier = 2000000
+                            file_name = file_name + " CA" +  str(cluster_amt)
+                            file_name = file_name + " MC" + str(min_size) + " MS" + str(min_score)
+                            names_fn = property_names_fn
+                            file_name = file_name + " ATS" + str(amount_to_start) + " DS" + str(dissim_amt)
+                            if breakoff:
+                                if find_most_similar:
+                                    file_name = file_name + " FMS"
+                                similarity_threshold = sim_t
+                                amount_to_start = amount_to_start
+                                add_all_terms = add_all_terms
+                                clusters_fn = loc + data_type + "/cluster/hierarchy_directions/" + file_name + ".txt"
+                                cluster_names_fn = loc + data_type + "/cluster/hierarchy_names/" + file_name + ".txt"
 
-                        hidden_layer_size = deep_size[x]
+                            else:
+                                high_threshold = 0.5
+                                low_threshold = 0.1
+                                clusters_fn = loc + data_type + "/cluster/clusters/" + file_name + ".txt"
+                                cluster_names_fn = loc + data_type + "/cluster/names/" + file_name + ".txt"
 
-                        past_model_weights_fn = [loc + data_type + "/nnet/weights/" + new_file_names[x] + ".txt"]
-                        past_model_bias_fn = [loc + data_type + "/nnet/bias/" + new_file_names[x] + ".txt"]
+                            if breakoff:
+                                hierarchy.initClustering(vector_path, directions_fn, scores_fn, names_fn, amount_to_start, False,
+                                      cluster_amt, score_limit, file_name, kappa, similarity_threshold,
+                                             add_all_terms=add_all_terms, data_type=data_type, rewrite_files=rewrite_files,
+                                                         lowest_amt=lowest_amt, highest_amt=highest_count, classification=new_classification_task,
+                                                         min_score=min_score, min_size = min_size, largest_clusters=largest_cluster, dissim=dissim,
+                                                         dissim_amt=dissim_amt, find_most_similar=find_most_similar, get_all=get_all,
+                                                         half_ndcg_half_kappa=half_ndcg_half_kappa)
+                            else:
+                                cluster.getClusters(directions_fn, scores_fn, names_fn, False, dissim_amt, amount_to_start, file_name, cluster_amt,
+                                                    dissim, min_score, data_type, rewrite_files=rewrite_files,
+                                                         half_kappa_half_ndcg=half_ndcg_half_kappa)
 
-                        """ DECISION TREES FOR NNET RANKINGS """
-                        nnet_ranking_fn = loc + data_type + "/nnet/clusters/" + file_name + "FT.txt"
+                            """ CLUSTER RANKING """
+                            if limit_entities is False:
+                                limited_label_fn = loc + data_type + "/classify/"+classification_task+"/available_entities.txt"
+                            else:
+                                vector_names_fn = loc + data_type + "/classify/"+classification_task+"/available_entities.txt"
+                                limited_label_fn = None
+                            ranking_fn = loc + data_type + "/rank/numeric/" + file_name + ".txt"
 
-                        csv_name = loc + data_type + "/rules/tree_csv/" + file_name + ".csv"
 
-                        file_name = file_name + "FT"
-                        if arcca is False:
 
-                            SDA = nnet.NeuralNetwork(noise=0, fine_tune_weights_fn=fine_tune_weights_fn, optimizer_name=optimizer_name,
-                                        past_model_bias_fn=past_model_bias_fn, save_outputs=True,
-                                        randomize_finetune_weights=randomize_finetune_weights,
-                                        vector_path=init_vector_path, hidden_layer_size=hidden_layer_size, class_path=class_path,
-                                        identity_swap=identity_swap, amount_of_finetune=amount_of_finetune,
-                                        hidden_activation=hidden_activation, output_activation=output_activation, epochs=epochs,
-                                        learn_rate=learn_rate, is_identity=is_identity, batch_size=batch_size,
-                                        past_model_weights_fn=past_model_weights_fn, loss=loss, rewrite_files=rewrite_files,
-                                        file_name=file_name, from_ae=from_ae, finetune_size=finetune_size, data_type=data_type,
-                                                   get_nnet_vectors_path= get_nnet_vectors_path)
 
-                            new_file_names[x] = file_name
-
-                            tree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name, 10000,
-                                                  max_depth=max_depth, balance="balanced", criterion="entropy", save_details=True,
-                                              data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
-                                              cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
-                                              limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn)
-
-                            tree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name + "None", 10000,
-                                                  max_depth=None, balance="balanced", criterion="entropy", save_details=False,
-                                              data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
-                                              cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
-                                              limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn)
-
-                            wekatree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name,
-                                                  save_details=True, data_type=data_type,split_to_use=splits,  rewrite_files=rewrite_files,
-                                                  csv_fn=csv_name, cv_splits=cv_splits, limit_entities=limit_entities,
-                                                  limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn)
-
-                            current_fn = file_name
-                            #SVM Classification
-                            if svm_classify:
-                                for c in classes:
-                                    print(c)
-                                    file_name = current_fn + c
-                                    class_c_fn = loc + data_type + "/rules/clusters/" + file_name + ".txt"
-                                    class_n_fn = loc + data_type + "/rules/names/" + file_name + ".txt"
-                                    rank.getAllRankings(class_c_fn, vector_path, class_n_fn, vector_names_fn, 0.2, 1, False,
-                                                        file_name,
-                                                        False, data_type=data_type, rewrite_files=rewrite_files)
-                                    class_rank_fn = loc+ data_type + "/rank/numeric/" + file_name + ".txt"
-                                    class_p_fn = loc + data_type + "/classify/" +  classification_task + "/class-" + c
-                                    svm.createSVM(class_rank_fn, class_p_fn, class_n_fn, file_name, lowest_count=lowest_amt,
-                                              highest_count=highest_count, data_type=data_type, get_kappa=False,
-                                              get_f1=True, single_class=True,svm_type=svm_type, getting_directions=False, threads=1,
-                                              rewrite_files=rewrite_files,
-                                              classification=classification, lowest_amt=lowest_amt, chunk_amt=chunk_amt,
-                                              chunk_id=chunk_id)
-
-                            file_name = current_fn
-                            rank.getAllRankings(clusters_fn, vector_path, cluster_names_fn, vector_names_fn, 0.2, 1, False,
-                                                file_name,
+                            rank.getAllRankings(clusters_fn, vector_path, cluster_names_fn , vector_names_fn, 0.2, 1, False, file_name,
                                                 False, data_type=data_type, rewrite_files=rewrite_files)
-                            csv_name = loc + data_type + "/rules/tree_csv/" + file_name + "TopDT.csv"
-                            tree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name + "None", 10000,
+                            if skip_nn:
+                                file_name = file_name + " " + classification_task
+
+                            if dt_dev:
+                                file_name = file_name + " tdev"
+
+                            csv_name = loc + data_type + "/rules/tree_csv/" + file_name + ".csv"
+
+                            csv_fns_dt[counter] = csv_name
+                            counter += 1
+
+                            file_name = file_name + str(max_depth)
+                            tree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name, 10000,
+                                      max_depth=max_depth, balance="balanced", criterion="entropy", save_details=True, cv_splits=cv_splits, split_to_use=splits,
+                                      data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files, development=dt_dev, limit_entities=limit_entities,
+                                              limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn)
+
+                            tree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name + "None", 10000,
                                                   max_depth=None, balance="balanced", criterion="entropy", save_details=False,
                                               data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
                                               cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
                                               limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn)
-                            csv_name = loc + data_type + "/rules/tree_csv/" + file_name + "TopDTJ48.csv"
-                            wekatree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name,
-                                                  save_details=True, data_type=data_type,split_to_use=splits,
-                                                  csv_fn=csv_name, cv_splits=cv_splits, limit_entities=limit_entities,
-                                                  limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn)
-                        if limit_entities is False:
-                            vector_path = old_vp
 
-                        if len(new_file_names) > 1:
-                            init_vector_path = vector_path
-                if len(deep_size) > 1:
-                    init_vector_path = loc + data_type + "/nnet/spaces/" + new_file_names[0] + "L0.txt"
-                    deep_size = deep_size[1:]
-            print("GETTING FNS")
-            for a in range(len(csv_fns_dt)):
-                csv_fns_dt_a[a].append(csv_fns_dt[a])
+                            wekatree.DecisionTree(ranking_fn, classification_path, label_names_fn , cluster_names_fn , file_name,
+                               save_details=True, data_type=data_type,split_to_use=splits,
+                                              limited_label_fn=limited_label_fn, rewrite_files=rewrite_files,
+                               csv_fn=csv_name, cv_splits=cv_splits, limit_entities=limit_entities, vector_names_fn=vector_names_fn)
+                            if not skip_nn:
+
+                                variables_to_execute = []
+
+                                for d in learn_rate_a:
+                                    for b in ft_loss_a:
+                                        for s in ft_optimizer_a:
+                                            for a in is_identity_a:
+                                                for c in amount_of_finetune_a:
+                                                    variables_to_execute.append((d, b, s, a, c))
+                                for v in variables_to_execute:
+                                    if use_pruned:
+                                        clusters_fn = loc+ data_type + "/rules/clusters/" + file_name + ".txt"
+                                        cluster_names_fn = loc+ data_type + "/rules/names/" + file_name + ".txt"
+
+                                    classes = dt.import1dArray(label_names_fn)
+                                    current_fn = file_name
+
+                                    # Use an SVM to classify each of the classes
+                                    if svm_classify:
+                                        for c in classes:
+                                            print(c)
+                                            file_name = current_fn + c
+                                            class_c_fn = loc+ data_type + "/rules/clusters/" + file_name + ".txt"
+                                            class_n_fn = loc+ data_type + "/rules/names/" + file_name + ".txt"
+                                            rank.getAllRankings(class_c_fn, vector_path, class_n_fn , vector_names_fn, 0.2, 1, False, file_name,
+                                                                False, data_type=data_type, rewrite_files=rewrite_files)
+                                            class_rank_fn = loc+ data_type + "/rank/numeric/" + file_name + ".txt"
+                                            class_p_fn = loc + data_type + "/classify/" +  classification_task + "/class-" + c
+                                            svm.createSVM(class_rank_fn, class_p_fn, class_n_fn, file_name, lowest_count=lowest_amt,
+                                                      highest_count=highest_count, data_type=data_type, get_kappa=False,
+                                                      get_f1=True, single_class=True,svm_type=svm_type, getting_directions=False, threads=1,
+                                                      rewrite_files=rewrite_files,
+                                                      classification=classification, lowest_amt=lowest_amt, chunk_amt=chunk_amt,
+                                                      chunk_id=chunk_id)
+
+
+                                    file_name = current_fn
+
+                                    limited_rankings_fn = loc+ data_type + "/rank/numeric/" + file_name + ".txt"
+                                    """
+                                    svm.createSVM(limited_rankings_fn, classification_path, class_names_fn, file_name, lowest_count=lowest_amt,
+                                                  highest_count=highest_count, data_type=data_type, get_kappa=False,
+                                                  get_f1=True, single_class=True,svm_type=svm_type, getting_directions=False, threads=1,
+                                                  rewrite_files=rewrite_files,
+                                                  classification=classification, lowest_amt=lowest_amt, chunk_amt=chunk_amt,
+                                                  chunk_id=chunk_id)
+                                    """
+                                    """ Testing consistency
+                                    tree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_names_fn,
+                                                      file_name, 10000,
+                                                      max_dep=max_depth, balance="balanced", criterion="entropy", save_details=False,
+                                                      cv_spli=cv_splits, split_to_use=splits,
+                                                      data_type=data_type, csv_fn=csv_name, rewrite_files=True,
+                                                      development=dt_dev)
+                                    """
+                                    # Decision tree
+
+                                    if average_ppmi:
+                                        file_name = file_name + "APPMI"
+
+                                    class_path = loc + data_type + "/finetune/" + file_name + ".txt"
+
+                                    if average_ppmi:
+                                        fto.pavPPMIAverage(cluster_names_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=rewrite_files,
+                                                classification=classification, lowest_amt=lowest_amt, limit_entities=limit_entities,highest_amt=highest_count)
+                                    else:
+                                            fto.pavPPMI(cluster_names_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=rewrite_files,
+                                                    classification=classification, lowest_amt=lowest_amt, limit_entities=limit_entities,highest_amt=highest_count)
+
+                                    """ FINETUNING """
+
+                                    if is_identity:
+                                        file_name = file_name + " IT" + str(amount_of_finetune)
+
+                                    epochs = epochs
+                                    file_name = file_name + str(epochs)
+
+                                    fine_tune_weights_fn = [clusters_fn]
+
+                                    batch_size = 200
+                                    learn_rate = learn_rate
+                                    identity_swap = False
+                                    randomize_finetune_weights = False
+                                    from_ae = True
+                                    finetune_size = cluster_amt
+
+                                    loss = ft_loss
+                                    optimizer_name = ft_optimizer
+
+                                    hidden_layer_size = deep_size[x]
+
+                                    past_model_weights_fn = [loc + data_type + "/nnet/weights/" + new_file_names[x] + ".txt"]
+                                    past_model_bias_fn = [loc + data_type + "/nnet/bias/" + new_file_names[x] + ".txt"]
+
+                                    """ DECISION TREES FOR NNET RANKINGS """
+                                    nnet_ranking_fn = loc + data_type + "/nnet/clusters/" + file_name + "FT.txt"
+
+                                    csv_name = loc + data_type + "/rules/tree_csv/" + file_name + ".csv"
+
+                                    file_name = file_name + "FT"
+                                    if arcca is False:
+
+                                        SDA = nnet.NeuralNetwork(noise=0, fine_tune_weights_fn=fine_tune_weights_fn, optimizer_name=optimizer_name,
+                                                    past_model_bias_fn=past_model_bias_fn, save_outputs=True,
+                                                    randomize_finetune_weights=randomize_finetune_weights,
+                                                    vector_path=init_vector_path, hidden_layer_size=hidden_layer_size, class_path=class_path,
+                                                    identity_swap=identity_swap, amount_of_finetune=amount_of_finetune,
+                                                    hidden_activation=hidden_activation, output_activation=output_activation, epochs=epochs,
+                                                    learn_rate=learn_rate, is_identity=is_identity, batch_size=batch_size,
+                                                    past_model_weights_fn=past_model_weights_fn, loss=loss, rewrite_files=rewrite_files,
+                                                    file_name=file_name, from_ae=from_ae, finetune_size=finetune_size, data_type=data_type,
+                                                               get_nnet_vectors_path= get_nnet_vectors_path)
+
+                                        new_file_names[x] = file_name
+
+                                        tree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name, 10000,
+                                                              max_depth=max_depth, balance="balanced", criterion="entropy", save_details=True,
+                                                          data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
+                                                          cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
+                                                          limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn)
+
+                                        tree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name + "None", 10000,
+                                                              max_depth=None, balance="balanced", criterion="entropy", save_details=False,
+                                                          data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
+                                                          cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
+                                                          limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn)
+
+                                        wekatree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name,
+                                                              save_details=True, data_type=data_type,split_to_use=splits,  rewrite_files=rewrite_files,
+                                                              csv_fn=csv_name, cv_splits=cv_splits, limit_entities=limit_entities,
+                                                              limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn)
+
+                                        current_fn = file_name
+                                        #SVM Classification
+                                        if svm_classify:
+                                            for c in classes:
+                                                print(c)
+                                                file_name = current_fn + c
+                                                class_c_fn = loc + data_type + "/rules/clusters/" + file_name + ".txt"
+                                                class_n_fn = loc + data_type + "/rules/names/" + file_name + ".txt"
+                                                rank.getAllRankings(class_c_fn, vector_path, class_n_fn, vector_names_fn, 0.2, 1, False,
+                                                                    file_name,
+                                                                    False, data_type=data_type, rewrite_files=rewrite_files)
+                                                class_rank_fn = loc+ data_type + "/rank/numeric/" + file_name + ".txt"
+                                                class_p_fn = loc + data_type + "/classify/" +  classification_task + "/class-" + c
+                                                svm.createSVM(class_rank_fn, class_p_fn, class_n_fn, file_name, lowest_count=lowest_amt,
+                                                          highest_count=highest_count, data_type=data_type, get_kappa=False,
+                                                          get_f1=True, single_class=True,svm_type=svm_type, getting_directions=False, threads=1,
+                                                          rewrite_files=rewrite_files,
+                                                          classification=classification, lowest_amt=lowest_amt, chunk_amt=chunk_amt,
+                                                          chunk_id=chunk_id)
+
+                                        file_name = current_fn
+                                        rank.getAllRankings(clusters_fn, vector_path, cluster_names_fn, vector_names_fn, 0.2, 1, False,
+                                                            file_name,
+                                                            False, data_type=data_type, rewrite_files=rewrite_files)
+                                        csv_name = loc + data_type + "/rules/tree_csv/" + file_name + "TopDT.csv"
+                                        tree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name + "None", 10000,
+                                                              max_depth=None, balance="balanced", criterion="entropy", save_details=False,
+                                                          data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
+                                                          cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
+                                                          limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn)
+                                        csv_name = loc + data_type + "/rules/tree_csv/" + file_name + "TopDTJ48.csv"
+                                        wekatree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name,
+                                                              save_details=True, data_type=data_type,split_to_use=splits,
+                                                              csv_fn=csv_name, cv_splits=cv_splits, limit_entities=limit_entities,
+                                                              limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn)
+
+                            if len(new_file_names) > 1:
+                                init_vector_path = vector_path
+                    if len(deep_size) > 1:
+                        init_vector_path = loc + data_type + "/nnet/spaces/" + new_file_names[0] + "L0.txt"
+                        deep_size = deep_size[1:]
+                print("GETTING FNS")
+                for a in range(len(csv_fns_dt)):
+                    csv_fns_dt_a[a].append(csv_fns_dt[a])
+                if not skip_nn:
+                    for a in range(len(csv_fns_nn)):
+                        csv_fns_nn_a[a].append(csv_fns_nn[a])
+
+            for a in range(len(csv_fns_dt_a)):
+                dt.averageCSVs(csv_fns_dt_a[a])
             if not skip_nn:
-                for a in range(len(csv_fns_nn)):
-                    csv_fns_nn_a[a].append(csv_fns_nn[a])
-
-        for a in range(len(csv_fns_dt_a)):
-            dt.averageCSVs(csv_fns_dt_a[a])
-        if not skip_nn:
-            for a in range(len(csv_fns_nn_a)):
-                dt.averageCSVs(csv_fns_nn_a[a])
-        for a in range(len(csv_fns_dt_a)):
-            dt.addToAverageCSV(csv_fns_dt_a[a], average_csv_fn)
+                for a in range(len(csv_fns_nn_a)):
+                    dt.averageCSVs(csv_fns_nn_a[a])
+            for a in range(len(csv_fns_dt_a)):
+                dt.addToAverageCSV(csv_fns_dt_a[a], average_csv_fn)
     jvm.stop()
 
 
@@ -652,16 +657,15 @@ get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 """
 
 data_type = "movies"
-classification_task = ["genres", "keywords", "uk-ratings", "us-ratings"]
-file_name = "movies mds"
+classification_task = ["genres", "keywords", "us-ratings", "uk-ratings"]
+file_name = "films200-genres"
 lowest_amt = 100
 highest_amt = 10
-init_vector_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
+init_vector_path = loc+data_type+"/nnet/spaces/films200-genres.txt"
 #init_vector_path = loc+data_type+"/nnet/spaces/films200-"+classification_task+".txt"
 #file_name = "films200-genres100ndcg0.85200 tdev3004FTL0"
 #init_vector_path = loc+data_type+"/nnet/spaces/"+file_name+".txt"
-vector_path_replacement = loc+data_type+"/nnet/spaces/films100-genres.txt"
-get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
+get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films200-genres.txt"
 
 """
 data_type = "placetypes"
@@ -717,8 +721,8 @@ output_activation = "sigmoid"
 trainer = "adagrad"
 loss="binary_crossentropy"
 class_weight = None
-deep_size = [100]
-ep =100
+deep_size = [200]
+ep =300
 lr = 0.01
 rewrite_files = False
 nnet_dev = False
@@ -726,25 +730,40 @@ nnet_dev = False
 limit_entities = False
 
 cutoff_start = 0.2
-is_identity = True
-amount_of_finetune = 1
 
+epochs=[1000,2000,3000]
+learn_rate= [0.01, 0.001, 0.0001]
+is_identity = [True, False]
+amount_of_finetune = [1,2]
+ft_loss = ["mse"]
+ft_optimizer = ["sgd", "rmsprop", "adam"]
 min_size = 1
 
+# Set to 0.0 for a janky skip, can set to 1.0 to delete it
+sim_t = 1.0#1.0
 min_score = 0.4
 largest_cluster = 1
 dissim = 0.0
-dissim_amt = [300,400,500]
-find_most_similar = True
-breakoff = [False]
-score_limit = [0.8, 0.9]
-amount_to_start = [1000, 2000, 3000]
-cluster_multiplier = [2]
-kappa = [ False, True]
+dissim_amt = [400]
+find_most_similar = True#False
+breakoff = [False, True]
+score_limit = [0.85, 0.9, 0.95]
+amount_to_start = [1000,3000,5000]
+cluster_multiplier = [2]#50
+kappa = [True, False]
 use_breakoff_dissim = [False]
-get_all = [True]
-half_ndcg_half_kappa = [True, False]
+get_all = [False]
+half_ndcg_half_kappa = [False]
 
+
+
+
+"""
+sim_t = 0.0#1.0
+find_most_similar = False#False
+cluster_multiplier = [50]#50
+score_limit = [0.0]
+"""
 hp_opt = True
 
 dt_dev = True
@@ -753,17 +772,17 @@ average_ppmi = False
 use_pruned = False
 svm_classify = False
 rewrite_files = False
-epochs=3002
-learn_rate=0.001
 max_depth = 3
 
 limit_entities = False
 
-skip_nn = True
+skip_nn = False
+vector_path_replacement =  None#loc+data_type+"/nnet/spaces/films100-genres.txt"
+
 cross_val = 1
+one_for_all = False
 
-
-threads=1
+threads=3
 chunk_amt = 0
 chunk_id = 0
 for c in range(chunk_amt):
@@ -775,7 +794,8 @@ for c in range(chunk_amt):
                                    lowest_amt, loss, nnet_dev, add_all_terms, average_ppmi, trainer, class_weight,
                                    amount_to_start, chunk_amt, chunk_id, lr, vector_path_replacement, dt_dev, use_pruned, max_depth,
                                    min_score, min_size, limit_entities, svm_classify, get_nnet_vectors_path, arcca, largest_cluster,
-                 skip_nn, dissim, dissim_amt, hp_opt, find_most_similar, use_breakoff_dissim, get_all, half_ndcg_half_kappa]
+                 skip_nn, dissim, dissim_amt, hp_opt, find_most_similar, use_breakoff_dissim, get_all, half_ndcg_half_kappa, sim_t,
+                 one_for_all]
 
     sys.stdout.write("python pipeline.py ")
     variable_string = "python $SRCPATH/pipeline.py "
@@ -864,6 +884,7 @@ if len(args) > 0:
     find_most_similar = args[49]
     get_all = args[50]
     half_ndcg_half_kappa = args[51]
+    one_for_all = args[52]
 
 
 if  __name__ =='__main__':main(data_type, classification_task, file_name, init_vector_path, hidden_activation,
@@ -874,4 +895,4 @@ if  __name__ =='__main__':main(data_type, classification_task, file_name, init_v
                                amount_to_start, chunk_amt, chunk_id, lr, vector_path_replacement, dt_dev, use_pruned, max_depth,
                                min_score, min_size, limit_entities, svm_classify, get_nnet_vectors_path, arcca, loc, largest_cluster,
                                skip_nn, dissim, dissim_amt, hp_opt, find_most_similar, use_breakoff_dissim, get_all,
-                               half_ndcg_half_kappa)
+                               half_ndcg_half_kappa, sim_t, one_for_all, ft_loss, ft_optimizer)
