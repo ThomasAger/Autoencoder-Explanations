@@ -39,6 +39,8 @@ class DecisionTree:
         all_fns.append(acc_fn)
         all_fns.append(f1_fn)
 
+        print(dt.allFnsAlreadyExist(all_fns), rewrite_files)
+
         if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
             print("Skipping task", "Weka Tree")
             return

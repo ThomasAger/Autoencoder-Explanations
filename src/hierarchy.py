@@ -107,18 +107,35 @@ class Cluster:
                 scores[n] = score
         return scores
 
+    def obtainNDCG(self):
+        # For each discrete rank, obtain the Kappa score compared to the word occ
+        ndcgs = np.empty(len(self.names))
+        for n in range(len(self.names)):
+            ppmi = np.asarray(dt.import1dArray("../data/" + self.data_type + "/bow/ppmi/class-" + self.names[n] + "-"
+                                               + str(self.lowest_amt) + "-" + str(self.highest_amt) + "-" + str(
+                self.classification), "f"))
+            sorted_indices = np.argsort(self.ranks)[::-1]
+            score = ndcg.ndcg_from_ranking(ppmi, sorted_indices)
+            ndcgs[n] = score
+        return ndcgs
+
     def obtainNDCGFirstAndLast(self):
         # For each discrete rank, obtain the Kappa score compared to the word occ
         ndcgs = np.empty(2)
         c = 0
         for n in [0, len(self.names) - 1]:
             ppmi = np.asarray(dt.import1dArray("../data/" + self.data_type + "/bow/ppmi/class-" + self.names[n] + "-"
-                                               + str(self.lowest_amt) + "-" + str(self.highest_amt) + "-" + str(self.classification), "f"))
+                                               + str(self.lowest_amt) + "-" + str(self.highest_amt) + "-" + str(
+                self.classification), "f"))
             sorted_indices = np.argsort(self.ranks)[::-1]
             score = ndcg.ndcg_from_ranking(ppmi, sorted_indices)
             ndcgs[c] = score
             c += 1
         return ndcgs
+
+
+
+
     def obtainNDCGFirst5(self):
         # For each discrete rank, obtain the Kappa score compared to the word occ
         ndcgs = None
@@ -140,16 +157,8 @@ class Cluster:
 
 
         return ndcgs
-    def obtainNDCG(self):
-        # For each discrete rank, obtain the Kappa score compared to the word occ
-        ndcgs = np.empty(len(self.names))
-        for n in range(len(self.names)):
-            ppmi = np.asarray(dt.import1dArray("../data/" + self.data_type + "/bow/ppmi/class-" + self.names[n] + "-"
-                                               + str(self.lowest_amt) + "-" + str(self.highest_amt) + "-" + str(self.classification), "f"))
-            sorted_indices = np.argsort(self.ranks)[::-1]
-            score = ndcg.ndcg_from_ranking(ppmi, sorted_indices)
-            ndcgs[n] = score
-        return ndcgs
+
+
 
     # Cutoff points
     def obtainKappaOnClusteredDirection(self):
@@ -334,7 +343,7 @@ def getBreakOffClustersMaxScoring(vectors, directions, scores, names, score_limi
 
 # New method, instead of averaging, compare each individual direction. Start with one cluster and then add more.
 def getBreakOffClusters(vectors, directions, scores, names, score_limit, max_clusters,
-                            file_name, kappa, similarity_threshold, add_all_terms, data_type, largest_clusters,
+                            file_name, score_type, similarity_threshold, add_all_terms, data_type, largest_clusters,
                  rewrite_files=False, lowest_amt=0, highest_amt=0, classification="genres", min_size=1, dissim=0.0,
                         dissim_amt=0, find_most_similar=False, get_all=False, half_ndcg_half_kappa=[]):
 
@@ -440,13 +449,19 @@ def getBreakOffClusters(vectors, directions, scores, names, score_limit, max_clu
             # Use the combined direction to see if the Kappa scores are not decreased an unreasonable amount
             if is_half:
                 cluster_scores = new_cluster.obtainKappaOrNDCG()
-            elif kappa:
+            elif score_type == "kappa":
                 new_cluster.rankVectors(vectors)
                 if not get_all:
                     cluster_scores = new_cluster.obtainKappaFirstAndLast()
                 else:
                     cluster_scores = new_cluster.obtainKappaOnClusteredDirection()
-            else:
+            elif score_type == "ndcg":
+                new_cluster.rankVectorsNDCG(vectors)
+                if not get_all:
+                    cluster_scores = new_cluster.obtainNDCGFirstAndLast()
+                else:
+                    cluster_scores = new_cluster.obtainNDCG()
+            elif score_type == "spearman":
                 new_cluster.rankVectorsNDCG(vectors)
                 if not get_all:
                     cluster_scores = new_cluster.obtainNDCGFirstAndLast()
@@ -568,7 +583,7 @@ def getBreakOffClusters(vectors, directions, scores, names, score_limit):
     dt.write2dArray(output_first_names, "../data/movies/cluster/hierarchy_names/" + file_name + str(score_limit)+".txt")
 """
 def initClustering(vector_fn, directions_fn, scores_fn, names_fn, amt_to_start, profiling,
-                   max_clusters, score_limit, file_name, kappa, similarity_threshold, add_all_terms=False,
+                   max_clusters, score_limit, file_name, score_type, similarity_threshold, add_all_terms=False,
                    data_type="movies", largest_clusters=1,
                  rewrite_files=False, lowest_amt=0, highest_amt=0, classification="genres", min_score=0, min_size = 1,
                    dissim=0.0, dissim_amt=0, find_most_similar=False, get_all=False, half_ndcg_half_kappa = ""):
@@ -638,7 +653,7 @@ def initClustering(vector_fn, directions_fn, scores_fn, names_fn, amt_to_start, 
     else:
 
         getBreakOffClusters(vectors, top_directions, top_scores, top_names, score_limit,
-                                max_clusters, file_name, kappa, similarity_threshold, add_all_terms, data_type,
+                                max_clusters, file_name, score_type, similarity_threshold, add_all_terms, data_type,
                             largest_clusters, rewrite_files=rewrite_files, lowest_amt=lowest_amt, highest_amt=highest_amt,
                             classification=classification, min_size = min_size, dissim=dissim, dissim_amt=dissim_amt,
                             find_most_similar=find_most_similar, get_all=get_all, half_ndcg_half_kappa=type)

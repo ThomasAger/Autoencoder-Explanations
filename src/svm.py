@@ -120,7 +120,7 @@ class SVM:
                       getting_directions=True, threads=1, chunk_amt = 0, chunk_id = 0,
                      rewrite_files=False, classification="genres", loc ="../data/"):
 
-        self.get_kappa = get_kappa
+        self.get_kappa = True
         self.get_f1 = get_f1
         self.data_type = data_type
         self.classification = classification

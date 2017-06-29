@@ -172,6 +172,7 @@ class NeuralNetwork:
                 weights.extend(dt.import2dArray(f))
 
             r = np.asarray(weights, dtype="float64")
+            r = np.asarray(weights, dtype="float64")
 
             for a in range(len(r)):
                 r[a] = np.around(r[a], decimals=6)
@@ -181,7 +182,7 @@ class NeuralNetwork:
 
             self.fine_tune_weights = []
             self.fine_tune_weights.append(r.transpose())
-            self.fine_tune_weights.append(np.empty(shape=len(r), dtype="float64"))
+            self.fine_tune_weights.append(np.zeros(shape=len(r), dtype="float64"))
         else:
             model_builder = self.classifierNetwork
 
@@ -328,7 +329,8 @@ class NeuralNetwork:
                     self.output_clusters = models[m].predict(nnet_vectors)
                 else:
                     self.output_clusters = models[m].predict(entity_vectors)
-                dt.write2dArray(self.output_clusters.transpose(), rank_fn)
+                self.output_clusters = self.output_clusters.transpose()
+                dt.write2dArray(self.output_clusters, rank_fn)
 
 
             for l in range(0, len(models[m].layers) - 1):
@@ -464,7 +466,7 @@ class NeuralNetwork:
         if self.is_identity:
             for a in range(self.amount_of_finetune):
                 print("Identity layer", self.hidden_layer_size, self.hidden_layer_size, self.hidden_activation)
-                model.add(Dense(output_dim=self.hidden_layer_size, input_dim=self.hidden_layer_size, activation=self.hidden_activation,
+                model.add(Dense(output_dim=self.hidden_layer_size, input_dim=self.hidden_layer_size, activation="linear",
                       init="identity"))
 
         if self.randomize_finetune_weights:

@@ -1,5 +1,6 @@
 import numpy as np
 import data as dt
+from scipy.stats import spearmanr
 
 def getGini(discrete_labels, ppmi):
     x = []

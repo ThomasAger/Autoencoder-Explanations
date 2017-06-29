@@ -1,6 +1,6 @@
 import numpy as np
 import data as dt
-
+from scipy.stats import spearmanr
 def ranking_precision_score(y_true, y_score, k=10):
     """Precision at rank k
     Parameters
@@ -180,7 +180,8 @@ def ndcg_from_ranking(y_true, ranking):
 import linecache
 def getNDCG(rankings_fn, fn, data_type, lowest_count, rewrite_files=False, highest_count = 0, classification = ""):
     ndcg_fn = "../data/" + data_type + "/ndcg/"+fn+".txt"
-    all_fns = [ndcg_fn]
+    spearman_fn = "../data/" + data_type + "/spearman/"+fn+".txt"
+    all_fns = [ndcg_fn, spearman_fn]
     if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
         print("Skipping task", getNDCG.__name__)
         return
@@ -189,18 +190,30 @@ def getNDCG(rankings_fn, fn, data_type, lowest_count, rewrite_files=False, highe
     ppmi_fn = "../data/" + data_type + "/bow/ppmi/class-all-"+str(lowest_count)+"-" + str(highest_count)+"-" +classification
     names = dt.import1dArray("../data/" + data_type + "/bow/names/"+str(lowest_count)+"-" + str(highest_count)+"-" +classification+".txt")
     ndcg_a = []
+    spearman_a = []
+    map_a = []
+    kendall_a = []
     r = 0
     with open(rankings_fn) as rankings, open(ppmi_fn) as ppmi:
         r = 0
         for lr in rankings:
                 for lp in ppmi:
                     sorted_indices = np.argsort(list(map(float, lr.strip().split())))[::-1]
-                    ndcg = ndcg_from_ranking(list(map(float, lp.strip().split())), sorted_indices)
+                    ppmi_scores = list(map(float, lp.strip().split()))
+                    ppmi_indices = np.argsort(np.asarray(ppmi_scores))
+                    ndcg = ndcg_from_ranking(ppmi_scores, sorted_indices)
                     ndcg_a.append(ndcg)
-                    print(ndcg, names[r], r)
+                    print("ndcg", ndcg, names[r], r)
+                    smr = spearmanr(ppmi_indices, sorted_indices)[1]
+                    spearman_a.append(smr)
+                    print("spearman", smr, names[r], r)
+
                     r+=1
                     break
     dt.write1dArray(ndcg_a, ndcg_fn)
+    dt.write1dArray(spearman_a, spearman_fn)
+
+
 
 class Gini:
     def __init__(self, rankings_fn, ppmi_fn, fn):

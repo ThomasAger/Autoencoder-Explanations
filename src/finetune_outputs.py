@@ -68,7 +68,7 @@ def pavPPMI(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type="movi
     return pav_classes
 
 def pavPPMIAverage(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type="movies", rewrite_files=False,
-            classification="genres", lowest_amt=0, highest_amt=2147000000):
+            classification="genres", lowest_amt=0, highest_amt=2147000000, limit_entities=False):
     pavPPMI_fn = "../data/" + data_type + "/finetune/" + file_name + ".txt"
     all_fns = [pavPPMI_fn]
     if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
@@ -76,6 +76,9 @@ def pavPPMIAverage(cluster_names_fn, ranking_fn, file_name, do_p=False, data_typ
         return
     else:
         print("Running task", pavPPMI.__name__)
+
+    if limit_entities is False:
+        classification = "all"
 
     ranking = dt.import2dArray(ranking_fn)
     names = dt.import2dArray(cluster_names_fn, "s")
