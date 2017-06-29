@@ -154,6 +154,15 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
         use_breakoff_dissim = vt[7]
         get_all = vt[8]
         half_ndcg_half_kappa = vt[9]
+
+        """ CLUSTER RANKING """
+        if limit_entities is False:
+            vector_names_fn = loc + data_type + "/nnet/spaces/entitynames.txt"
+            limited_label_fn = loc + data_type + "/classify/" + classification_task + "/available_entities.txt"
+        else:
+            vector_names_fn = loc + data_type + "/classify/" + classification_task + "/available_entities.txt"
+            limited_label_fn = None
+
         if one_for_all and not skip_nn:
             classification_names = dt.import1dArray(loc + data_type + "/classify/" + classification_task + "/names.txt")
         else:
@@ -260,7 +269,9 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                             learn_rate=lr, is_identity=is_identity_a[0], output_size=output_size, split_to_use=splits, label_names_fn=label_names_fn,
                             batch_size=batch_size, past_model_weights_fn=past_model_weights_fn, loss=loss, cv_splits=cv_splits, csv_fn = file_name,
                             file_name=file_name, from_ae=from_ae, data_type=data_type, rewrite_files=rewrite_files, development=development,
-                                                 class_weight=class_weight, get_nnet_vectors_path=get_nnet_vectors_path)
+                                                 class_weight=class_weight, get_nnet_vectors_path=get_nnet_vectors_path,
+                                                 limit_entities=limit_entities, limited_label_fn=limited_label_fn,
+                                                 vector_names_fn=vector_names_fn)
 
                     new_file_names = []
 
@@ -308,7 +319,6 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
 
                         """ DIRECTION RANKINGS """
                         # Get rankings
-                        vector_names_fn = loc + data_type + "/nnet/spaces/entitynames.txt"
                         class_names_fn = property_names_fn
 
                         cluster_amt = deep_size[x] * cluster_multiplier
@@ -416,12 +426,6 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                     dissim, min_score, data_type, rewrite_files=rewrite_files,
                                                          half_kappa_half_ndcg=half_ndcg_half_kappa)
 
-                            """ CLUSTER RANKING """
-                            if limit_entities is False:
-                                limited_label_fn = loc + data_type + "/classify/"+classification_task+"/available_entities.txt"
-                            else:
-                                vector_names_fn = loc + data_type + "/classify/"+classification_task+"/available_entities.txt"
-                                limited_label_fn = None
                             ranking_fn = loc + data_type + "/rank/numeric/" + file_name + ".txt"
 
 
@@ -579,7 +583,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                     learn_rate=learn_rate, is_identity=is_identity, batch_size=batch_size,
                                                     past_model_weights_fn=past_model_weights_fn, loss=loss, rewrite_files=rewrite_files,
                                                     file_name=file_name, from_ae=from_ae, finetune_size=finetune_size, data_type=data_type,
-                                                               get_nnet_vectors_path= get_nnet_vectors_path)
+                                                               get_nnet_vectors_path= get_nnet_vectors_path, limit_entities=True)
 
                                         #new_file_names[x] = file_name
 
@@ -681,7 +685,7 @@ init_vector_path = loc+data_type+"/pca/class-all-50-10-alld100"
 vector_path_replacement = loc+data_type+"/pca/class-all-50-10-alld100"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 """
-
+"""
 data_type = "movies"
 classification_task = ["genres"]
 file_name = "f200ge"
@@ -692,10 +696,9 @@ init_vector_path = loc+data_type+"/nnet/spaces/films200-genres.txt"
 #file_name = "films200-genres100ndcg0.85200 tdev3004FTL0"
 #init_vector_path = loc+data_type+"/nnet/spaces/"+file_name+".txt"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films200-genres.txt"
-
 """
 data_type = "placetypes"
-classification_task = ["opencyc", "foursquare", "geonames"]
+classification_task = ["opencyc"]
 lowest_amt = 50
 highest_amt = 10
 #init_vector_path = "../data/"+data_type+"/bow/ppmi/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+classification_task
@@ -710,7 +713,6 @@ if limit_entities:
     get_nnet_vectors_path = None
 else:
     get_nnet_vectors_path = loc + data_type +"/nnet/spaces/places100.txt"
-"""
 """
 hidden_activation = "tanh"
 dropout_noise = 0.6
@@ -747,8 +749,8 @@ output_activation = "sigmoid"
 trainer = "adagrad"
 loss="binary_crossentropy"
 class_weight = None
-deep_size = [200]
-ep =300
+deep_size = [100]
+ep =1400
 lr = 0.01
 rewrite_files = False
 nnet_dev = False
