@@ -119,7 +119,7 @@ def writeTabArray(array, file_name):
         for n in name_array:
             string_to_append = string_to_append + n + "\t"
         names_with_tabs.append(string_to_append)
-    write1dArray(names_with_tabs, file_name)
+    write1dArray(names_with_tabs,  file_name)
 
 def getFns(folder_path):
     file_names = []
@@ -263,14 +263,22 @@ def allFnsAlreadyExist(all_fns):
     if all_exist == len(all_fns):
         return True
     return False
-
 def write2dArray(array, name):
-    file = open(name, "w")
-    for i in range(len(array)):
-        for n in range(len(array[i])):
-            file.write(str(array[i][n]) + " ")
-        file.write("\n")
-    file.close()
+    try:
+        file = open(name, "w")
+        for i in range(len(array)):
+            for n in range(len(array[i])):
+                file.write(str(array[i][n]) + " ")
+            file.write("\n")
+        file.close()
+    except FileNotFoundError:
+        name = "//?/" + name
+        file = open(name, "w")
+        for i in range(len(array)):
+            for n in range(len(array[i])):
+                file.write(str(array[i][n]) + " ")
+            file.write("\n")
+        file.close()
 def sortIndexesByArraySize(array):
     array_of_lens = []
     for i in range(len(array)):
@@ -393,10 +401,17 @@ def writeArff(features, classes, class_names, file_name, header=True):
 
 
 def write1dArray(array, name):
-    file = open(name, "w")
-    for i in range(len(array)):
-        file.write(str(array[i]) + "\n")
-    file.close()
+    try:
+        file = open(name, "w")
+        for i in range(len(array)):
+            file.write(str(array[i]) + "\n")
+        file.close()
+    except FileNotFoundError:
+        name = "//?/" + name
+        file = open(name, "w")
+        for i in range(len(array)):
+            file.write(str(array[i]) + "\n")
+        file.close()
 
 import io
 def write1dLinux(array, name):
