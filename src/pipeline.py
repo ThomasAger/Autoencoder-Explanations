@@ -683,7 +683,7 @@ get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 """
 
 data_type = "movies"
-classification_task = ["genres"]
+classification_task = ["us-ratings"]
 file_name = "f200ge"
 lowest_amt = 100
 highest_amt = 10
@@ -773,11 +773,11 @@ largest_cluster = 1
 dissim = 0.0
 dissim_amt = [400]
 find_most_similar = True#False
-breakoff = [False, True]
-score_limit = [0.85, 0.9, 0.95]
-amount_to_start = [1000,3000,5000]
+breakoff = [True]
+score_limit = [ 0.95]
+amount_to_start = [1000,5000]
 cluster_multiplier = [2]#50
-score_type = ["ndcg", "kappa"]
+score_type = ["ndcg"]
 use_breakoff_dissim = [False]
 get_all = [False]
 half_ndcg_half_kappa = [False]
@@ -799,7 +799,7 @@ average_ppmi = [True, False]
 use_pruned = False
 svm_classify = False
 rewrite_files = False
-max_depth = 3
+max_depth = 5
 
 limit_entities = False
 
@@ -809,7 +809,7 @@ vector_path_replacement =  None#loc+data_type+"/nnet/spaces/films100-genres.txt"
 cross_val = 1
 one_for_all = False
 
-threads=3
+threads=2
 chunk_amt = 0
 chunk_id = 0
 for c in range(chunk_amt):
