@@ -63,13 +63,16 @@ class NeuralNetwork:
                  optimizer_name="rmsprop", noise=0.0, fine_tune_weights_fn=None, past_model_weights_fn=None,
                  from_ae=True, save_outputs=False, label_names_fn="",
                  rewrite_files=False, cv_splits=1,cutoff_start=0.2, development=False,
-                 class_weight=None, csv_fn=None, tune_vals=False, get_nnet_vectors_path=None, classification_name="all"):
+                 class_weight=None, csv_fn=None, tune_vals=False, get_nnet_vectors_path=None, classification_name="all",
+                 limit_entities=False, limited_label_fn="", vector_names_fn=""):
 
         total_file_name = "../data/" + data_type + "/nnet/spaces/" + file_name
         space_fn = total_file_name + "L0.txt"
         weights_fn = "../data/" + data_type + "/nnet/weights/" + file_name + "L0.txt"
         bias_fn = "../data/" + data_type + "/nnet/bias/" + file_name +"L0.txt"
         rank_fn = "../data/" + data_type + "/nnet/clusters/" + file_name + ".txt"
+
+
 
         all_fns = [space_fn, weights_fn, bias_fn, rank_fn]
         if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
@@ -130,6 +133,11 @@ class NeuralNetwork:
 
         entity_classes = np.asarray(dt.import2dArray(self.class_path))
         print("Imported classes", len(entity_classes), len(entity_classes[0]))
+
+        if limit_entities is False:
+            vector_names = dt.import1dArray(vector_names_fn)
+            limited_labels = dt.import1dArray(limited_label_fn)
+            entity_vectors = np.asarray(dt.match_entities(entity_vectors, limited_labels, vector_names))
 
 
         if fine_tune_weights_fn is not None:
