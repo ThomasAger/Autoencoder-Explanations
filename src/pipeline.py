@@ -685,9 +685,9 @@ init_vector_path = loc+data_type+"/pca/class-all-50-10-alld100"
 vector_path_replacement = loc+data_type+"/pca/class-all-50-10-alld100"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 """
-"""
+
 data_type = "movies"
-classification_task = ["us-ratings"]
+classification_task = ["uk-ratings"]
 file_name = "f200ge"
 lowest_amt = 100
 highest_amt = 10
@@ -696,6 +696,7 @@ init_vector_path = loc+data_type+"/nnet/spaces/films200-genres.txt"
 #file_name = "films200-genres100ndcg0.85200 tdev3004FTL0"
 #init_vector_path = loc+data_type+"/nnet/spaces/"+file_name+".txt"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films200-genres.txt"
+
 """
 data_type = "placetypes"
 classification_task = ["opencyc"]
@@ -713,6 +714,7 @@ if limit_entities:
     get_nnet_vectors_path = None
 else:
     get_nnet_vectors_path = loc + data_type +"/nnet/spaces/places100.txt"
+"""
 """
 hidden_activation = "tanh"
 dropout_noise = 0.6

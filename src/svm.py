@@ -118,7 +118,7 @@ class SVM:
     def __init__(self, vector_path, class_path, property_names_fn, file_name, svm_type, training_size=10000,  lowest_count=200,
                       highest_count=21470000, get_kappa=True, get_f1=True, single_class=True, data_type="movies",
                       getting_directions=True, threads=1, chunk_amt = 0, chunk_id = 0,
-                     rewrite_files=False, classification="genres", loc ="../data/"):
+                     rewrite_files=False, classification="all", loc ="../data/"):
 
         self.get_kappa = True
         self.get_f1 = get_f1

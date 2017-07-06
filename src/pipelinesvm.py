@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+print("failed")
 from __future__ import unicode_literals
 
 import numpy as np
@@ -12,7 +13,7 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
          breakoff, kappa, score_limit, rewrite_files, cluster_multiplier, threads, dropout_noise, learn_rate, epochs, cross_val, ep,
          output_activation, cs, deep_size, classification, direction_count, lowest_amt, loss, development, add_all_terms,
          average_ppmi, optimizer_name, class_weight, amount_to_start, chunk_amt, chunk_id, arcca, vector_path_replacement):
-
+    print("start pipeline")
     if arcca:
         loc = "/scratch/c1214824/data/"
     else:
@@ -163,8 +164,10 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
                 #vector_path = loc + data_type + "/nnet/spaces/"+new_file_names[x]+".txt"
                 vector_path = vector_path_replacement
 
-                bow_path =loc+ data_type + "/bow/binary/phrases/class-all-"+str(lowest_amt)+"-"+str(highest_count)+"-"+classification_task
-                property_names_fn = loc+ data_type + "/bow/names/" + str(lowest_amt) + "-" +str(highest_count)+"-"+ classification_task +".txt"
+                bow_path = loc + data_type + "/bow/binary/phrases/class-all-" + str(lowest_amt) + "-" + str(
+                    highest_count) + "-" + "all"
+                property_names_fn = loc + data_type + "/bow/names/" + str(lowest_amt) + "-" + str(
+                    highest_count) + "-" + "all" + ".txt"
                 directions_fn = loc + data_type + "/svm/directions/" + file_name + ".txt"
 
                 # Get rankings
@@ -201,7 +204,7 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
                 svm.createSVM(vector_path, bow_path, property_names_fn, file_name, lowest_count=lowest_amt,
                   highest_count=highest_count, data_type=data_type, get_kappa=kappa,
                   get_f1=False, svm_type=svm_type, getting_directions=True, threads=threads, rewrite_files=rewrite_files,
-                              classification=classification, lowest_amt=lowest_amt, chunk_amt=chunk_amt, chunk_id=chunk_id, loc=loc)
+                              classification="all", lowest_amt=lowest_amt, chunk_amt=chunk_amt, chunk_id=chunk_id, loc=loc)
 
                 if chunk_amt > 0:
                     if chunk_id == chunk_amt-1:
@@ -210,8 +213,12 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
 
                     else:
                         exit()
-
-
+print("ran first part")
+arcca = True
+if arcca:
+    loc = "/scratch/c1214824/data/"
+else:
+    loc = "../data/"
 
 """
 data_type = "wines"
@@ -223,12 +230,12 @@ init_vector_path = "../data/"+data_type+"/nnet/spaces/wines100trimmed.txt"
 """
 
 data_type = "movies"
-classification_task = "genres"
+classification_task = "uk-ratings"
 lowest_amt = 100
 highest_amt = 10
 #init_vector_path = "../data/"+data_type+"/nnet/spaces/films200-"+classification_task+".txt"
-file_name = "movies pca 100"
-init_vector_path = "../data/"+data_type+"/nnet/spaces/"+file_name+".txt"
+file_name = "f200ge"
+init_vector_path = loc+data_type+"/nnet/spaces/f200geE1400DS[100]DN0.5CTuk-ratingsHAtanhCV1 S0 SFT0 allL0s.txt"
 """
 data_type = "placetypes"
 classification_task = "foursquare"
@@ -247,15 +254,14 @@ ep=200
 hidden_activation = "tanh"
 dropout_noise = 0.5
 output_activation = "sigmoid"
+trainer = "adagrad"
+loss="binary_crossentropy"
 cutoff_start = 0.2
 deep_size = [200]
 #init_vector_path = "../data/"+data_type+"/bow/ppmi/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+classification_task
 ep =100
 
 class_weight = None
-trainer = "adagrad"
-loss="binary_crossentropy"
-
 is_identity = True
 amount_of_finetune = 1
 
@@ -271,10 +277,8 @@ average_ppmi = False
 amount_to_start = 1000
 
 cross_val = 1
-loc = "/scratch/c1214824/data/"
-vector_path_replacement = loc+ data_type + "/pca/class-all-100-10-genresd100"
+vector_path_replacement = loc + data_type+"/nnet/spaces/f200geE1400DS[100]DN0.5CTuk-ratingsHAtanhCV1 S0 SFT0 allL0.txt"
 rewrite_files = False
-arcca = True
 threads=3
 chunk_amt = 20
 chunk_id = 0
@@ -298,7 +302,7 @@ for v in variables:
         cmd += str(v) + " "
     count += 1
 
-print("")
+print("living dream")
 args = sys.argv[1:]
 if len(args) > 0:
     data_type = args[0]
@@ -353,7 +357,7 @@ if len(args) == 0:
                          "export PYTHONPATH=$SRCPATH",
                          cmd + str(c) + " True"], "../data/"+data_type+"/cmds/pipelinesvm"+str(c)+".sh")
 
-
+print("got to final area")
 if  __name__ =='__main__':main(data_type, classification_task, file_name, init_vector_path, hidden_activation,
                                is_identity, amount_of_finetune, breakoff, kappa, score_limit, rewrite_files,
                                cluster_multiplier, threads, dropout_noise, learn_rate, epochs, cross_val, ep,
