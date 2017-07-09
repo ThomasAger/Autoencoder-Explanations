@@ -7,6 +7,7 @@ from collections import OrderedDict
 def getRankings(cluster_directions, vectors, cluster_names, vector_names):
     rankings = []
     ranking_names = []
+    sorted_rankings_a = []
     for d in range(len(cluster_directions)):
         cluster_ranking = []
         cluster_ranking_names = []
@@ -20,7 +21,8 @@ def getRankings(cluster_directions, vectors, cluster_names, vector_names):
         rankings.append(cluster_ranking)
         print("Cluster:", cluster_names[d], "Movies:",
               sorted_ranking_names[0], sorted_rankings[0],   sorted_ranking_names[1], sorted_rankings[1], sorted_ranking_names[2], sorted_rankings[2])
-    return rankings, ranking_names
+        sorted_rankings_a.append(sorted_rankings)
+    return rankings, ranking_names#, sorted_rankings_a
 
 
 # Create binary vectors for the top % of the rankings, 1 for if it is in that percent and 0 if not.
