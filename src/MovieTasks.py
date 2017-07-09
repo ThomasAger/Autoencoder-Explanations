@@ -812,6 +812,33 @@ def importCertificates(cert_fn, entity_name_fn):
 
     #Merge 12/12A
 
+def getTop250Movies(entity_names):
+    imdb = dt.import1dArray("../data/raw/imdb/ratings/ratings.list")[28:278]
+    orig_en = entity_names
+    for e in range(len(entity_names)):
+        entity_names[e] = "".join(entity_names[e].split()[:-1])
+        entity_names[e] = dt.removeEverythingFromString(entity_names[e])
+    top_en = []
+
+    for string in imdb:
+        string =string.split(".")[1][1:]
+        string =string.split()[:-1]
+        string = " ".join(string)
+        string = dt.removeEverythingFromString(string)
+        top_en.append(string)
+    matched_index = []
+    for e in range(len(entity_names)):
+        for x in range(len(top_en)):
+            if entity_names[e] == top_en[x]:
+                matched_index.append(e)
+                print(entity_names[e])
+                break
+    dt.write1dArray(matched_index, "../data/movies/top_imdb_indexes.txt")
+"""
+entity_name_fn = "../data/movies/nnet/spaces/entitynames.txt"
+entity_names = dt.import1dArray(entity_name_fn)
+getTop250Movies(entity_names)
+"""
 def convertEntityNamesToIDS(ID_fn, all_names_fn, individual_names_fn, output_fn):
     ID_fn = dt.import1dArray(ID_fn)
     all_names_fn = dt.import1dArray(all_names_fn)
@@ -961,9 +988,10 @@ additional_name = ""
 #make_individual = True
 make_individual = True
 print("??")
+"""
 if  __name__ =='__main__':main(min, max, data_type, class_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn, use_all_files,
                                sparse_matrix, word_count_amt)
-
+"""
 
 """
 dt.write2dArray(convertPPMI( sp.csr_matrix(dt.import2dArray("../data/wines/bow/frequency/phrases/class-all-50"))), "../data/wines/bow/ppmi/class-all-50")

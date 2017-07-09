@@ -687,7 +687,7 @@ get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 """
 
 data_type = "movies"
-classification_task = ["uk-ratings"]
+classification_task = ["us-ratings"]
 file_name = "f200ge"
 lowest_amt = 100
 highest_amt = 10
@@ -696,6 +696,7 @@ init_vector_path = loc+data_type+"/nnet/spaces/films200-genres.txt"
 #file_name = "films200-genres100ndcg0.85200 tdev3004FTL0"
 #init_vector_path = loc+data_type+"/nnet/spaces/"+file_name+".txt"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films200-genres.txt"
+deep_size = [100]
 
 """
 data_type = "placetypes"
@@ -751,7 +752,6 @@ output_activation = "sigmoid"
 trainer = "adagrad"
 loss="binary_crossentropy"
 class_weight = None
-deep_size = [100]
 ep =1400
 lr = 0.01
 rewrite_files = False
@@ -777,11 +777,11 @@ largest_cluster = 1
 dissim = 0.0
 dissim_amt = [400]
 find_most_similar = True#False
-breakoff = [True]
-score_limit = [ 0.95]
-amount_to_start = [1000,5000]
+breakoff = [True, False]
+score_limit = [ 0.9,0.95]
+amount_to_start = [1000,3000,5000]
 cluster_multiplier = [2]#50
-score_type = ["ndcg"]
+score_type = ["ndcg","kappa"]
 use_breakoff_dissim = [False]
 get_all = [False]
 half_ndcg_half_kappa = [False]
@@ -803,7 +803,7 @@ average_ppmi = [True, False]
 use_pruned = False
 svm_classify = False
 rewrite_files = False
-max_depth = 5
+max_depth = 2
 
 limit_entities = False
 
