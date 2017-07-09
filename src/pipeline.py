@@ -458,7 +458,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
 
                             wekatree.DecisionTree(ranking_fn, classification_path, label_names_fn , cluster_names_fn , file_name,
                                save_details=True, data_type=data_type,split_to_use=splits,
-                                              limited_label_fn=limited_label_fn, rewrite_files=rewrite_files,
+                                              limited_label_fn=limited_label_fn, rewrite_files=True,
                                csv_fn=csv_name, cv_splits=cv_splits, limit_entities=limit_entities, vector_names_fn=vector_names_fn)
                             if not skip_nn:
 
@@ -600,7 +600,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                           limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn)
 
                                         wekatree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name,
-                                                              save_details=True, data_type=data_type,split_to_use=splits,  rewrite_files=rewrite_files,
+                                                              save_details=True, data_type=data_type,split_to_use=splits,  rewrite_files=True,
                                                               csv_fn=csv_name, cv_splits=cv_splits, limit_entities=limit_entities,
                                                               limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn)
 

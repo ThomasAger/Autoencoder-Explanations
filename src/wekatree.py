@@ -14,6 +14,7 @@ from sklearn.model_selection import KFold
 import random
 from weka.core.converters import Loader
 from weka.classifiers import Classifier
+import weka.plot.graph as graph  # NB: pygraphviz and PIL are required
 
 
 class DecisionTree:
@@ -211,7 +212,8 @@ class DecisionTree:
             dist = cls.distribution_for_instance(inst)
             y_pred.append(pred)
 
-
+        graph.plot_dot_graph(cls.graph)
+        print(cls)
         return y_pred
 
 def main(cluster_vectors_fn, classes_fn, label_names_fn, cluster_names_fn, file_name, balance,save_details, data_type, csv_fn, cv_splits):
