@@ -199,6 +199,9 @@ class DecisionTree:
         f1_array = np.asarray(f1_array)
         f1_average = np.average(f1_array)
 
+        all_y_test = np.asarray(all_y_test)
+        all_predictions = np.asarray(all_predictions)
+
         micro_average = f1_score(all_y_test, all_predictions, average="micro")
 
         accuracy_array = accuracy_array.tolist()
