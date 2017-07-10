@@ -143,7 +143,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                     for ga in get_all_a:
                                         for hnk in half_ndcg_half_kappa_a:
                                             variables_to_execute.append((d, b, s, a, c, k, ct, ub, ga, hnk))
-    all_csv_fns = [[] * len(classification_task_a)]
+    all_csv_fns = [[""] ]* (len(classification_task_a))
     arrange_name = ""
     for vt in variables_to_execute:
         file_name = average_csv_fn
@@ -246,7 +246,6 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                     classification_path = loc + data_type + "/classify/" + classification_task + "/class-"+classification_name
                     label_names_fn = loc + data_type + "/classify/" + classification_task + "/names.txt"
                     fine_tune_weights_fn = None
-                    ep = ep
                     batch_size = 200
                     save_outputs = True
                     dropout_noise = dropout_noise
@@ -555,7 +554,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                         file_name = file_name + " IT" + str(amount_of_finetune)
 
                                     epochs = epochs
-                                    file_name = file_name + str(epochs) + str(learn_rate) + ft_optimizer + ft_loss
+                                    file_name = file_name + str(epochs)
 
                                     fine_tune_weights_fn = [clusters_fn]
 
@@ -712,7 +711,7 @@ deep_size = [200]
 """
 
 data_type = "placetypes"
-classification_task = ["foursquare", "geonames"]
+classification_task = ["opencyc"]
 lowest_amt = 50
 highest_amt = 10
 #init_vector_path = "../data/"+data_type+"/bow/ppmi/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+classification_task
@@ -728,18 +727,17 @@ if limit_entities:
 else:
     get_nnet_vectors_path = loc + data_type +"/nnet/spaces/places100.txt"
 deep_size = [100]
-
+"""
 hidden_activation = "tanh"
 dropout_noise = 0.5
 output_activation = "softmax"
 trainer = "adadelta"
 loss="categorical_crossentropy"
 class_weight = None
-deep_size = [100]
 lr = 0.01
 nnet_dev = False
 ep=1400
-
+"""
 """
 hidden_activation = "tanh"
 dropout_noise = 0.2
@@ -755,7 +753,6 @@ loss="categorical_crossentropy"
 class_weight = "balanced"
 rewrite_files = True
 """
-"""
 hidden_activation = "tanh"
 dropout_noise = 0.5
 output_activation = "sigmoid"
@@ -766,7 +763,9 @@ ep =1400
 lr = 0.01
 rewrite_files = False
 nnet_dev = False
-"""
+
+
+
 limit_entities = False
 
 cutoff_start = 0.2
