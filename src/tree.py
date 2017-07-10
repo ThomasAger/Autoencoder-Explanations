@@ -218,7 +218,7 @@ class DecisionTree:
         dt.write1dArray(accuracy_array, acc_fn)
         dt.write1dArray(f1_array, f1_fn)
 
-        if dt.fileExists(csv_fn) and rewrite_files is  False:
+        if dt.fileExists(csv_fn) and rewrite_files is False:
             print("File exists, writing to csv")
             try:
                 dt.write_to_csv(csv_fn, file_names, scores)
@@ -230,6 +230,14 @@ class DecisionTree:
                 print("CSV FILE WAS OPEN, WRITING TO ANOTHER FILE")
                 print("CSV FILE WAS OPEN, WRITING TO ANOTHER FILE")
                 dt.write_to_csv(csv_fn[:len(csv_fn)-4] + str(random.random()) + "FAIL.csv", file_names, scores)
+            except ValueError:
+                print("File does not exist, recreating csv")
+                key = []
+                for l in label_names:
+                    key.append(l)
+                key.append("AVERAGE")
+                key.append("MICRO AVERAGE")
+                dt.write_csv(csv_fn, file_names, scores, key)
         else:
             print("File does not exist, recreating csv")
             key = []
@@ -254,8 +262,6 @@ class DecisionTree:
         fn_ids = np.unique(fns, return_index=True)[1]
         final_fns = []
         final_features = []
-        print(len(fns))
-        print(fn_ids)
         for i in fn_ids:
             final_fns.append(fns[i])
             final_features.append(features[i])
