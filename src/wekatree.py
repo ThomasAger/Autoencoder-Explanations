@@ -22,7 +22,7 @@ class DecisionTree:
     def __init__(self, features_fn, classes_fn,  class_names_fn, cluster_names_fn, filename,
                    max_depth=None, balance=None, criterion="entropy", save_details=False, data_type="movies",cv_splits=5,
                  csv_fn="../data/temp/no_csv_provided.csv", rewrite_files=True, split_to_use=-1, development=False,
-                 limit_entities=False, limited_label_fn=None, vector_names_fn=None, pruning=0.25):
+                 limit_entities=False, limited_label_fn=None, vector_names_fn=None, pruning=1):
 
         vectors = np.asarray(dt.import2dArray(features_fn)).transpose()
 
@@ -231,7 +231,7 @@ class DecisionTree:
         train_data = loader.load_file(train_fn)
         train_data.class_is_last()
 
-        cls = Classifier(classname="weka.classifiers.trees.J48", options=["-C", str(pruning)])
+        cls = Classifier(classname="weka.classifiers.trees.J48", options=["-M", str(pruning)])
 
 
         cls.build_classifier(train_data)
