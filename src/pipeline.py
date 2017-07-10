@@ -697,7 +697,7 @@ init_vector_path = loc+data_type+"/pca/class-all-50-10-alld100"
 vector_path_replacement = loc+data_type+"/pca/class-all-50-10-alld100"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 """
-
+"""
 data_type = "movies"
 classification_task = ["genres", "keywords"]
 file_name = "f200ge"
@@ -709,10 +709,10 @@ init_vector_path = loc+data_type+"/nnet/spaces/films200-genres.txt"
 #init_vector_path = loc+data_type+"/nnet/spaces/"+file_name+".txt"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films200-genres.txt"
 deep_size = [200]
-
 """
+
 data_type = "placetypes"
-classification_task = ["opencyc"]
+classification_task = ["foursquare", "geonames"]
 lowest_amt = 50
 highest_amt = 10
 #init_vector_path = "../data/"+data_type+"/bow/ppmi/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+classification_task
@@ -727,20 +727,18 @@ if limit_entities:
     get_nnet_vectors_path = None
 else:
     get_nnet_vectors_path = loc + data_type +"/nnet/spaces/places100.txt"
-"""
-"""
+deep_size = [100]
+
 hidden_activation = "tanh"
-dropout_noise = 0.6
+dropout_noise = 0.5
 output_activation = "softmax"
 trainer = "adadelta"
 loss="categorical_crossentropy"
 class_weight = None
 deep_size = [100]
-ep =2000
 lr = 0.01
-vector_path_replacement = "films100-ratings"
 nnet_dev = False
-"""
+ep=1400
 
 """
 hidden_activation = "tanh"
@@ -757,18 +755,18 @@ loss="categorical_crossentropy"
 class_weight = "balanced"
 rewrite_files = True
 """
-
+"""
 hidden_activation = "tanh"
 dropout_noise = 0.5
 output_activation = "sigmoid"
 trainer = "adagrad"
 loss="binary_crossentropy"
 class_weight = None
-ep =300
+ep =1400
 lr = 0.01
 rewrite_files = False
 nnet_dev = False
-
+"""
 limit_entities = False
 
 cutoff_start = 0.2
