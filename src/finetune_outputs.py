@@ -28,6 +28,25 @@ def readPPMI(name, data_type, lowest_amt, highest_amt, classification):
         frq_a.append(float(line))
     return frq_a
 
+import MovieTasks as mt
+import scipy.sparse as sp
+
+def writeBagOfClusters(cluster_dict, data_type, lowest_amt, highest_amt, classification):
+    bag_of_clusters = []
+    names_array = [""] * len(cluster_dict)
+    for c in range(len(cluster_dict)):
+        accum_freqs = [0.0] * len(dt.import1dArray("../data/"+data_type+"/bow/ppmi/" + "class-" + cluster_dict[c][0] + "-" + str(lowest_amt) + "-" + str(highest_amt) + "-" + classification))
+        for f in cluster_dict[c]:
+            if ":" in f:
+                f = f[:-1]
+            names_array[c] = names_array[c] + f[0]
+            accum_freqs = np.add(accum_freqs, dt.import1dArray("../data/"+data_type+"/bow/ppmi/" + "class-" + f + "-" + str(lowest_amt) + "-" + str(highest_amt) + "-" + classification, "f"))
+        bag_of_clusters.append(accum_freqs)
+    ppmi_fn = "../data/" + data_type + "/bow/ppmi/class-temp-" + str(lowest_amt) + "-" + str(highest_amt) + "-" + classification
+    dt.write2dArray(mt.convertPPMI(sp.csr_matrix(bag_of_clusters)), ppmi_fn)
+    mt.printIndividualFromAll(data_type, "ppmi", lowest_amt, highest_amt, data_type, classification, all_fn=ppmi_fn, names_array=names_array)
+    return names_array
+
 def pavPPMI(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type="movies", rewrite_files=False,limit_entities=False,
             classification="genres", lowest_amt=0, highest_amt=2147000000):
     pavPPMI_fn = "../data/" + data_type + "/finetune/" + file_name + ".txt"
@@ -67,6 +86,47 @@ def pavPPMI(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type="movi
     dt.write2dArray(pav_classes, pavPPMI_fn)
     return pav_classes
 
+
+def bagOfClustersPavPPMI(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type="movies", rewrite_files=False,limit_entities=False,
+            classification="genres", lowest_amt=0, highest_amt=2147000000):
+    pavPPMI_fn = "../data/" + data_type + "/finetune/boc/" + file_name + ".txt"
+    all_fns = [pavPPMI_fn]
+    if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
+        print("Skipping task", pavPPMI.__name__)
+        return
+    else:
+        print("Running task", pavPPMI.__name__)
+
+    if limit_entities is False:
+        classification = "all"
+
+    ranking = dt.import2dArray(ranking_fn)
+    names = dt.import2dArray(cluster_names_fn, "s")
+    frq = []
+
+    names = writeBagOfClusters(names, data_type, lowest_amt, highest_amt, classification)
+
+    for name in names:
+        frq.append(readPPMI("".join(name), data_type, lowest_amt, highest_amt, classification))
+
+    pav_classes = []
+
+    for f in range(len(frq)):
+        print(names[f])
+        x = np.asarray(frq[f])
+        y = ranking[f]
+
+        ir = IsotonicRegression()
+        y_ = ir.fit_transform(x, y)
+        pav_classes.append(y_)
+        if do_p:
+            plot(x, y, y_)
+        print(f)
+
+    dt.write2dArray(pav_classes, pavPPMI_fn)
+    return pav_classes
+
+
 def pavPPMIAverage(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type="movies", rewrite_files=False,
             classification="genres", lowest_amt=0, highest_amt=2147000000, limit_entities=False):
     pavPPMI_fn = "../data/" + data_type + "/finetune/" + file_name + ".txt"
@@ -82,6 +142,12 @@ def pavPPMIAverage(cluster_names_fn, ranking_fn, file_name, do_p=False, data_typ
 
     ranking = dt.import2dArray(ranking_fn)
     names = dt.import2dArray(cluster_names_fn, "s")
+
+    for n in range(len(names)):
+        for x in names[n]:
+            if ":" in names[n][x]:
+                names[n][x] = names[n][x][:-1]
+
     frq = []
     counter = 0
 

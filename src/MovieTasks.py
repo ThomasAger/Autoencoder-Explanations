@@ -301,11 +301,14 @@ def convertToTfIDF(data_type, lowest_count, highest_count, freq_arrays_fn, class
                      "../data/"+data_type+"/bow/tfidf/class-all-"+str(lowest_count)+"-"+str(highest_count)+"-"+str(class_type))
 
 
-def printIndividualFromAll(data_type, type, lowest_count, max, class_type, classification):
+def printIndividualFromAll(data_type, type, lowest_count, max, class_type, classification, all_fn=None, names_array = None):
     fn = "../data/" + data_type + "/bow/"
-
-    all_fn = fn + type + "/class-all-"+str(lowest_count)+"-"+str(max)+"-"+str(classification)
-    names = dt.import1dArray(fn + "names/"+str(lowest_count)+"-"+str(max)+"-"+str(classification)+".txt")
+    if all_fn is None:
+        all_fn = fn + type + "/class-all-"+str(lowest_count)+"-"+str(max)+"-"+str(classification)
+    if names_array is None:
+        names = dt.import1dArray(fn + "names/"+str(lowest_count)+"-"+str(max)+"-"+str(classification)+".txt")
+    else:
+        names = names_array
     with open(all_fn) as all:
         c = 0
         for la in all:

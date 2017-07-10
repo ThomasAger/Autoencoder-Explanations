@@ -30,12 +30,12 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
          breakoff_a, kappa_a, score_limit_a, rewrite_files, cluster_multiplier_a, threads, dropout_noise, learn_rate_a, epochs_a, cross_val, ep,
          output_activation, cs, deep_size, classification, direction_count, lowest_amt, loss, development, add_all_terms,
          average_ppmi_a, optimizer_name, class_weight, amount_to_start_a, chunk_amt, chunk_id, lr, vector_path_replacement, dt_dev,
-         use_pruned, max_depth, min_score, min_size, limit_entities, svm_classify, get_nnet_vectors_path, arcca, loc, largest_cluster,
+         use_pruned, max_depth, min_score, min_size, limit_entities_a, svm_classify, get_nnet_vectors_path, arcca, loc, largest_cluster,
          skip_nn, dissim, dissim_amt_a, hp_opt, find_most_similar, use_breakoff_dissim_a, get_all_a, half_ndcg_half_kappa_a,
-         sim_t, one_for_all, ft_loss_a, ft_optimizer_a):
+         sim_t, one_for_all, ft_loss_a, ft_optimizer_a, bag_of_clusters_a):
 
 
-    prune_val = 0.25
+    prune_val = 2
 
     average_csv_fn = file_name
 
@@ -58,6 +58,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
             amount_of_finetune = dt.stringToArray(amount_of_finetune_a)[0]
             epochs_a = dt.stringToArray(epochs_a)[0]
             average_ppmi_a = dt.stringToArray(average_ppmi_a)[0]
+            limit_entities_a = dt.stringToArray(limit_entities_a)[0]
+            bag_of_clusters_a = dt.stringToArray(bag_of_clusters_a)[0]
         else:
             dissim_amt_a = dt.stringToArray(dissim_amt_a)
             breakoff_a = dt.stringToArray(breakoff_a)
@@ -76,6 +78,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
             amount_of_finetune = dt.stringToArray(amount_of_finetune_a)
             epochs_a = dt.stringToArray(epochs_a)
             average_ppmi_a = dt.stringToArray(average_ppmi_a)
+            limit_entities_a = dt.stringToArray(limit_entities_a)
+            bag_of_clusters_a = dt.stringToArray(bag_of_clusters_a)
         ep = int(ep)
         dropout_noise = float(dropout_noise)
         cross_val = int(cross_val)
@@ -89,7 +93,6 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
         rewrite_files = dt.toBool(rewrite_files)
         development = dt.toBool(development)
         svm_classify = dt.toBool(svm_classify)
-        limit_entities = dt.toBool(limit_entities)
         min_size = int(min_size)
         min_score = float(min_score)
         max_depth = int(max_depth)
@@ -128,6 +131,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
         amount_of_finetune = [amount_of_finetune_a[0]]
         epochs = [epochs_a[0]]
         average_ppmi_a = [average_ppmi_a[0]]
+        limit_entities_a = [limit_entities_a[0]]
+        bag_of_clusters_a = [bag_of_clusters_a[0]]
 
 
     variables_to_execute = []
@@ -142,7 +147,9 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                 for ub in use_breakoff_dissim_a:
                                     for ga in get_all_a:
                                         for hnk in half_ndcg_half_kappa_a:
-                                            variables_to_execute.append((d, b, s, a, c, k, ct, ub, ga, hnk))
+                                            for l in limit_entities_a:
+                                                for bc in bag_of_clusters_a:
+                                                    variables_to_execute.append((d, b, s, a, c, k, ct, ub, ga, hnk, l, bc))
     all_csv_fns = [[""] ]* (len(classification_task_a))
     arrange_name = ""
     for vt in variables_to_execute:
@@ -157,7 +164,13 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
         use_breakoff_dissim = vt[7]
         get_all = vt[8]
         half_ndcg_half_kappa = vt[9]
+        limit_entities = vt[10]
+        bag_of_clusters = vt[11]
         class_task_index = 0
+
+        if limit_entities:
+            get_nnet_vectors_path = None
+
         for c in range(len(classification_task_a)):
             if classification_task == classification_task_a[c]:
                 class_task_index = c
@@ -413,12 +426,13 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                 add_all_terms = add_all_terms
                                 clusters_fn = loc + data_type + "/cluster/hierarchy_directions/" + file_name + ".txt"
                                 cluster_names_fn = loc + data_type + "/cluster/hierarchy_names/" + file_name + ".txt"
-
+                                cluster_dict_fn = cluster_names_fn
                             else:
                                 high_threshold = 0.5
                                 low_threshold = 0.1
                                 clusters_fn = loc + data_type + "/cluster/clusters/" + file_name + ".txt"
                                 cluster_names_fn = loc + data_type + "/cluster/names/" + file_name + ".txt"
+                                cluster_dict_fn = loc + data_type + "/cluster/dict/" + file_name + ".txt"
 
                             if breakoff:
                                 hierarchy.initClustering(vector_path, directions_fn, scores_fn, names_fn, amount_to_start, False,
@@ -434,9 +448,6 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                          half_kappa_half_ndcg=half_ndcg_half_kappa)
 
                             ranking_fn = loc + data_type + "/rank/numeric/" + file_name + ".txt"
-
-
-
 
                             rank.getAllRankings(clusters_fn, vector_path, cluster_names_fn , vector_names_fn, 0.2, 1, False, file_name,
                                                 False, data_type=data_type, rewrite_files=rewrite_files)
@@ -464,7 +475,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                               limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn)
 
                             wekatree.DecisionTree(ranking_fn, classification_path, label_names_fn , cluster_names_fn , file_name,
-                               save_details=True, data_type=data_type,split_to_use=splits, pruning=prune_val,
+                               save_details=False, data_type=data_type,split_to_use=splits, pruning=2,
                                               limited_label_fn=limited_label_fn, rewrite_files=rewrite_files,
                                csv_fn=csv_name, cv_splits=cv_splits, limit_entities=limit_entities, vector_names_fn=vector_names_fn)
                             if not skip_nn:
@@ -538,14 +549,22 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
 
                                     if average_ppmi:
                                         file_name = file_name + "APPMI"
+                                    elif bag_of_clusters:
+                                        file_name = file_name + "BOC"
 
-                                    class_path = loc + data_type + "/finetune/" + file_name + ".txt"
+                                    if bag_of_clusters:
+                                        class_path = loc + data_type + "/finetune/boc/" + file_name + ".txt"
+                                    else:
+                                        class_path = loc + data_type + "/finetune/" + file_name + ".txt"
 
                                     if average_ppmi:
-                                        fto.pavPPMIAverage(cluster_names_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=rewrite_files,
+                                        fto.pavPPMIAverage(cluster_dict_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=rewrite_files,
                                                 classification=classification, lowest_amt=lowest_amt, limit_entities=limit_entities, highest_amt=highest_count)
+                                    elif bag_of_clusters:
+                                        fto.bagOfClustersPavPPMI(cluster_dict_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=rewrite_files,
+                                                    classification=classification, lowest_amt=lowest_amt, limit_entities=limit_entities,highest_amt=highest_count)
                                     else:
-                                            fto.pavPPMI(cluster_names_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=rewrite_files,
+                                        fto.pavPPMI(cluster_names_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=rewrite_files,
                                                     classification=classification, lowest_amt=lowest_amt, limit_entities=limit_entities,highest_amt=highest_count)
 
                                     """ FINETUNING """
@@ -606,10 +625,23 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                           cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
                                                           limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn)
 
-                                        wekatree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name,
-                                                              save_details=True, data_type=data_type,split_to_use=splits,  rewrite_files=rewrite_files,
-                                                              csv_fn=csv_name, cv_splits=cv_splits, limit_entities=limit_entities,
-                                                              limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, pruning=prune_val)
+                                        wekatree.DecisionTree(ranking_fn, classification_path, label_names_fn,
+                                                              cluster_names_fn, file_name,
+                                                              save_details=True, data_type=data_type,
+                                                              split_to_use=splits, pruning=1,
+                                                              limited_label_fn=limited_label_fn, rewrite_files=True,
+                                                              csv_fn=csv_name, cv_splits=cv_splits,
+                                                              limit_entities=limit_entities,
+                                                              vector_names_fn=vector_names_fn)
+
+                                        wekatree.DecisionTree(ranking_fn, classification_path, label_names_fn,
+                                                              cluster_names_fn, file_name,
+                                                              save_details=False, data_type=data_type,
+                                                              split_to_use=splits, pruning=2,
+                                                              limited_label_fn=limited_label_fn, rewrite_files=True,
+                                                              csv_fn=csv_name, cv_splits=cv_splits,
+                                                              limit_entities=limit_entities,
+                                                              vector_names_fn=vector_names_fn)
 
                                         current_fn = file_name
                                         #SVM Classification
@@ -710,8 +742,10 @@ get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films200-genres.txt"
 deep_size = [200]
 """
 
+bag_of_clusters = [True, False]
+
 data_type = "placetypes"
-classification_task = ["opencyc"]
+classification_task = ["foursquare", "geonames"]
 lowest_amt = 50
 highest_amt = 10
 #init_vector_path = "../data/"+data_type+"/bow/ppmi/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+classification_task
@@ -721,13 +755,8 @@ init_vector_path = "../data/"+data_type+"/nnet/spaces/places100.txt"
 vector_path_replacement = loc+data_type+"/nnet/spaces/places100.txt"
 
 file_name = "places mds 100"
-limit_entities = False
-if limit_entities:
-    get_nnet_vectors_path = None
-else:
-    get_nnet_vectors_path = loc + data_type +"/nnet/spaces/places100.txt"
+limit_entities = [False, True]
 deep_size = [100]
-"""
 hidden_activation = "tanh"
 dropout_noise = 0.5
 output_activation = "softmax"
@@ -737,7 +766,6 @@ class_weight = None
 lr = 0.01
 nnet_dev = False
 ep=1400
-"""
 """
 hidden_activation = "tanh"
 dropout_noise = 0.2
@@ -753,6 +781,7 @@ loss="categorical_crossentropy"
 class_weight = "balanced"
 rewrite_files = True
 """
+"""
 hidden_activation = "tanh"
 dropout_noise = 0.5
 output_activation = "sigmoid"
@@ -763,10 +792,9 @@ ep =1400
 lr = 0.01
 rewrite_files = False
 nnet_dev = False
+"""
+get_nnet_vectors_path = loc + data_type + "/nnet/spaces/places100.txt"
 
-
-
-limit_entities = False
 
 cutoff_start = 0.2
 
@@ -787,7 +815,7 @@ dissim = 0.0
 dissim_amt = [400]
 find_most_similar = True#False
 breakoff = [True, False]
-score_limit = [0.85, 0.9, 0.95]
+score_limit = [0.9, 0.95]
 amount_to_start = [1000, 3000, 5000]
 cluster_multiplier = [2, 4, 1]#50
 score_type = ["ndcg", "kappa"]
@@ -814,10 +842,10 @@ svm_classify = False
 rewrite_files = False
 max_depth = 2
 
-limit_entities = False
+limit_entities = [False, False]
 
 skip_nn = False
-vector_path_replacement =  None#loc+data_type+"/nnet/spaces/films100-genres.txt"
+vector_path_replacement = None#loc+data_type+"/nnet/spaces/films100-genres.txt"
 
 cross_val = 1
 one_for_all = False
@@ -835,7 +863,7 @@ for c in range(chunk_amt):
                                    amount_to_start, chunk_amt, chunk_id, lr, vector_path_replacement, dt_dev, use_pruned, max_depth,
                                    min_score, min_size, limit_entities, svm_classify, get_nnet_vectors_path, arcca, largest_cluster,
                  skip_nn, dissim, dissim_amt, hp_opt, find_most_similar, use_breakoff_dissim, get_all, half_ndcg_half_kappa, sim_t,
-                 one_for_all]
+                 one_for_all, bag_of_clusters]
 
     sys.stdout.write("python pipeline.py ")
     variable_string = "python $SRCPATH/pipeline.py "
@@ -925,6 +953,7 @@ if len(args) > 0:
     get_all = args[50]
     half_ndcg_half_kappa = args[51]
     one_for_all = args[52]
+    bag_of_clusters = args[53]
 
 
 if  __name__ =='__main__':main(data_type, classification_task, file_name, init_vector_path, hidden_activation,
@@ -935,4 +964,4 @@ if  __name__ =='__main__':main(data_type, classification_task, file_name, init_v
                                amount_to_start, chunk_amt, chunk_id, lr, vector_path_replacement, dt_dev, use_pruned, max_depth,
                                min_score, min_size, limit_entities, svm_classify, get_nnet_vectors_path, arcca, loc, largest_cluster,
                                skip_nn, dissim, dissim_amt, hp_opt, find_most_similar, use_breakoff_dissim, get_all,
-                               half_ndcg_half_kappa, sim_t, one_for_all, ft_loss, ft_optimizer)
+                               half_ndcg_half_kappa, sim_t, one_for_all, ft_loss, ft_optimizer, bag_of_clusters)
