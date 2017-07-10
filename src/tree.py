@@ -243,13 +243,16 @@ class DecisionTree:
     def getNodesToDepth(self, tree, clusters, feature_names):
         fns = []
         features = []
+        clusters = np.asarray(clusters).transpose()
         for i in tree.tree_.feature:
             if i != -2 or i <= 200:
-                fns.append(feature_names[i])
+                fns.append(feature_names[i][0])
                 features.append(clusters[i])
         fn_ids = np.unique(fns, return_index=True)[1]
         final_fns = []
         final_features = []
+        print(len(fns))
+        print(fn_ids)
         for i in fn_ids:
             final_fns.append(fns[i])
             final_features.append(features[i])
