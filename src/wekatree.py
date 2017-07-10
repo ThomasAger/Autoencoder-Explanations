@@ -22,7 +22,7 @@ class DecisionTree:
     def __init__(self, features_fn, classes_fn,  class_names_fn, cluster_names_fn, filename,
                    max_depth=None, balance=None, criterion="entropy", save_details=False, data_type="movies",cv_splits=5,
                  csv_fn="../data/temp/no_csv_provided.csv", rewrite_files=True, split_to_use=-1, development=False,
-                 limit_entities=False, limited_label_fn=None, vector_names_fn=None):
+                 limit_entities=False, limited_label_fn=None, vector_names_fn=None, pruning=0.25):
 
         vectors = np.asarray(dt.import2dArray(features_fn)).transpose()
 
@@ -69,6 +69,8 @@ class DecisionTree:
             limited_labels = dt.import1dArray(limited_label_fn)
             vectors = np.asarray(dt.match_entities(vectors, limited_labels, vector_names))
 
+        all_y_test = []
+        all_predictions = []
         for l in range(len(labels)):
 
             if balance:
@@ -111,6 +113,7 @@ class DecisionTree:
                     break
 
             predictions = []
+            rules = []
 
             if development:
                 ac_x_test = np.copy(np.asarray(ac_x_dev))
@@ -119,15 +122,23 @@ class DecisionTree:
             train_fn = "../data/" + data_type + "/weka/data/" + filename + "Train.txt"
             test_fn = "../data/" + data_type + "/weka/data/" + filename + "Test.txt"
 
+
+
             for splits in range(len(ac_y_test)):
+
                 # Get the weka predictions
                 dt.writeArff(ac_x_train[splits], [ac_y_train[splits]], [label_names[splits]], train_fn, header=True)
                 dt.writeArff(ac_x_test[splits], [ac_y_test[splits]], [label_names[splits]], test_fn, header=True)
-                predictions.append(self.getWekaPredictions(train_fn+label_names[splits]+".arff",
-                                                           test_fn+label_names[splits]+".arff", save_details))
+                prediction, rule = self.getWekaPredictions(train_fn+label_names[splits]+".arff",
+                                                           test_fn+label_names[splits]+".arff", save_details, pruning)
+                predictions.append(prediction)
+                rules.append(rule)
 
 
             for i in range(len(predictions)):
+                if len(predictions) == 1:
+                    all_y_test.append(ac_y_test[i])
+                    all_predictions.append(predictions[i])
                 f1 = f1_score(ac_y_test[i], predictions[i], average="binary")
                 accuracy = accuracy_score(ac_y_test[i], predictions[i])
                 cv_f1.append(f1)
@@ -136,21 +147,43 @@ class DecisionTree:
                 print(scores)
 
 
+
                 # Export a tree for each label predicted by the clf, not sure if this is needed...
                 if save_details:
+                    data_fn = "../data/"+data_type+"/rules/weka_rules/" + label_names[l] + " " + filename + ".txt"
                     class_names = [label_names[l], "NOT " + label_names[l]]
                     #self.get_code(clf, cluster_names, class_names, label_names[l] + " " + filename, data_type)
+                    dt.write1dArray(rules[i].split("\n"), data_fn)
+                    dot_file = dt.import1dArray(data_fn)
+                    new_dot_file = []
+                    for line in dot_file:
+                        if "->" not in line and "label" in line and '"t ' not in line and '"f ' not in line:
+                            line = line.split('"')
+                            line[1] = '"' + cluster_names[int(line[1])] + '"'
+                            line = "".join(line)
+                        new_dot_file.append(line)
+                    dt.write1dArray(new_dot_file, data_fn)
+                    graph = pydot.graph_from_dot_file(data_fn)
+                    graph.write_png( "../data/"+data_type+"/rules/weka_images/" + label_names[l] + " " + filename + ".png")
             f1_array.append(np.average(np.asarray(cv_f1)))
             accuracy_array.append(np.average(np.asarray(cv_acc)))
 
         accuracy_array = np.asarray(accuracy_array)
         accuracy_average = np.average(accuracy_array)
-
+        accuracy_array = accuracy_array.tolist()
         f1_array = np.asarray(f1_array)
         f1_average = np.average(f1_array)
+        f1_array = f1_array.tolist()
+        micro_average = f1_score(np.asarray(all_y_test), np.asarray(all_predictions), average="micro")
 
-        accuracy_array = np.append(accuracy_array, accuracy_average)
-        f1_array = np.append(f1_array, f1_average)
+        print("Micro F1", micro_average)
+
+        accuracy_array.append(accuracy_average)
+        accuracy_array.append(0.0)
+
+        f1_array.append(f1_average)
+        f1_array.append(micro_average)
+
 
         scores = [accuracy_array, f1_array]
 
@@ -176,6 +209,7 @@ class DecisionTree:
             for l in label_names:
                 key.append(l)
             key.append("AVERAGE")
+            key.append("MICRO AVERAGE")
             dt.write_csv(csv_fn, file_names, scores, key)
 
 
@@ -189,7 +223,7 @@ class DecisionTree:
         file.close()
 
 
-    def getWekaPredictions(self, train_fn, test_fn, save_details):
+    def getWekaPredictions(self, train_fn, test_fn, save_details, pruning):
         print("weka")
 
 
@@ -197,7 +231,7 @@ class DecisionTree:
         train_data = loader.load_file(train_fn)
         train_data.class_is_last()
 
-        cls = Classifier(classname="weka.classifiers.trees.J48")
+        cls = Classifier(classname="weka.classifiers.trees.J48", options=["-C", str(pruning)])
 
 
         cls.build_classifier(train_data)
@@ -212,9 +246,8 @@ class DecisionTree:
             dist = cls.distribution_for_instance(inst)
             y_pred.append(pred)
 
-        graph.plot_dot_graph(cls.graph)
-        print(cls)
-        return y_pred
+
+        return y_pred, cls.graph
 
 def main(cluster_vectors_fn, classes_fn, label_names_fn, cluster_names_fn, file_name, balance,save_details, data_type, csv_fn, cv_splits):
 

@@ -34,6 +34,9 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
          skip_nn, dissim, dissim_amt_a, hp_opt, find_most_similar, use_breakoff_dissim_a, get_all_a, half_ndcg_half_kappa_a,
          sim_t, one_for_all, ft_loss_a, ft_optimizer_a):
 
+
+    prune_val = 0.25
+
     average_csv_fn = file_name
 
     if isinstance(deep_size, str):
@@ -140,8 +143,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                     for ga in get_all_a:
                                         for hnk in half_ndcg_half_kappa_a:
                                             variables_to_execute.append((d, b, s, a, c, k, ct, ub, ga, hnk))
-
-
+    all_csv_fns = [[] * len(classification_task_a)]
+    arrange_name = ""
     for vt in variables_to_execute:
         file_name = average_csv_fn
         dissim_amt = vt[0]
@@ -154,6 +157,10 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
         use_breakoff_dissim = vt[7]
         get_all = vt[8]
         half_ndcg_half_kappa = vt[9]
+        class_task_index = 0
+        for c in range(len(classification_task_a)):
+            if classification_task == classification_task_a[c]:
+                class_task_index = c
 
         """ CLUSTER RANKING """
         if limit_entities is False:
@@ -258,6 +265,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                     csv_fns_nn[nn_counter] = loc + data_type + "/nnet/csv/" + file_name + ".csv"
                     nn_counter+=1
                     print("nnet hi", arcca)
+                    arrange_name = file_name
                     if not arcca and not skip_nn:
                         print ("nnet hello?")
                         SDA = nnet.NeuralNetwork(noise=0, fine_tune_weights_fn=fine_tune_weights_fn, optimizer_name=optimizer_name,
@@ -271,7 +279,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                             file_name=file_name, from_ae=from_ae, data_type=data_type, rewrite_files=rewrite_files, development=development,
                                                  class_weight=class_weight, get_nnet_vectors_path=get_nnet_vectors_path,
                                                  limit_entities=limit_entities, limited_label_fn=limited_label_fn,
-                                                 vector_names_fn=vector_names_fn)
+                                                 vector_names_fn=vector_names_fn, classification_name=classification_name)
 
                     new_file_names = []
 
@@ -457,8 +465,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                               limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn)
 
                             wekatree.DecisionTree(ranking_fn, classification_path, label_names_fn , cluster_names_fn , file_name,
-                               save_details=True, data_type=data_type,split_to_use=splits,
-                                              limited_label_fn=limited_label_fn, rewrite_files=True,
+                               save_details=True, data_type=data_type,split_to_use=splits, pruning=prune_val,
+                                              limited_label_fn=limited_label_fn, rewrite_files=rewrite_files,
                                csv_fn=csv_name, cv_splits=cv_splits, limit_entities=limit_entities, vector_names_fn=vector_names_fn)
                             if not skip_nn:
 
@@ -600,9 +608,9 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                           limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn)
 
                                         wekatree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name,
-                                                              save_details=True, data_type=data_type,split_to_use=splits,  rewrite_files=True,
+                                                              save_details=True, data_type=data_type,split_to_use=splits,  rewrite_files=rewrite_files,
                                                               csv_fn=csv_name, cv_splits=cv_splits, limit_entities=limit_entities,
-                                                              limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn)
+                                                              limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, pruning=prune_val)
 
                                         current_fn = file_name
                                         #SVM Classification
@@ -656,11 +664,15 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
 
             for a in range(len(csv_fns_dt_a)):
                 dt.averageCSVs(csv_fns_dt_a[a])
+                for n in csv_fns_dt_a[a]:
+                    all_csv_fns[class_task_index].append(n)
             if not skip_nn:
                 for a in range(len(csv_fns_nn_a)):
                     dt.averageCSVs(csv_fns_nn_a[a])
-            for a in range(len(csv_fns_dt_a)):
-                dt.addToAverageCSV(csv_fns_dt_a[a], average_csv_fn)
+
+    for c in range(len(all_csv_fns)):
+        dt.arrangeByScore(all_csv_fns[c], classification_task_a[c], "../data/"+data_type+"/rules/tree_csv/"
+                          +classification_task_a[c] + " " + arrange_name +".csv")
     jvm.stop()
 
 
@@ -687,7 +699,7 @@ get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 """
 
 data_type = "movies"
-classification_task = ["us-ratings"]
+classification_task = ["genres", "keywords"]
 file_name = "f200ge"
 lowest_amt = 100
 highest_amt = 10
@@ -696,7 +708,7 @@ init_vector_path = loc+data_type+"/nnet/spaces/films200-genres.txt"
 #file_name = "films200-genres100ndcg0.85200 tdev3004FTL0"
 #init_vector_path = loc+data_type+"/nnet/spaces/"+file_name+".txt"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films200-genres.txt"
-deep_size = [100]
+deep_size = [200]
 
 """
 data_type = "placetypes"
@@ -752,7 +764,7 @@ output_activation = "sigmoid"
 trainer = "adagrad"
 loss="binary_crossentropy"
 class_weight = None
-ep =1400
+ep =300
 lr = 0.01
 rewrite_files = False
 nnet_dev = False
@@ -778,12 +790,12 @@ dissim = 0.0
 dissim_amt = [400]
 find_most_similar = True#False
 breakoff = [True, False]
-score_limit = [ 0.9,0.95]
-amount_to_start = [1000,3000,5000]
-cluster_multiplier = [2]#50
-score_type = ["ndcg","kappa"]
+score_limit = [0.85, 0.9, 0.95]
+amount_to_start = [1000, 3000, 5000]
+cluster_multiplier = [2, 4, 1]#50
+score_type = ["ndcg", "kappa"]
 use_breakoff_dissim = [False]
-get_all = [False]
+get_all = [True]
 half_ndcg_half_kappa = [False]
 
 
@@ -799,7 +811,7 @@ hp_opt = True
 
 dt_dev = True
 add_all_terms = False
-average_ppmi = [True, False]
+average_ppmi = [False]
 use_pruned = False
 svm_classify = False
 rewrite_files = False

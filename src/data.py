@@ -297,6 +297,14 @@ def write_to_csv(csv_fn, col_names, cols_to_add):
         df[col_names[c]] = cols_to_add[c]
     df.to_csv(csv_fn)
 
+def write_to_csv_key(csv_fn, col_names, cols_to_add, keys):
+    df = pd.read_csv(csv_fn, index_col=0)
+    for c in range(len(cols_to_add)):
+        for k in range(len(keys)):
+            df[col_names[c]][k] = cols_to_add[c][k]
+    df.to_csv(csv_fn)
+
+
 def read_csv(csv_fn):
     return pd.read_csv(csv_fn, index_col=0)
 
@@ -865,8 +873,6 @@ def averageCSVs(csv_array_fns):
 
     csv_array[0].to_csv(csv_array_fns[0][:len(csv_array_fns[0])-4] + "AVG.csv")
 
-def addToAverageCSV(csv_array_fns, average_csv_fn):
-    print("a")
 
 def stringToArray(string):
     array = string.split()
@@ -938,6 +944,40 @@ def match_entities(entities, t_names, names):
         matched_entities.append(entities[e])
     print("Amount found", amount_found)
     return matched_entities
+
+def arrangeByScore(csv_fns, class_name, arra_name):
+    csv_array = []
+    for csv_name in csv_fns:
+        csv_array.append(read_csv(csv_name).as_matrix())
+    # Get rows of averages
+    row = 0
+    for c in range(len(csv_fns)):
+        csv_fns[c] = csv_fns[c].split("/")
+        csv_fns[c] = csv_fns[c][len(csv_fns[c])-1]
+
+    col_names = ["1 ACC D3", "2 F1 D3","3 ACC DN", "4 F1 DN","5 ACC J48", "6 F1 J48",  "7 MICRO F1 D3",  "8 MICRO F1 DN", "9 MICRO F1 J48"]
+    average_rows = []
+    for csv in range(0, len(csv_array)):
+        row = []
+        count = 0
+        for col in range(len(csv_array[csv])-2, len(csv_array[csv])):
+            if count != 1:
+                row.extend(csv_array[csv][col][:6])
+            else:
+                new_val = np.unique(np.asarray(csv_array[csv][col]))
+                new_val = new_val[np.nonzero(new_val)]
+                row.extend(new_val.tolist()[:3])
+            count+=1
+        while len(row) != 9:
+            row.append(0.0)
+        average_rows.append(row)
+    average_rows = np.asarray(average_rows).transpose()
+    if fileExists(arra_name):
+        write_to_csv_key( arra_name, col_names, average_rows, csv_fns)
+    else:
+        write_csv( arra_name, col_names, average_rows, csv_fns)
+
+    print("x")
 
 """
 write2dArray(deleteAllButIndexes(import2dArray("../data/movies/cluster/hierarchy_directions/films200-genres100ndcg0.9200.txt", "s"),

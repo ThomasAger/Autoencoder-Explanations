@@ -72,6 +72,9 @@ class DecisionTree:
         all_top_clusters = []
         all_top_names = []
 
+        all_y_test = []
+        all_predictions = []
+
         for l in range(len(labels)):
             """
             pipeline = Pipeline([('clf', tree.DecisionTreeClassifier(criterion=criterion, random_state=20000, class_weight=balance))])
@@ -141,6 +144,9 @@ class DecisionTree:
                 predictions.append(clf.predict(ac_x_test[splits]))
 
             for i in range(len(predictions)):
+                if len(predictions) == 1:
+                    all_y_test.append(ac_y_test[i])
+                    all_predictions.append(predictions[i])
                 f1 = f1_score(ac_y_test[i], predictions[i], average="binary")
                 accuracy = accuracy_score(ac_y_test[i], predictions[i])
                 cv_f1.append(f1)
@@ -193,16 +199,23 @@ class DecisionTree:
         f1_array = np.asarray(f1_array)
         f1_average = np.average(f1_array)
 
-        accuracy_array = np.append(accuracy_array, accuracy_average)
-        f1_array = np.append(f1_array, f1_average)
+        micro_average = f1_score(all_y_test, all_predictions, average="micro")
 
+        accuracy_array = accuracy_array.tolist()
+        f1_array =f1_array.tolist()
+
+        accuracy_array.append(accuracy_average)
+        accuracy_array.append(0.0)
+
+        f1_array.append(f1_average)
+        f1_array.append(micro_average)
 
         scores = [accuracy_array, f1_array]
 
         dt.write1dArray(accuracy_array, acc_fn)
         dt.write1dArray(f1_array, f1_fn)
 
-        if dt.fileExists(csv_fn):
+        if dt.fileExists(csv_fn) and rewrite_files is  False:
             print("File exists, writing to csv")
             try:
                 dt.write_to_csv(csv_fn, file_names, scores)
@@ -220,6 +233,7 @@ class DecisionTree:
             for l in label_names:
                 key.append(l)
             key.append("AVERAGE")
+            key.append("MICRO AVERAGE")
             dt.write_csv(csv_fn, file_names, scores, key)
 
         dt.write2dArray(all_top_names, "../data/"+data_type+"/rules/names/" + filename + ".txt")

@@ -290,7 +290,7 @@ class NeuralNetwork:
                     print(f1_array[y])
                 y_pred = y_pred.transpose()
                 y_test[m] = np.asarray(y_test[m]).transpose()
-                micro_average = f1_score(y_test[m], y_pred, average="macro")
+                micro_average = f1_score(y_test[m], y_pred, average="micro")
                 cv_f1_fn = "../data/" + data_type + "/nnet/scores/F1 " + file_name + ".txt"
                 cv_acc_fn = "../data/" + data_type + "/nnet/scores/ACC " + file_name + ".txt"
                 dt.write1dArray(f1_array, cv_f1_fn)
@@ -327,7 +327,8 @@ class NeuralNetwork:
                     print("File does not exist, recreating csv")
                     key = []
                     for l in label_names:
-                        key.append(l)
+                        if l == classification_name:
+                            key.append(l)
                     key.append("AVERAGE")
                     key.append("MICRO AVERAGE")
                     dt.write_csv(csv_fn, file_names, scores, key)
