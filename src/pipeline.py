@@ -745,7 +745,7 @@ deep_size = [200]
 bag_of_clusters = [True, False]
 
 data_type = "placetypes"
-classification_task = ["foursquare", "geonames"]
+classification_task = ["opencyc"]
 lowest_amt = 50
 highest_amt = 10
 #init_vector_path = "../data/"+data_type+"/bow/ppmi/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+classification_task
@@ -753,10 +753,11 @@ highest_amt = 10
 init_vector_path = "../data/"+data_type+"/nnet/spaces/places100.txt"
 
 vector_path_replacement = loc+data_type+"/nnet/spaces/places100.txt"
-
+get_nnet_vectors_path = loc + data_type + "/nnet/spaces/places100.txt"
 file_name = "places mds 100"
 limit_entities = [False, True]
-deep_size = [100]
+
+
 hidden_activation = "tanh"
 dropout_noise = 0.5
 output_activation = "softmax"
@@ -766,6 +767,7 @@ class_weight = None
 lr = 0.01
 nnet_dev = False
 ep=1400
+deep_size = [100]
 """
 hidden_activation = "tanh"
 dropout_noise = 0.2
@@ -788,13 +790,12 @@ output_activation = "sigmoid"
 trainer = "adagrad"
 loss="binary_crossentropy"
 class_weight = None
-ep =1400
+ep =300
 lr = 0.01
 rewrite_files = False
 nnet_dev = False
-"""
-get_nnet_vectors_path = loc + data_type + "/nnet/spaces/places100.txt"
 
+"""
 
 cutoff_start = 0.2
 
@@ -814,13 +815,13 @@ largest_cluster = 1
 dissim = 0.0
 dissim_amt = [400]
 find_most_similar = True#False
-breakoff = [True, False]
+breakoff = [False]
 score_limit = [0.9, 0.95]
 amount_to_start = [1000, 3000, 5000]
 cluster_multiplier = [2, 4, 1]#50
 score_type = ["ndcg", "kappa"]
 use_breakoff_dissim = [False]
-get_all = [True]
+get_all = [False]
 half_ndcg_half_kappa = [False]
 
 
