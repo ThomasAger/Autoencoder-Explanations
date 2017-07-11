@@ -35,12 +35,22 @@ def writeBagOfClusters(cluster_dict, data_type, lowest_amt, highest_amt, classif
     bag_of_clusters = []
     names_array = [""] * len(cluster_dict)
     for c in range(len(cluster_dict)):
+        for f in range(len(cluster_dict[c])):
+            if ":" in cluster_dict[c][f]:
+                cluster_dict[c][f] = cluster_dict[c][f][:-1]
         accum_freqs = [0.0] * len(dt.import1dArray("../data/"+data_type+"/bow/ppmi/" + "class-" + cluster_dict[c][0] + "-" + str(lowest_amt) + "-" + str(highest_amt) + "-" + classification))
+        counter = 0
         for f in cluster_dict[c]:
             if ":" in f:
                 f = f[:-1]
-            names_array[c] = names_array[c] + f[0]
+            if counter < 20:
+                if counter > 0:
+                    names_array[c] = names_array[c] + f[0]
+                else:
+                    names_array[c] = names_array[c] + f
+
             accum_freqs = np.add(accum_freqs, dt.import1dArray("../data/"+data_type+"/bow/ppmi/" + "class-" + f + "-" + str(lowest_amt) + "-" + str(highest_amt) + "-" + classification, "f"))
+            counter += 1
         bag_of_clusters.append(accum_freqs)
     ppmi_fn = "../data/" + data_type + "/bow/ppmi/class-temp-" + str(lowest_amt) + "-" + str(highest_amt) + "-" + classification
     dt.write2dArray(mt.convertPPMI(sp.csr_matrix(bag_of_clusters)), ppmi_fn)
@@ -144,7 +154,7 @@ def pavPPMIAverage(cluster_names_fn, ranking_fn, file_name, do_p=False, data_typ
     names = dt.import2dArray(cluster_names_fn, "s")
 
     for n in range(len(names)):
-        for x in names[n]:
+        for x in range(len(names[n])):
             if ":" in names[n][x]:
                 names[n][x] = names[n][x][:-1]
 

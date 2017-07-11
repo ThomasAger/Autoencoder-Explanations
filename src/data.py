@@ -947,8 +947,11 @@ def match_entities(entities, t_names, names):
 
 def arrangeByScore(csv_fns, class_name, arra_name):
     csv_array = []
+    counter = 0
     for csv_name in csv_fns:
+        print(counter)
         csv_array.append(read_csv(csv_name).as_matrix())
+        counter = counter + 1
     # Get rows of averages
     row = 0
     for c in range(len(csv_fns)):
@@ -972,10 +975,7 @@ def arrangeByScore(csv_fns, class_name, arra_name):
             row.append(0.0)
         average_rows.append(row)
     average_rows = np.asarray(average_rows).transpose()
-    if fileExists(arra_name):
-        write_to_csv_key( arra_name, col_names, average_rows, csv_fns)
-    else:
-        write_csv( arra_name, col_names, average_rows, csv_fns)
+    write_csv( arra_name, col_names, average_rows, csv_fns)
 
     print("x")
 
