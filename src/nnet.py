@@ -134,7 +134,8 @@ class NeuralNetwork:
         entity_classes = np.asarray(dt.import2dArray(self.class_path))
         print("Imported classes", len(entity_classes), len(entity_classes[0]))
 
-        if limit_entities is False:
+
+        if fine_tune_weights_fn is None:
             vector_names = dt.import1dArray(vector_names_fn)
             limited_labels = dt.import1dArray(limited_label_fn)
             entity_vectors = np.asarray(dt.match_entities(entity_vectors, limited_labels, vector_names))
@@ -193,6 +194,7 @@ class NeuralNetwork:
             self.fine_tune_weights.append(r.transpose())
             self.fine_tune_weights.append(np.zeros(shape=len(r), dtype="float64"))
         else:
+
             model_builder = self.classifierNetwork
 
         models = []
@@ -328,8 +330,7 @@ class NeuralNetwork:
                     print("File does not exist, recreating csv")
                     key = []
                     for l in label_names:
-                        if l == classification_name:
-                            key.append(l)
+                        key.append(l)
                     key.append("AVERAGE")
                     key.append("MICRO AVERAGE")
                     dt.write_csv(csv_fn, file_names, scores, key)

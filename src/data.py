@@ -955,8 +955,13 @@ def arrangeByScore(csv_fns, class_name, arra_name):
     # Get rows of averages
     row = 0
     for c in range(len(csv_fns)):
-        csv_fns[c] = csv_fns[c].split("/")
-        csv_fns[c] = csv_fns[c][len(csv_fns[c])-1]
+        split = csv_fns[c].split("/")
+        try:
+            csv_fns[c] = split[len(split)-1]
+        except IndexError:
+            print()
+            print(split)
+            print(csv_fns[c])
 
     col_names = ["1 ACC D3", "2 F1 D3","3 ACC DN", "4 F1 DN","5 ACC J48", "6 F1 J48",  "7 MICRO F1 D3",  "8 MICRO F1 DN", "9 MICRO F1 J48"]
     average_rows = []
