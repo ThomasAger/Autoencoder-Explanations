@@ -32,7 +32,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
          average_ppmi_a, optimizer_name, class_weight, amount_to_start_a, chunk_amt, chunk_id, lr, vector_path_replacement, dt_dev,
          use_pruned, max_depth, min_score, min_size, limit_entities_a, svm_classify, get_nnet_vectors_path, arcca, loc, largest_cluster,
          skip_nn, dissim, dissim_amt_a, hp_opt, find_most_similar, use_breakoff_dissim_a, get_all_a, half_ndcg_half_kappa_a,
-         sim_t, one_for_all, ft_loss_a, ft_optimizer_a, bag_of_clusters_a, just_output):
+         sim_t, one_for_all, ft_loss_a, ft_optimizer_a, bag_of_clusters_a, just_output, arrange_name):
 
 
     prune_val = 2
@@ -156,7 +156,6 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
     all_csv_fns = []
     for a in  classification_task_a:
         all_csv_fns.append([])
-    arrange_name = ""
     for vt in variables_to_execute:
         file_name = average_csv_fn
         dissim_amt = vt[0]
@@ -279,7 +278,6 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                     csv_fns_nn[nn_counter] = loc + data_type + "/nnet/csv/" + file_name + ".csv"
                     nn_counter+=1
                     print("nnet hi", arcca)
-                    arrange_name = file_name
                     if not arcca and not skip_nn:
                         print ("nnet hello?")
                         SDA = nnet.NeuralNetwork(noise=0, fine_tune_weights_fn=fine_tune_weights_fn, optimizer_name=optimizer_name,
@@ -701,6 +699,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                           +classification_task_a[c] + " " + arrange_name + str(len(all_csv_fns[0])) + ".csv")
     jvm.stop()
 
+arrange_name = "all"
+
 just_output = True
 arcca = False
 if arcca:
@@ -820,7 +820,7 @@ half_ndcg_half_kappa = [False]
 add_all_terms = [True, False]
 
 
-average_ppmi = [False]i_    
+average_ppmi = [False]
 bag_of_clusters = [True, False]
 
 
@@ -858,7 +858,7 @@ for c in range(chunk_amt):
                                    amount_to_start, chunk_amt, chunk_id, lr, vector_path_replacement, dt_dev, use_pruned, max_depth,
                                    min_score, min_size, limit_entities, svm_classify, get_nnet_vectors_path, arcca, largest_cluster,
                  skip_nn, dissim, dissim_amt, hp_opt, find_most_similar, use_breakoff_dissim, get_all, half_ndcg_half_kappa, sim_t,
-                 one_for_all, bag_of_clusters]
+                 one_for_all, bag_of_clusters, arrange_name]
 
     sys.stdout.write("python pipeline.py ")
     variable_string = "python $SRCPATH/pipeline.py "
@@ -949,6 +949,7 @@ if len(args) > 0:
     half_ndcg_half_kappa = args[51]
     one_for_all = args[52]
     bag_of_clusters = args[53]
+    arrange_name = args[54]
 
 
 if  __name__ =='__main__':main(data_type, classification_task, file_name, init_vector_path, hidden_activation,
@@ -959,4 +960,5 @@ if  __name__ =='__main__':main(data_type, classification_task, file_name, init_v
                                amount_to_start, chunk_amt, chunk_id, lr, vector_path_replacement, dt_dev, use_pruned, max_depth,
                                min_score, min_size, limit_entities, svm_classify, get_nnet_vectors_path, arcca, loc, largest_cluster,
                                skip_nn, dissim, dissim_amt, hp_opt, find_most_similar, use_breakoff_dissim, get_all,
-                               half_ndcg_half_kappa, sim_t, one_for_all, ft_loss, ft_optimizer, bag_of_clusters, just_output)
+                               half_ndcg_half_kappa, sim_t, one_for_all, ft_loss, ft_optimizer, bag_of_clusters, just_output,
+                               arrange_name)
