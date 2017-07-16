@@ -9,6 +9,7 @@ import theano
 from theano.tensor.shared_randomstreams import RandomStreams
 import pandas as pd
 import scipy.sparse as sp
+
 def  getVectors(input_folder, file_names_fn, extension, output_folder, only_words_in_x_entities,
                words_without_x_entities, cut_first_line=False, get_all=False, additional_name="", make_individual=True,
                classification="", use_all_files="", minimum_words=0, data_type="", sparse_matrix=False, word_count_amt = 0):
@@ -958,16 +959,14 @@ def main(min, max, data_type, class_type, raw_fn, extension, cut_first_line, add
 
 min=0
 max=0
-
-class_type = "movies"
-classification = "all"
+"""
+data_type = "movies"
+class_type = "all"
 raw_fn = "../data/raw/previous work/movievectors/tokens/"
 extension = "film"
 cut_first_line = True
 entity_name_fn = "../data/raw/previous work/filmIds.txt"
-use_all_files = None#""
-sparse_matrix = False
-word_count_amt = 0
+"""
 """
 data_type = "wines"f
 class_type = "all"
@@ -978,23 +977,25 @@ use_all_files =  "../data/raw/previous work/winevectors/"
 entity_name_fn = "../data/"+data_type+"/nnet/spaces/entitynames.txt"
 word_count_amt = 1000
 """
-"""
-class_type = "placetypes"
-classification = "foursquare"
+data_type = "placetypes"
+class_type = "opencyc"
 raw_fn = "../data/raw/previous work/placevectors/"
 extension = "photos"
 cut_first_line = False
-entity_name_fn = "../data/"+class_type+"/nnet/spaces/entitynames.txt"
-"""
+entity_name_fn = "../data/"+data_type+"/nnet/spaces/entitynames.txt"
+
 get_all = False
 additional_name = ""
 #make_individual = True
 make_individual = True
+use_all_files = None#""
+sparse_matrix = False
+word_count_amt = 0
 print("??")
-"""
+
 if  __name__ =='__main__':main(min, max, data_type, class_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn, use_all_files,
                                sparse_matrix, word_count_amt)
-"""
+
 
 """
 dt.write2dArray(convertPPMI( sp.csr_matrix(dt.import2dArray("../data/wines/bow/frequency/phrases/class-all-50"))), "../data/wines/bow/ppmi/class-all-50")

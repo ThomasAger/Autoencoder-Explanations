@@ -400,6 +400,7 @@ def getBreakOffClusters(vectors, directions, scores, names, score_limit, max_clu
         start = 0
     else:
         start = 1
+    fms_count = 0
     for d in range(start, len(directions)):
         dont_add = False
         print(d, "/", len(directions))
@@ -411,6 +412,7 @@ def getBreakOffClusters(vectors, directions, scores, names, score_limit, max_clu
             print("REACHED MAX CLUSTERS")
             if add_all_terms:
                 reached_max = True
+                fms_count += 1
             else:
                 break
         else:
@@ -420,7 +422,7 @@ def getBreakOffClusters(vectors, directions, scores, names, score_limit, max_clu
         s = 0
 
         cl_ind = []
-
+        # Once we check the top 10 most similar, stop completely.
         if find_most_similar:
             cl_ind_dir = [None] * len(clusters)
             for c in range(len(clusters)):
@@ -429,9 +431,9 @@ def getBreakOffClusters(vectors, directions, scores, names, score_limit, max_clu
             cl_ind = inds
         else:
             cl_ind.extend(list(range(len(clusters))))
-
+        swag_count = 0
         for c in cl_ind:
-
+            swag_count += 1
             passed = True
             # Just here to do a janky skip
             if similarity_threshold == 0.0:

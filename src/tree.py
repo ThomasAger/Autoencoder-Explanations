@@ -182,7 +182,12 @@ class DecisionTree:
                         new_dot_file.append(new_string)
                     dt.write1dArray(new_dot_file, dot_file_fn)
                     graph = pydot.graph_from_dot_file(graph_fn)
-                    graph.write_png(graph_png_fn)
+
+                    try:
+                        graph.write_png(graph_png_fn)
+                    except FileNotFoundError:
+                        graph_png_fn = "//?/" + graph_png_fn
+                        graph.write_png(graph_png_fn)
                     self.get_code(clf, output_names, class_names, label_names[l] + " " + filename, data_type)
                     features, fns = self.getNodesToDepth(clf, vectors, cluster_names)
                     print(filename+label_names[l])
