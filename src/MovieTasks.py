@@ -301,7 +301,8 @@ def convertToTfIDF(data_type, lowest_count, highest_count, freq_arrays_fn, class
                      "../data/"+data_type+"/bow/tfidf/class-all-"+str(lowest_count)+"-"+str(highest_count)+"-"+str(class_type))
 
 
-def printIndividualFromAll(data_type, type, lowest_count, max, class_type, classification, all_fn=None, names_array = None):
+
+def printIndividualFromAll(data_type, type, lowest_count, max,  classification, all_fn=None, names_array = None):
     fn = "../data/" + data_type + "/bow/"
     if all_fn is None:
         all_fn = fn + type + "/class-all-"+str(lowest_count)+"-"+str(max)+"-"+str(classification)
@@ -938,17 +939,17 @@ additional_name = ""
 make_individual = True
 """
 def main(min, max, data_type, class_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn,
-         use_all_files, sparse_matrix, word_count_amt):
-
+         use_all_files, sparse_matrix, word_count_amt, classification):
+    """
     getVectors(raw_fn, entity_name_fn, extension, "../data/"+data_type+"/bow/",
            min, max, cut_first_line, get_all, additional_name,  make_individual, class_type, use_all_files, 1000, data_type,
                sparse_matrix)
 
     bow = sp.csr_matrix(dt.import2dArray("../data/"+data_type+"/bow/frequency/phrases/class-all-"+str(min)+"-" + str(max)+"-"+class_type))
     dt.write2dArray(convertPPMI( bow), "../data/"+data_type+"/bow/ppmi/class-all-"+str(min)+"-"+str(max)+"-" + class_type)
-
+    """
     print("indiviual from all")
-    #printIndividualFromAll(data_type, "ppmi", min, max, data_type, class_type)
+    printIndividualFromAll(data_type, "ppmi", min, max,  classification)
     #printIndividualFromAll(class_type, "binary/phrases", min, max, class_type, classification)
 
     convertToTfIDF(data_type, min, max, "../data/"+data_type+"/bow/frequency/phrases/class-all-"+str(min)+"-"+str(max)+"-"+class_type, class_type)
@@ -956,8 +957,8 @@ def main(min, max, data_type, class_type, raw_fn, extension, cut_first_line, add
     printIndividualFromAll(data_type, "tfidf", min, max, data_type, class_type)
 
 
-min=0
-max=0
+min=100
+max=10
 
 class_type = "movies"
 classification = "all"
@@ -991,10 +992,10 @@ additional_name = ""
 #make_individual = True
 make_individual = True
 print("??")
-"""
+
 if  __name__ =='__main__':main(min, max, data_type, class_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn, use_all_files,
-                               sparse_matrix, word_count_amt)
-"""
+                               sparse_matrix, word_count_amt, classification)
+
 
 """
 dt.write2dArray(convertPPMI( sp.csr_matrix(dt.import2dArray("../data/wines/bow/frequency/phrases/class-all-50"))), "../data/wines/bow/ppmi/class-all-50")

@@ -141,14 +141,15 @@ class NeuralNetwork:
 
 
         if fine_tune_weights_fn is not None:
-            entity_classes = entity_classes.transpose()
-            print("Transposed classes, now in form", len(entity_classes), len(entity_classes[0]))
-            """
-            # IF Bow
-            if len(entity_vectors[0]) != len(entity_classes[0]):
-                entity_vectors = entity_vectors.transpose()
-                print("Transposed vectors, now in form", len(entity_vectors), len(entity_vectors[0]))
-            """
+            if len(entity_vectors) != len(entity_classes):
+                entity_classes = entity_classes.transpose()
+                print("Transposed classes, now in form", len(entity_classes), len(entity_classes[0]))
+                """
+                # IF Bow
+                if len(entity_vectors[0]) != len(entity_classes[0]):
+                    entity_vectors = entity_vectors.transpose()
+                    print("Transposed vectors, now in form", len(entity_vectors), len(entity_vectors[0]))
+                """
         elif len(entity_vectors) != len(entity_classes):
             entity_vectors = entity_vectors.transpose()
             print("Transposed vectors, now in form", len(entity_vectors), len(entity_vectors[0]))
