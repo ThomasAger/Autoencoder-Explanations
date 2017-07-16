@@ -181,6 +181,7 @@ def  getVectors(input_folder, file_names_fn, extension, output_folder, only_word
         else:
             all_phrases_complete = all_phrases_complete.transpose()
 
+        indexes_to_delete = []
         if sparse_matrix:
             cx = sp.coo_matrix(all_phrases_complete)
 
@@ -891,8 +892,6 @@ match_entities("../data/"+data_type+"/nnet/spaces/entitynames.txt",
     "../data/"+data_type+"/classify/"+classification+"/available_entities.txt",
                "../data/"+data_type+"/rank/numeric/places100projected.txt", classification)
 """
-classification = "ratings"
-data_type = "movies"
 """
 writeFromMultiClass("../data/raw/previous work/placeclasses/GeonamesClasses.txt", "../data/placetypes/classify/Geonames/",
                     "../data/raw/previous work/placeNames.txt", data_type="placetypes", classify_name="Geonames")
@@ -938,28 +937,28 @@ get_all = False
 additional_name = ""
 make_individual = True
 """
-def main(min, max, data_type, class_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn,
+def main(min, max, data_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn,
          use_all_files, sparse_matrix, word_count_amt, classification):
-    """
+
     getVectors(raw_fn, entity_name_fn, extension, "../data/"+data_type+"/bow/",
-           min, max, cut_first_line, get_all, additional_name,  make_individual, class_type, use_all_files, 1000, data_type,
+           min, max, cut_first_line, get_all, additional_name,  make_individual, classification, use_all_files, 1000, data_type,
                sparse_matrix)
 
-    bow = sp.csr_matrix(dt.import2dArray("../data/"+data_type+"/bow/frequency/phrases/class-all-"+str(min)+"-" + str(max)+"-"+class_type))
-    dt.write2dArray(convertPPMI( bow), "../data/"+data_type+"/bow/ppmi/class-all-"+str(min)+"-"+str(max)+"-" + class_type)
-    """
+    bow = sp.csr_matrix(dt.import2dArray("../data/"+data_type+"/bow/frequency/phrases/class-all-"+str(min)+"-" + str(max)+"-"+classification))
+    dt.write2dArray(convertPPMI( bow), "../data/"+data_type+"/bow/ppmi/class-all-"+str(min)+"-"+str(max)+"-" + classification)
+
     print("indiviual from all")
     printIndividualFromAll(data_type, "ppmi", min, max,  classification)
-    #printIndividualFromAll(class_type, "binary/phrases", min, max, class_type, classification)
+    printIndividualFromAll(data_type, "binary/phrases", min, max,  classification)
 
-    convertToTfIDF(data_type, min, max, "../data/"+data_type+"/bow/frequency/phrases/class-all-"+str(min)+"-"+str(max)+"-"+class_type, class_type)
+    convertToTfIDF(data_type, min, max, "../data/"+data_type+"/bow/frequency/phrases/class-all-"+str(min)+"-"+str(max)+"-"+classification, classification)
 
-    printIndividualFromAll(data_type, "tfidf", min, max, data_type, class_type)
+    printIndividualFromAll(data_type, "tfidf", min, max,  classification)
 
 
-min=100
+min=50
 max=10
-
+"""
 class_type = "movies"
 classification = "all"
 raw_fn = "../data/raw/previous work/movievectors/tokens/"
@@ -967,33 +966,33 @@ extension = "film"
 cut_first_line = True
 entity_name_fn = "../data/raw/previous work/filmIds.txt"
 use_all_files = None#""
-sparse_matrix = False
 word_count_amt = 0
 """
-data_type = "wines"f
-class_type = "all"
+data_type = "wines"
+classification = "types"
 raw_fn = "../data/raw/previous work/winevectors/"
 extension = ""
 cut_first_line = True
 use_all_files =  "../data/raw/previous work/winevectors/"
 entity_name_fn = "../data/"+data_type+"/nnet/spaces/entitynames.txt"
 word_count_amt = 1000
+
 """
-"""
-class_type = "placetypes"
+data_type = "placetypes"
 classification = "foursquare"
 raw_fn = "../data/raw/previous work/placevectors/"
 extension = "photos"
 cut_first_line = False
-entity_name_fn = "../data/"+class_type+"/nnet/spaces/entitynames.txt"
+entity_name_fn = "../data/"+classification+"/nnet/spaces/entitynames.txt"
 """
 get_all = False
 additional_name = ""
 #make_individual = True
 make_individual = True
+sparse_matrix = False
 print("??")
 
-if  __name__ =='__main__':main(min, max, data_type, class_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn, use_all_files,
+if  __name__ =='__main__':main(min, max, data_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn, use_all_files,
                                sparse_matrix, word_count_amt, classification)
 
 

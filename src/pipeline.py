@@ -32,7 +32,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
          average_ppmi_a, optimizer_name, class_weight, amount_to_start_a, chunk_amt, chunk_id, lr, vector_path_replacement, dt_dev,
          use_pruned, max_depth, min_score, min_size, limit_entities_a, svm_classify, get_nnet_vectors_path, arcca, loc, largest_cluster,
          skip_nn, dissim, dissim_amt_a, hp_opt, find_most_similar, use_breakoff_dissim_a, get_all_a, half_ndcg_half_kappa_a,
-         sim_t, one_for_all, ft_loss_a, ft_optimizer_a, bag_of_clusters_a, just_output, arrange_name):
+         sim_t, one_for_all, ft_loss_a, ft_optimizer_a, bag_of_clusters_a, just_output, arrange_name, only_most_similar_a,
+         dont_cluster_a):
 
 
     prune_val = 2
@@ -61,6 +62,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
             limit_entities_a = dt.stringToArray(limit_entities_a)[0]
             bag_of_clusters_a = dt.stringToArray(bag_of_clusters_a)[0]
             add_all_terms_a = dt.stringToArray(add_all_terms_a)[0]
+            only_most_similar_a = dt.stringToArray(only_most_similar_a)[0]
+            dont_cluster_a = dt.stringToArray(dont_cluster_a)[0]
         else:
             dissim_amt_a = dt.stringToArray(dissim_amt_a)
             breakoff_a = dt.stringToArray(breakoff_a)
@@ -82,6 +85,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
             limit_entities_a = dt.stringToArray(limit_entities_a)
             bag_of_clusters_a = dt.stringToArray(bag_of_clusters_a)
             add_all_terms_a = dt.stringToArray(add_all_terms_a)
+            only_most_similar_a = dt.stringToArray(only_most_similar_a)
+            dont_cluster_a = dt.stringToArray(dont_cluster_a)
         ep = int(ep)
         dropout_noise = float(dropout_noise)
         cross_val = int(cross_val)
@@ -135,6 +140,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
         limit_entities_a = [limit_entities_a[0]]
         bag_of_clusters_a = [bag_of_clusters_a[0]]
         add_all_terms_a = [add_all_terms_a[0]]
+        only_most_similar_a = [only_most_similar_a[0]]
+        dont_cluster_a = [dont_cluster_a[0]]
 
 
     variables_to_execute = []
@@ -152,7 +159,10 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                             for l in limit_entities_a:
                                                 for bc in bag_of_clusters_a:
                                                     for aa in add_all_terms_a:
-                                                        variables_to_execute.append((d, b, s, a, c, k, ct, ub, ga, hnk, l, bc, aa))
+                                                        for bb in only_most_similar_a:
+                                                            for cc in dont_cluster_a:
+                                                                variables_to_execute.append((d, b, s, a, c, k, ct, ub, ga,
+                                                                                         hnk, l, bc, aa, bb, cc))
     all_csv_fns = []
     for a in  classification_task_a:
         all_csv_fns.append([])
@@ -171,6 +181,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
         limit_entities = vt[10]
         bag_of_clusters = vt[11]
         add_all_terms = vt[12]
+        only_most_similar = vt[13]
+        dont_cluster = vt[14]
         class_task_index = 0
 
         if limit_entities:
@@ -315,7 +327,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                             new_classification_task = classification_task
                         file_name = new_file_names[x]
 
-                        if vector_path_replacement is not None:
+                        vector_path = loc + data_type + "/nnet/spaces/" + new_file_names[x] + ".txt"
+                        if vector_path_replacement is not None and limit_entities:
                             vector_path = vector_path_replacement
                         """ Begin Filename """
 
@@ -329,8 +342,10 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                         svm_type = "svm"
                         highest_count = direction_count
 
-                        if vector_path_replacement is None:
-                            vector_path = loc + data_type + "/nnet/spaces/"+new_file_names[x]+".txt"
+                        if limit_entities is True and vector_path_replacement is None:
+                            print("NO VECTOR PATH REPLACEMENT FOR LIMIT ENTITIES")
+                            break
+
                         #vector_path = loc + data_type + "/nnet/spaces/"+vector_path_replacement+".txt"
                         bow_path = loc + data_type + "/bow/binary/phrases/class-all-"+str(lowest_amt)+"-"+str(highest_count)+"-"+new_classification_task
                         property_names_fn = loc + data_type + "/bow/names/" + str(lowest_amt) + "-" +str(highest_count)+"-"+ new_classification_task +".txt"
@@ -441,7 +456,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                          lowest_amt=lowest_amt, highest_amt=highest_count, classification=new_classification_task,
                                                          min_score=min_score, min_size = min_size, largest_clusters=largest_cluster, dissim=dissim,
                                                          dissim_amt=dissim_amt, find_most_similar=find_most_similar, get_all=get_all,
-                                                         half_ndcg_half_kappa=half_ndcg_half_kappa)
+                                                         half_ndcg_half_kappa=half_ndcg_half_kappa, only_most_similar=only_most_similar,
+                                                         dont_cluster=dont_cluster)
                             else:
                                 cluster.getClusters(directions_fn, scores_fn, names_fn, False, dissim_amt, amount_to_start, file_name, cluster_amt,
                                                     dissim, min_score, data_type, rewrite_files=rewrite_files,
@@ -707,6 +723,13 @@ if arcca:
     loc = "/scratch/c1214824/data/"
 else:
     loc = "../data/"
+
+
+limit_entities = [False]
+
+
+
+
 """
 data_type = "wines"
 classification_task = ["types"]
@@ -717,6 +740,7 @@ highest_amt = 10
 init_vector_path = loc+data_type+"/nnet/spaces/wines100.txt"
 vector_path_replacement = loc+data_type+"/nnet/spaces/wines100.txt"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/wines100.txt"
+limit_entities = [True]
 """
 """
 init_vector_path = loc+data_type+"/pca/class-all-50-10-alld100"
@@ -738,7 +762,7 @@ deep_size = [200]
 """
 
 data_type = "placetypes"
-classification_task = ["opencyc"]
+classification_task = ["foursquare"]
 lowest_amt = 50
 highest_amt = 10
 #init_vector_path = "../data/"+data_type+"/bow/ppmi/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+classification_task
@@ -802,25 +826,26 @@ sim_t = 1.0#1.0
 nnet_dev = False
 
 deep_size = [100]
-limit_entities = [False]
 
 min_score = 0.4
 largest_cluster = 1
 dissim = 0.0
 dissim_amt = [400]
-find_most_similar = True#False
-breakoff = [False, True]
-score_limit = [0.8]
-amount_to_start = [1000]
-cluster_multiplier = [2, 4, 1]#50
-score_type = ["ndcg", "kappa"]
+breakoff = [True]
+score_limit = [0.85, 0.9, 0.95]
+amount_to_start = [1000,2000,3000]
+cluster_multiplier = [4]#50
+score_type = [ "kappa"]
 use_breakoff_dissim = [False]
 get_all = [False]
 half_ndcg_half_kappa = [False]
 add_all_terms = [True, False]
+find_most_similar = True#False
+only_most_similar = [True, False]
+dont_cluster = [True, False]
 
 
-average_ppmi = [False]
+average_ppmi = [True, False]
 bag_of_clusters = [True, False]
 
 
@@ -858,7 +883,7 @@ for c in range(chunk_amt):
                                    amount_to_start, chunk_amt, chunk_id, lr, vector_path_replacement, dt_dev, use_pruned, max_depth,
                                    min_score, min_size, limit_entities, svm_classify, get_nnet_vectors_path, arcca, largest_cluster,
                  skip_nn, dissim, dissim_amt, hp_opt, find_most_similar, use_breakoff_dissim, get_all, half_ndcg_half_kappa, sim_t,
-                 one_for_all, bag_of_clusters, arrange_name]
+                 one_for_all, bag_of_clusters, arrange_name, only_most_similar, dont_cluster]
 
     sys.stdout.write("python pipeline.py ")
     variable_string = "python $SRCPATH/pipeline.py "
@@ -950,6 +975,8 @@ if len(args) > 0:
     one_for_all = args[52]
     bag_of_clusters = args[53]
     arrange_name = args[54]
+    only_most_similar = args[55]
+    dont_cluster = args[56]
 
 
 if  __name__ =='__main__':main(data_type, classification_task, file_name, init_vector_path, hidden_activation,
@@ -961,4 +988,4 @@ if  __name__ =='__main__':main(data_type, classification_task, file_name, init_v
                                min_score, min_size, limit_entities, svm_classify, get_nnet_vectors_path, arcca, loc, largest_cluster,
                                skip_nn, dissim, dissim_amt, hp_opt, find_most_similar, use_breakoff_dissim, get_all,
                                half_ndcg_half_kappa, sim_t, one_for_all, ft_loss, ft_optimizer, bag_of_clusters, just_output,
-                               arrange_name)
+                               arrange_name, only_most_similar, dont_cluster)

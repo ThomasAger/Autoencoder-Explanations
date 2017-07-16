@@ -24,6 +24,7 @@ class DecisionTree:
         all_fns = []
         file_names = ['ACC ' + filename, 'F1 ' + filename]
         acc_fn = '../data/' + data_type + '/rules/tree_scores/' + file_names[0] + '.scores'
+        prediction_fn = '../data/' + data_type + '/rules/tree_output/' + filename + '.scores'
         f1_fn = '../data/' + data_type + '/rules/tree_scores/' + file_names[1] + '.scores'
         all_fns.append(acc_fn)
         all_fns.append(f1_fn)
@@ -222,6 +223,7 @@ class DecisionTree:
 
         dt.write1dArray(accuracy_array, acc_fn)
         dt.write1dArray(f1_array, f1_fn)
+        dt.write2dArray(all_predictions, prediction_fn)
 
         if dt.fileExists(csv_fn) and rewrite_files is False:
             print("File exists, writing to csv")
