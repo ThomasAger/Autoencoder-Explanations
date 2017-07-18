@@ -248,9 +248,6 @@ class NeuralNetwork:
             c+= 1
             if cv_splits == 1 or split_to_use == c:
                 break
-
-
-
         original_fn = file_name
         for m in range(len(models)):
             if development:
@@ -336,7 +333,7 @@ class NeuralNetwork:
                     dt.write_csv(csv_fn, file_names, scores, key)
 
             if save_outputs:
-                if get_nnet_vectors_path is not None:
+                if limit_entities is False:
                     self.output_clusters = models[m].predict(nnet_vectors)
                 else:
                     self.output_clusters = models[m].predict(entity_vectors)

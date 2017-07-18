@@ -945,7 +945,7 @@ def match_entities(entities, t_names, names):
     print("Amount found", amount_found)
     return matched_entities
 
-def arrangeByScore(csv_fns, class_name, arra_name):
+def arrangeByScore(csv_fns, arra_name):
     csv_array = []
     counter = 0
     for csv_name in csv_fns:

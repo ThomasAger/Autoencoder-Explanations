@@ -346,7 +346,7 @@ def getBreakOffClusters(vectors, directions, scores, names, score_limit, max_clu
                             file_name, score_type, similarity_threshold, add_all_terms, data_type, largest_clusters,
                  rewrite_files=False, lowest_amt=0, highest_amt=0, classification="genres", min_size=1, dissim=0.0,
                         dissim_amt=0, find_most_similar=False, get_all=False, half_ndcg_half_kappa=[], only_most_similar=False,
-                        dont_cluster=False):
+                        dont_cluster=0):
 
 
     output_directions_fn =  "../data/" + data_type + "/cluster/hierarchy_directions/"+file_name+".txt"
@@ -360,8 +360,6 @@ def getBreakOffClusters(vectors, directions, scores, names, score_limit, max_clu
         half_ndcg_half_kappa = np.zeros(len(directions))
     else:
         is_half = True
-
-
 
     reached_max = False
 
@@ -433,7 +431,7 @@ def getBreakOffClusters(vectors, directions, scores, names, score_limit, max_clu
             for c in range(len(clusters)):
                 cl_ind_dir[c] = clusters[c].getClusterDirection()
             if only_most_similar:
-                amt = 3
+                amt = 5
             else:
                 amt = len(clusters)
             inds = st.getXMostSimilarIndex(directions[d], cl_ind_dir, [], amt)
@@ -442,7 +440,8 @@ def getBreakOffClusters(vectors, directions, scores, names, score_limit, max_clu
             cl_ind.extend(list(range(len(clusters))))
         swag_count = 0
         for c in cl_ind:
-            if dont_cluster:
+            if dont_cluster is not 0:
+                print("Dont cluster enabled")
                 failed = True
                 break
             swag_count += 1
@@ -601,7 +600,7 @@ def initClustering(vector_fn, directions_fn, scores_fn, names_fn, amt_to_start, 
                    data_type="movies", largest_clusters=1,
                  rewrite_files=False, lowest_amt=0, highest_amt=0, classification="genres", min_score=0, min_size = 1,
                    dissim=0.0, dissim_amt=0, find_most_similar=False, get_all=False, half_ndcg_half_kappa = "",
-                   only_most_similar=False, dont_cluster=False):
+                   only_most_similar=False, dont_cluster=0):
 
     output_directions_fn =  "../data/" + data_type + "/cluster/hierarchy_directions/"+file_name+".txt"
     output_names_fn = "../data/" + data_type + "/cluster/hierarchy_names/" + file_name +".txt"

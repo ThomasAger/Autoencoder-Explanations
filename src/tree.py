@@ -18,7 +18,7 @@ class DecisionTree:
     def __init__(self, features_fn, classes_fn,  class_names_fn, cluster_names_fn, filename,
                  training_data,  max_depth=None, balance=None, criterion="entropy", save_details=False, data_type="movies",cv_splits=5,
                  csv_fn="../data/temp/no_csv_provided.csv", rewrite_files=False, split_to_use=-1, development=False,
-                 limit_entities=False, limited_label_fn=None, vector_names_fn=None):
+                 limit_entities=False, limited_label_fn=None, vector_names_fn=None, clusters_fn="", cluster_duplicates=False):
 
 
         all_fns = []
@@ -26,8 +26,18 @@ class DecisionTree:
         acc_fn = '../data/' + data_type + '/rules/tree_scores/' + file_names[0] + '.scores'
         prediction_fn = '../data/' + data_type + '/rules/tree_output/' + filename + '.scores'
         f1_fn = '../data/' + data_type + '/rules/tree_scores/' + file_names[1] + '.scores'
-        all_fns.append(acc_fn)
-        all_fns.append(f1_fn)
+
+        all_top_names_fn = "../data/"+data_type+"/rules/names/" + filename + ".txt"
+        all_top_rankings_fn = "../data/"+data_type+"/rules/rankings/" + filename + ".txt"
+        all_top_clusters_fn = "../data/"+data_type+"/rules/clusters/" + filename + ".txt"
+
+
+        all_fns = [acc_fn, f1_fn, prediction_fn]
+
+        if max_depth is not None:
+            all_fns.append(all_top_names_fn)
+            all_fns.append(all_top_rankings_fn)
+            all_fns.append(all_top_clusters_fn)
 
         if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
             print("Skipping task", "DecisionTree")
@@ -47,7 +57,8 @@ class DecisionTree:
         print("vectors", len(vectors), len(vectors[0]))
         cluster_names = dt.import2dArray(cluster_names_fn, "s")
         label_names = dt.import1dArray(class_names_fn)
-
+        clusters = dt.import2dArray(clusters_fn, "f")
+        original_vectors = vectors
         if limit_entities is False:
             vector_names = dt.import1dArray(vector_names_fn)
             limited_labels = dt.import1dArray(limited_label_fn)
@@ -71,7 +82,9 @@ class DecisionTree:
 
 
         all_top_clusters = []
+        all_top_rankings = []
         all_top_names = []
+        all_top_inds = []
 
         all_y_test = []
         all_predictions = []
@@ -132,7 +145,6 @@ class DecisionTree:
                 if cv_splits == 1:
                     break
 
-
             predictions = []
 
             if development:
@@ -168,7 +180,7 @@ class DecisionTree:
                         for i in range(len(c)):
                             line = line + c[i] + " "
                             counter += 1
-                            if counter == 2:
+                            if counter == 4:
                                 break
                         output_names.append(line)
                     tree.export_graphviz(clf, feature_names=output_names, class_names=class_names, out_file=dot_file_fn,
@@ -190,14 +202,24 @@ class DecisionTree:
                         graph_png_fn = "//?/" + graph_png_fn
                         graph.write_png(graph_png_fn)
                     self.get_code(clf, output_names, class_names, label_names[l] + " " + filename, data_type)
-                    features, fns = self.getNodesToDepth(clf, vectors, cluster_names)
+                    dt_clusters, features, fns, inds = self.getNodesToDepth(clf, original_vectors, cluster_names, clusters)
                     print(filename+label_names[l])
                     dt.write2dArray(fns, "../data/"+data_type+"/rules/names/"+filename+label_names[l]+".txt")
-                    dt.write2dArray(features, "../data/"+data_type+"/rules/clusters/"+filename+label_names[l]+".txt")
-                    all_top_clusters.extend(features)
+                    dt.write2dArray(features, "../data/"+data_type+"/rules/rankings/"+filename+label_names[l]+".txt")
+                    dt.write2dArray(dt_clusters, "../data/"+data_type+"/rules/clusters/"+filename+label_names[l]+".txt")
+                    all_top_rankings.extend(features)
+                    all_top_clusters.extend(dt_clusters)
                     all_top_names.extend(fns)
+                    all_top_inds.extend(inds)
             f1_array.append(np.average(np.asarray(cv_f1)))
             accuracy_array.append(np.average(np.asarray(cv_acc)))
+
+        print("len clusters", len(all_top_clusters))
+        print("len rankings", len(all_top_rankings))
+        print("len names", len(all_top_names))
+
+        if len(all_top_clusters) != len(all_top_rankings) or len(all_top_clusters) != len(all_top_names):
+            print("stop")
 
         accuracy_array = np.asarray(accuracy_array)
         accuracy_average = np.average(accuracy_array)
@@ -254,25 +276,48 @@ class DecisionTree:
             key.append("MICRO AVERAGE")
             dt.write_csv(csv_fn, file_names, scores, key)
 
-        dt.write2dArray(all_top_names, "../data/"+data_type+"/rules/names/" + filename + ".txt")
-        dt.write2dArray(all_top_clusters, "../data/"+data_type+"/rules/clusters/" + filename + ".txt")
+        if max_depth is not None:
+            all_top_names = np.asarray(all_top_names)
+            all_top_rankings = np.asarray(all_top_rankings)
+            all_top_clusters = np.asarray(all_top_clusters)
+            all_top_inds = np.asarray(all_top_inds)
+
+            if cluster_duplicates:
+                ind_to_keep = np.unique(all_top_inds, return_index=True)[1]
+                all_top_names = all_top_names[ind_to_keep]
+                all_top_rankings = all_top_rankings[ind_to_keep]
+                all_top_clusters = all_top_clusters[ind_to_keep]
+
+            dt.write2dArray(all_top_names, all_top_names_fn)
+            dt.write2dArray(all_top_rankings, all_top_rankings_fn)
+            dt.write2dArray(all_top_clusters, all_top_clusters_fn)
 
 
-    def getNodesToDepth(self, tree, clusters, feature_names):
+    def getNodesToDepth(self, tree, rankings, feature_names, clusters):
         fns = []
         features = []
-        clusters = np.asarray(clusters).transpose()
-        for i in tree.tree_.feature:
-            if i != -2 or i <= 200:
-                fns.append(feature_names[i][0])
-                features.append(clusters[i])
+        rankings = np.asarray(rankings).transpose()
+        clusters = np.asarray(clusters)
+        dt_clusters = []
+        for i in range(len(tree.tree_.feature)):
+            if i != -2 or i <= len(clusters):
+                id = tree.tree_.feature[i]
+                if id >=0:
+                    fns.append(feature_names[id])
+                    features.append(rankings[id])
+                    dt_clusters.append(clusters[id])
         fn_ids = np.unique(fns, return_index=True)[1]
         final_fns = []
-        final_features = []
+        clusters = list(clusters)
+        final_rankings = []
+        final_clusters = []
         for i in fn_ids:
             final_fns.append(fns[i])
-            final_features.append(features[i])
-        return final_features, final_fns
+            final_rankings.append(features[i])
+            final_clusters.append(dt_clusters[i])
+        if len(dt_clusters) != len(final_fns):
+            print("stop")
+        return final_clusters, final_rankings, final_fns, fn_ids
 
     def get_code(self, tree, feature_names, class_names, filename, data_type):
         left      = tree.tree_.children_left
@@ -280,8 +325,6 @@ class DecisionTree:
         threshold = tree.tree_.threshold
         value = tree.tree_.value
 
-        #print tree.tree_.feature, len(tree.tree_.feature
-        # )
         features = []
         for i in tree.tree_.feature:
             if i != -2 or i <= 200:
