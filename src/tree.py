@@ -315,8 +315,6 @@ class DecisionTree:
             final_fns.append(fns[i])
             final_rankings.append(features[i])
             final_clusters.append(dt_clusters[i])
-        if len(dt_clusters) != len(final_fns):
-            print("stop")
         return final_clusters, final_rankings, final_fns, fn_ids
 
     def get_code(self, tree, feature_names, class_names, filename, data_type):

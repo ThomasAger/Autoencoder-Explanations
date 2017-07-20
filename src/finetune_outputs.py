@@ -86,15 +86,19 @@ def pavPPMI(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type="movi
     pav_classes = []
 
     for f in range(len(frq)):
-        print(names[f])
-        x = np.asarray(frq[f])
-        y = ranking[f]
+        try:
+            print(names[f])
+            x = np.asarray(frq[f])
+            y = ranking[f]
 
-        ir = IsotonicRegression()
-        y_ = ir.fit_transform(x, y)
-        pav_classes.append(y_)
-        if do_p:
-            plot(x, y, y_)
+            ir = IsotonicRegression()
+            y_ = ir.fit_transform(x, y)
+            pav_classes.append(y_)
+            if do_p:
+                plot(x, y, y_)
+        except ValueError:
+            print(names[f], "len ppmi", len(frq[f], "len ranking", len(ranking[f])))
+            exit()
         print(f)
 
     dt.write2dArray(pav_classes, pavPPMI_fn)

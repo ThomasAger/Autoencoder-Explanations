@@ -428,8 +428,6 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                             if dont_cluster:
                                 file_name = file_name + " DC" +str(dont_cluster)
                             if breakoff:
-                                if cluster_duplicates:
-                                    file_name = file_name + " UNIQUE"
                                 if only_most_similar:
                                     file_name = file_name + " OMS"
                                 if find_most_similar:
@@ -477,6 +475,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                             all_csv_fns.append(csv_name)
                             counter += 1
 
+                            if cluster_duplicates:
+                                file_name = file_name + " UNIQUE"
                             file_name = file_name + str(max_depth)
                             tree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name, 10000,
                                       max_depth=max_depth, balance="balanced", criterion="entropy", save_details=True, cv_splits=cv_splits, split_to_use=splits,
@@ -505,8 +505,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                         for s in ft_optimizer_a:
                                             for a in is_identity_a:
                                                 for c in amount_of_finetune_a:
-                                                    for x in average_ppmi_a:
-                                                        variables_to_execute.append((d, b, s, a, c, e, x))
+                                                    for xa in average_ppmi_a:
+                                                        variables_to_execute.append((d, b, s, a, c, e, xa))
                                 orig_fn = file_name
                                 for v in variables_to_execute:
                                     learn_rate = v[0]
@@ -661,6 +661,11 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
 
 
                                         current_fn = file_name
+
+
+                                        
+
+
                                         #SVM Classification
                                         if svm_classify:
                                             for c in classes:
@@ -712,9 +717,9 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
 
             for a in range(len(csv_fns_dt_a)):
                 dt.averageCSVs(csv_fns_dt_a[a])
-            if not skip_nn:
-                for a in range(len(csv_fns_nn_a)):
-                    dt.averageCSVs(csv_fns_nn_a[a])
+            #if not skip_nn:
+                #for a in range(len(csv_fns_nn_a)):
+                    #dt.averageCSVs(csv_fns_nn_a[a])
 
     dt.arrangeByScore(np.unique(np.asarray(all_csv_fns)),"../data/"+data_type+"/rules/tree_csv/"
                + " " + arrange_name + file_name[:50] + str(len(all_csv_fns)) + ".csv")
@@ -752,9 +757,8 @@ init_vector_path = loc+data_type+"/pca/class-all-50-10-alld100"
 vector_path_replacement = loc+data_type+"/pca/class-all-50-10-alld100"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 """
-"""
 data_type = "movies"
-classification_task = ["genres", "keywords"]
+classification_task = ["uk-ratings"]
 file_name = "f200ge"
 lowest_amt = 100
 highest_amt = 10
@@ -763,9 +767,8 @@ init_vector_path = loc+data_type+"/nnet/spaces/films200-genres.txt"
 #file_name = "films200-genres100ndcg0.85200 tdev3004FTL0"
 #init_vector_path = loc+data_type+"/nnet/spaces/"+file_name+".txt"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films200-genres.txt"
-deep_size = [200]
+vector_path_replacement = loc+data_type+"/nnet/spaces/films200-genres.txt"
 """
-
 data_type = "placetypes"
 classification_task = ["opencyc"]
 lowest_amt = 50
@@ -777,7 +780,7 @@ init_vector_path = "../data/"+data_type+"/nnet/spaces/places100.txt"
 vector_path_replacement = loc+data_type+"/nnet/spaces/places100.txt"
 get_nnet_vectors_path = loc + data_type + "/nnet/spaces/places100.txt"
 file_name = "places mds 100"
-
+"""
 """
 hidden_activation = "tanh"
 dropout_noise = 0.5
@@ -794,7 +797,6 @@ hidden_activation = "tanh"
 dropout_noise = 0.2
 output_activation = "softmax"
 cutoff_start = 0.2
-deep_size = [100]
 init_vector_path = loc+data_type+"/bow/ppmi/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+classification_task
 ep =100
 lr = 0.1
@@ -811,7 +813,13 @@ trainer = "adagrad"
 loss="binary_crossentropy"
 class_weight = None
 nnet_dev = False
-ep =2001
+if classification_task[0] == "genres" or classification_task[0] == "keywords":
+    ep =300
+    deep_size = [200]
+else:
+    ep =1400
+    deep_size = [100]
+
 lr = 0.01
 rewrite_files = False
 
@@ -829,17 +837,15 @@ min_size = 1
 sim_t = 1.0#1.0
 
 
-deep_size = [100]
-
 min_score = 0.4
 largest_cluster = 1
 dissim = 0.0
 dissim_amt = [400]
 breakoff = [True, False]
-score_limit = [0.9]
-amount_to_start = [3000]
-cluster_multiplier = [2]#50
-score_type = [ "kappa"]
+score_limit = [0.85, 0.9, 0.95]
+amount_to_start = [1000,3000]
+cluster_multiplier = [2, 4, 1]#50
+score_type = [ "ndcg", "kappa"]
 use_breakoff_dissim = [False]
 get_all = [False]
 half_ndcg_half_kappa = [False]
@@ -849,13 +855,13 @@ only_most_similar = [True]
 dont_cluster = [0]
 
 
-average_ppmi = [False]
-bag_of_clusters = [True]
+average_ppmi = [False, True]
+bag_of_clusters = [True, False]
 
-top_dt_clusters = [True, False]
+top_dt_clusters = [False]
 by_class_finetune = [False]
 use_pruned = False
-cluster_duplicates = [True, False]
+cluster_duplicates = [False]
 
 
 
