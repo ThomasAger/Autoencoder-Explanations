@@ -18,7 +18,8 @@ class DecisionTree:
     def __init__(self, features_fn, classes_fn,  class_names_fn, cluster_names_fn, filename,
                  training_data,  max_depth=None, balance=None, criterion="entropy", save_details=False, data_type="movies",cv_splits=5,
                  csv_fn="../data/temp/no_csv_provided.csv", rewrite_files=False, split_to_use=-1, development=False,
-                 limit_entities=False, limited_label_fn=None, vector_names_fn=None, clusters_fn="", cluster_duplicates=False):
+                 limit_entities=False, limited_label_fn=None, vector_names_fn=None, clusters_fn="", cluster_duplicates=False,
+                 save_results_so_far=True):
 
 
         all_fns = []
@@ -31,7 +32,7 @@ class DecisionTree:
         all_top_rankings_fn = "../data/"+data_type+"/rules/rankings/" + filename + ".txt"
         all_top_clusters_fn = "../data/"+data_type+"/rules/clusters/" + filename + ".txt"
 
-
+        dt.write1dArray(["False"], "../data/temp/skip.txt")
         all_fns = [acc_fn, f1_fn, prediction_fn]
 
         if max_depth is not None:
@@ -44,6 +45,10 @@ class DecisionTree:
             return
         else:
             print("Running task", "DecisionTree")
+            if save_results_so_far:
+                dt.write1dArray(["True"], "../data/temp/skip.txt")
+                return
+
 
         vectors = np.asarray(dt.import2dArray(features_fn)).transpose()
 
