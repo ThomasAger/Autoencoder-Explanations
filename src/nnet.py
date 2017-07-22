@@ -487,8 +487,14 @@ class NeuralNetwork:
                                  weights=self.fine_tune_weights))
         else:
             print("Fine tune weights", self.hidden_layer_size, finetune_size, "linear")
-            model.add(Dense(output_dim=finetune_size, input_dim=self.hidden_layer_size, activation="linear",
-                                 weights=self.fine_tune_weights))
+
+            if not self.from_ae:
+                model.add(Dense(output_dim=finetune_size, input_dim=self.input_size, activation="linear",
+                                     weights=self.fine_tune_weights))#
+            else:
+                model.add(Dense(output_dim=finetune_size, input_dim=self.hidden_layer_size, activation="linear",
+                                     weights=self.fine_tune_weights))#
+
         if self.get_scores:
             if self.randomize_finetune_weights or self.corrupt_finetune_weights or len(self.fine_tune_weights_fn) > 0:
                 print("Class outputs", finetune_size, self.output_size, self.output_activation)
@@ -619,7 +625,7 @@ cutoff_start = 0.2
 deep_size = [100]
 #init_vector_path = "../data/"+data_type+"/bow/ppmi/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+classification_task
 #file_name = "movies ppmi"
-ep =2000
+ep =8000
 tune_vals = True
 class_weight = None
 optimizer_name = "adadelta"

@@ -164,6 +164,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
     all_csv_fns = []
     skip_all = False
     for vt in variables_to_execute:
+        if skip_all is True:
+            break
         file_name = average_csv_fn
         dissim_amt = vt[0]
         breakoff = vt[1]
@@ -230,6 +232,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
 
                 split_fns.append(fn)
             original_deep_size = deep_size
+            if skip_all is True:
+                break
             for splits in range(cv_splits):
                 deep_size = original_deep_size
                 file_name = split_fns[0]
@@ -259,7 +263,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                     deep_fns.append(split_fns[splits] + " SFT" + str(s))
                 csv_fns = []
                 counter = 0
-
+                if skip_all is True:
+                    break
                 for d in range(len(deep_size)):
                     file_name = deep_fns[d]
                     print(deep_size, init_vector_path)
@@ -316,6 +321,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                             new_file_names.append(new_fn)
 
                     #for j in range(len(new_file_names)):
+                    if skip_all is True:
+                        break
                     for x in range(len(deep_size)):
                     #for x in range(len([0])):
 
@@ -512,8 +519,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                     for s in ft_optimizer_a:
                                         for a in is_identity_a:
                                             for c in amount_of_finetune_a:
-                                                for x in average_ppmi_a:
-                                                    variables_to_execute.append((d, b, s, a, c, e, x))
+                                                for xa in average_ppmi_a:
+                                                    variables_to_execute.append((d, b, s, a, c, e, xa))
                             orig_fn = file_name
                             for v in variables_to_execute:
                                 learn_rate = v[0]
@@ -631,6 +638,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                     all_csv_fns.append(csv_name)
                                     file_name = file_name + "FT"
                                     if arcca is False:
+                                        if skip_nn:
+                                            from_ae = False
                                         SDA = nnet.NeuralNetwork(noise=0, fine_tune_weights_fn=fine_tune_weights_fn, optimizer_name=optimizer_name,
                                                     past_model_bias_fn=past_model_bias_fn, save_outputs=True,
                                                     randomize_finetune_weights=randomize_finetune_weights,
@@ -714,32 +723,23 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                       limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn)
                                     """
                                 file_name = orig_fn
-                                if skip_all is True:
-                                    break
+
                             if len(new_file_names) > 1:
                                 init_vector_path = vector_path
-                            if skip_all is True:
-                                break
 
-                        if skip_all is True:
-                            break
 
-                    if skip_all is True:
-                        break
+
                     if len(deep_size) > 1:
                         init_vector_path = loc + data_type + "/nnet/spaces/" + new_file_names[0] + "L0.txt"
                         deep_size = deep_size[1:]
 
-                if skip_all is True:
-                    break
                 print("GETTING FNS")
                 for a in range(len(csv_fns_dt)):
                     csv_fns_dt_a[a].append(csv_fns_dt[a])
                 if not skip_nn:
                     for a in range(len(csv_fns_nn)):
                         csv_fns_nn_a[a].append(csv_fns_nn[a])
-            if skip_all is True:
-                break
+
             for a in range(len(csv_fns_dt_a)):
                 dt.averageCSVs(csv_fns_dt_a[a])
             #if not skip_nn:
@@ -782,6 +782,7 @@ init_vector_path = loc+data_type+"/pca/class-all-50-10-alld100"
 vector_path_replacement = loc+data_type+"/pca/class-all-50-10-alld100"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 """
+"""
 data_type = "movies"
 classification_task = ["keywords"]
 file_name = "films200-genres"
@@ -805,7 +806,6 @@ init_vector_path = "../data/"+data_type+"/nnet/spaces/places100.txt"
 vector_path_replacement = loc+data_type+"/nnet/spaces/places100.txt"
 get_nnet_vectors_path = loc + data_type + "/nnet/spaces/places100.txt"
 file_name = "places mds 100"
-"""
 """
 hidden_activation = "tanh"
 dropout_noise = 0.5
@@ -875,10 +875,10 @@ add_all_terms = [False]
 find_most_similar = True#False
 only_most_similar = [True]
 dont_cluster = [0]
-save_results_so_far = True
+save_results_so_far = False
 
-average_ppmi = [False]
-bag_of_clusters = [True]
+average_ppmi = [False, True]
+bag_of_clusters = [True, False]
 
 top_dt_clusters = [False]
 by_class_finetune = [False]
@@ -888,7 +888,7 @@ repeat_finetune = [1]
 
 
 
-epochs=[300]
+epochs=[300,1000,5000,10000]
 
 """
 sim_t = 0.0#1.0
@@ -908,7 +908,7 @@ skip_nn = True
 cross_val = 1
 one_for_all = False
 
-threads=2
+threads=10
 chunk_amt = 0
 chunk_id = 0
 for c in range(chunk_amt):
