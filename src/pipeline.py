@@ -496,9 +496,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                               limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn = clusters_fn,
                                               cluster_duplicates = cluster_duplicates, save_results_so_far=save_results_so_far)
                             skip = dt.import1dArray("../data/temp/skip.txt")
-                            if skip[0] == "True":
-                                skip_all = True
-                                break
+
                             tree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name + "None", 10000,
                                                   max_depth=None, balance="balanced", criterion="entropy", save_details=False,
                                               data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
@@ -750,7 +748,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                + " " + arrange_name + file_name[:50] + str(len(all_csv_fns)) + ".csv")
     jvm.stop()
 
-arrange_name = "cluster etc"
+arrange_name = "cluster ratings etc"
 
 just_output = True
 arcca = False
@@ -782,9 +780,9 @@ init_vector_path = loc+data_type+"/pca/class-all-50-10-alld100"
 vector_path_replacement = loc+data_type+"/pca/class-all-50-10-alld100"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 """
-"""
+
 data_type = "movies"
-classification_task = ["keywords"]
+classification_task = ["uk-ratings", "us-ratings"]
 file_name = "films200-genres"
 lowest_amt = 100
 highest_amt = 10
@@ -793,7 +791,8 @@ init_vector_path = loc+data_type+"/nnet/spaces/films200-genres.txt"
 #file_name = "films200-genres100ndcg0.85200 tdev3004FTL0"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films200-genres.txt"
 vector_path_replacement = loc+data_type+"/nnet/spaces/films200-genres.txt"
-deep_size = [100]
+deep_size = [200]
+
 """
 data_type = "placetypes"
 classification_task = ["opencyc"]
@@ -806,6 +805,7 @@ init_vector_path = "../data/"+data_type+"/nnet/spaces/places100.txt"
 vector_path_replacement = loc+data_type+"/nnet/spaces/places100.txt"
 get_nnet_vectors_path = loc + data_type + "/nnet/spaces/places100.txt"
 file_name = "places mds 100"
+"""
 """
 hidden_activation = "tanh"
 dropout_noise = 0.5
@@ -839,7 +839,7 @@ trainer = "adagrad"
 loss="binary_crossentropy"
 class_weight = None
 nnet_dev = False
-ep =1400
+ep =300
 lr = 0.01
 rewrite_files = False
 
@@ -857,16 +857,14 @@ min_size = 1
 sim_t = 1.0#1.0
 
 
-deep_size = [200]
-
 min_score = 0.4
 largest_cluster = 1
 dissim = 0.0
-dissim_amt = [800]
+dissim_amt = [400]
 breakoff = [False]
 score_limit = [0.9]
 amount_to_start = [1000,2000,3000]
-cluster_multiplier = [1,2,4]#50
+cluster_multiplier = [2]#50
 score_type = ["kappa","ndcg"]
 use_breakoff_dissim = [False]
 get_all = [False]
