@@ -163,6 +163,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                    top_dt_clusters_a,by_class_finetune_a, cluster_duplicates_a, repeat_finetune_a))
     all_csv_fns = []
     skip_all = False
+    original_fn = []
     for vt in variables_to_execute:
         if skip_all is True:
             break
@@ -324,8 +325,6 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                     if skip_all is True:
                         break
                     for x in range(len(deep_size)):
-                    #for x in range(len([0])):
-
                         if limit_entities is False:
                             new_classification_task = "all"
                         else:
@@ -484,7 +483,11 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                             csv_name = loc + data_type + "/rules/tree_csv/" + file_name + ".csv"
 
                             csv_fns_dt[counter] = csv_name
-                            all_csv_fns.append(csv_name)
+                            if cv_splits == 0:
+                                all_csv_fns.append(csv_name)
+                            else:
+                                if splits == 0:
+                                    original_fn.append(csv_name)
                             counter += 1
 
                             if cluster_duplicates:
@@ -495,19 +498,19 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                       data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files, development=dt_dev, limit_entities=limit_entities,
                                               limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn = clusters_fn,
                                               cluster_duplicates = cluster_duplicates, save_results_so_far=save_results_so_far)
-                            skip = dt.import1dArray("../data/temp/skip.txt")
+
 
                             tree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name + "None", 10000,
                                                   max_depth=None, balance="balanced", criterion="entropy", save_details=False,
                                               data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
                                               cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
                                               limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn = clusters_fn,
-                                              cluster_duplicates=cluster_duplicates)
+                                              cluster_duplicates=cluster_duplicates, save_results_so_far=save_results_so_far)
 
                             wekatree.DecisionTree(ranking_fn, classification_path, label_names_fn , cluster_names_fn , file_name,
                                save_details=False, data_type=data_type,split_to_use=splits, pruning=2,
                                               limited_label_fn=limited_label_fn, rewrite_files=rewrite_files,
-                               csv_fn=csv_name, cv_splits=cv_splits, limit_entities=limit_entities, vector_names_fn=vector_names_fn)
+                               csv_fn=csv_name, cv_splits=cv_splits, limit_entities=limit_entities, vector_names_fn=vector_names_fn, save_results_so_far=save_results_so_far)
 
                             variables_to_execute = []
 
@@ -632,8 +635,12 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                     nnet_ranking_fn = loc + data_type + "/nnet/clusters/" + file_name + "FT.txt"
 
                                     csv_name = loc + data_type + "/rules/tree_csv/" + file_name + ".csv"
+                                    if cv_splits == 0:
+                                        all_csv_fns.append(csv_name)
+                                    else:
+                                        if splits == 0:
+                                            original_fn.append(csv_name)
 
-                                    all_csv_fns.append(csv_name)
                                     file_name = file_name + "FT"
                                     if arcca is False:
                                         if skip_nn:
@@ -730,7 +737,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                     if len(deep_size) > 1:
                         init_vector_path = loc + data_type + "/nnet/spaces/" + new_file_names[0] + "L0.txt"
                         deep_size = deep_size[1:]
-
+            """
                 print("GETTING FNS")
                 for a in range(len(csv_fns_dt)):
                     csv_fns_dt_a[a].append(csv_fns_dt[a])
@@ -740,15 +747,22 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
 
             for a in range(len(csv_fns_dt_a)):
                 dt.averageCSVs(csv_fns_dt_a[a])
+            """
             #if not skip_nn:
             #    for a in range(len(csv_fns_nn_a)):
             #        dt.averageCSVs(csv_fns_nn_a[a])
-
+    if cross_val > 0:
+        for fn in original_fn:
+            fn = fn.split("/")[len(fn.split("/"))-1]
+            fns_to_add = dt.getCSVsToAverage("../data/"+data_type+"/rules/tree_csv/",fn)
+            for f in range(len(fns_to_add)):
+                fns_to_add[f] = "../data/"+data_type+"/rules/tree_csv/" + fns_to_add[f]
+            all_csv_fns.extend(fns_to_add)
     dt.arrangeByScore(np.unique(np.asarray(all_csv_fns)),"../data/"+data_type+"/rules/tree_csv/"
                + " " + arrange_name + file_name[:50] + str(len(all_csv_fns)) + ".csv")
     jvm.stop()
 
-arrange_name = "cluster ratings etc"
+arrange_name = "cluster ratings mds"
 
 just_output = True
 arcca = False
@@ -757,11 +771,7 @@ if arcca:
 else:
     loc = "../data/"
 
-
 limit_entities = [False]
-
-
-
 
 """
 data_type = "wines"
@@ -780,9 +790,9 @@ init_vector_path = loc+data_type+"/pca/class-all-50-10-alld100"
 vector_path_replacement = loc+data_type+"/pca/class-all-50-10-alld100"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 """
-
+"""
 data_type = "movies"
-classification_task = ["uk-ratings", "us-ratings"]
+classification_task = ["uk-ratings"]
 file_name = "films200-genres"
 lowest_amt = 100
 highest_amt = 10
@@ -792,8 +802,9 @@ init_vector_path = loc+data_type+"/nnet/spaces/films200-genres.txt"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films200-genres.txt"
 vector_path_replacement = loc+data_type+"/nnet/spaces/films200-genres.txt"
 deep_size = [200]
-
 """
+""""""
+
 data_type = "placetypes"
 classification_task = ["opencyc"]
 lowest_amt = 50
@@ -805,7 +816,7 @@ init_vector_path = "../data/"+data_type+"/nnet/spaces/places100.txt"
 vector_path_replacement = loc+data_type+"/nnet/spaces/places100.txt"
 get_nnet_vectors_path = loc + data_type + "/nnet/spaces/places100.txt"
 file_name = "places mds 100"
-"""
+deep_size = [100]
 """
 hidden_activation = "tanh"
 dropout_noise = 0.5
@@ -815,7 +826,7 @@ loss="categorical_crossentropy"
 class_weight = None
 lr = 0.01
 nnet_dev = False
-ep=2001
+ep=2000
 """
 """
 hidden_activation = "tanh"
@@ -832,6 +843,7 @@ loss="categorical_crossentropy"
 class_weight = "balanced"
 rewrite_files = True
 """
+
 hidden_activation = "tanh"
 dropout_noise = 0.5
 output_activation = "sigmoid"
@@ -839,9 +851,8 @@ trainer = "adagrad"
 loss="binary_crossentropy"
 class_weight = None
 nnet_dev = False
-ep =300
+ep =2000
 lr = 0.01
-rewrite_files = False
 
 learn_rate= [ 0.001]
 cutoff_start = 0.2
@@ -863,9 +874,9 @@ dissim = 0.0
 dissim_amt = [400]
 breakoff = [False]
 score_limit = [0.9]
-amount_to_start = [1000,2000,3000]
+amount_to_start = [1000, 2000, 3000]
 cluster_multiplier = [2]#50
-score_type = ["kappa","ndcg"]
+score_type = ["kappa", "ndcg"]
 use_breakoff_dissim = [False]
 get_all = [False]
 half_ndcg_half_kappa = [False]
@@ -873,10 +884,10 @@ add_all_terms = [False]
 find_most_similar = True#False
 only_most_similar = [True]
 dont_cluster = [0]
-save_results_so_far = False
+save_results_so_far = True
 
 average_ppmi = [False, True]
-bag_of_clusters = [True, False]
+bag_of_clusters = [True, True]
 
 top_dt_clusters = [False]
 by_class_finetune = [False]
@@ -901,12 +912,14 @@ svm_classify = False
 rewrite_files = False
 max_depth = 3
 
-skip_nn = True
+skip_nn = False
 
-cross_val = 1
+cross_val = 5
 one_for_all = False
 
-threads=10
+
+
+threads=3
 chunk_amt = 0
 chunk_id = 0
 for c in range(chunk_amt):

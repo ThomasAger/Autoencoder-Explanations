@@ -22,7 +22,7 @@ class DecisionTree:
     def __init__(self, features_fn, classes_fn,  class_names_fn, cluster_names_fn, filename,
                    max_depth=None, balance=None, criterion="entropy", save_details=False, data_type="movies",cv_splits=5,
                  csv_fn="../data/temp/no_csv_provided.csv", rewrite_files=True, split_to_use=-1, development=False,
-                 limit_entities=False, limited_label_fn=None, vector_names_fn=None, pruning=1):
+                 limit_entities=False, limited_label_fn=None, vector_names_fn=None, pruning=1, save_results_so_far=False):
 
         vectors = np.asarray(dt.import2dArray(features_fn)).transpose()
 
@@ -42,7 +42,7 @@ class DecisionTree:
 
         print(dt.allFnsAlreadyExist(all_fns), rewrite_files)
 
-        if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
+        if dt.allFnsAlreadyExist(all_fns) and not rewrite_files or save_results_so_far:
             print("Skipping task", "Weka Tree")
             return
         else:

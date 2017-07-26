@@ -67,14 +67,13 @@ class NeuralNetwork:
                  limit_entities=False, limited_label_fn="", vector_names_fn=""):
 
         total_file_name = "../data/" + data_type + "/nnet/spaces/" + file_name
-        space_fn = total_file_name + "L0.txt"
         weights_fn = "../data/" + data_type + "/nnet/weights/" + file_name + "L0.txt"
         bias_fn = "../data/" + data_type + "/nnet/bias/" + file_name +"L0.txt"
         rank_fn = "../data/" + data_type + "/nnet/clusters/" + file_name + ".txt"
 
 
 
-        all_fns = [space_fn, weights_fn, bias_fn, rank_fn]
+        all_fns = [weights_fn, bias_fn, rank_fn]
         if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
             print("Skipping task", "nnet")
             return

@@ -40,14 +40,11 @@ class DecisionTree:
             all_fns.append(all_top_rankings_fn)
             all_fns.append(all_top_clusters_fn)
 
-        if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
+        if dt.allFnsAlreadyExist(all_fns) and not rewrite_files or save_results_so_far:
             print("Skipping task", "DecisionTree")
             return
         else:
             print("Running task", "DecisionTree")
-            if save_results_so_far:
-                dt.write1dArray(["True"], "../data/temp/skip.txt")
-                return
 
 
         vectors = np.asarray(dt.import2dArray(features_fn)).transpose()

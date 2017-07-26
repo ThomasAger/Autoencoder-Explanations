@@ -870,9 +870,67 @@ def averageCSVs(csv_array_fns):
             print(csv_array[0].iloc[col][val])
             csv_array[0].iloc[col][val] = csv_array[0].iloc[col][val] / len(csv_array)
             print(csv_array[0].iloc[col][val])
+    avg_fn = csv_array_fns[0][:len(csv_array_fns[0])-4] + "AVG.csv"
+    csv_array[0].to_csv(avg_fn)
+    return avg_fn
 
-    csv_array[0].to_csv(csv_array_fns[0][:len(csv_array_fns[0])-4] + "AVG.csv")
+def removeCSVText(filename):
+    original_fn = filename
 
+    filename = filename.split()
+
+    done = False
+    for s in range(len(filename)):
+        for i in range(10):
+            if "S" +str(i) in filename[s]:
+                del filename[s]
+                done=True
+                break
+        if done:
+            break
+    filename = " ".join(filename)
+    return original_fn, filename
+
+def getCSVsToAverage(csv_folder_fn,  starting_fn=""):
+    fns = getFns(csv_folder_fn)
+    fns_to_average = []
+    og_st_fn, st_fn = removeCSVText(starting_fn)
+    for f in fns:
+        if len(st_fn) > 0:
+            og_f, f = removeCSVText(f)
+            if og_st_fn == og_f:
+                print(f)
+                if len(f) == len(st_fn):
+                    print("SUCCESS")
+                else:
+                    print(og_st_fn)
+                    print(len(f), len(og_st_fn), "FAIL")
+                fns_to_average.append(f)
+        else:
+            fns_to_average.append(f)
+    # Get an array of grouped filenames, where filenames are grouped if they are to be averaged
+    # Determine this by checking if the only differentiator is the CSV number
+    average_groups = []
+    # For every FN
+    for f in fns_to_average:
+        # Remove the CSV part and then remake the string, find any matching strings with the same effect
+        og_fn, fn = removeCSVText(f)
+        average_group = [og_fn]
+        for fn in fns_to_average:
+            s_og_fn, s_fn = removeCSVText(fn)
+            # If it matches without the CSV but isn't already added
+            if s_fn == fn and s_og_fn not in average_group:
+                average_group.append(s_og_fn)
+        # Add to the collection
+        if len(average_group) > 1:
+            average_groups.append(average_group)
+    average_fns = []
+    # Average the CSV's, return filenames to add to the overall csv compilation
+    for g in average_groups:
+        for i in range(len(g)):
+            g[i] = csv_folder_fn + g[i]
+        average_fns.append(average_csv(g))
+    return average_fns
 
 def stringToArray(string):
     array = string.split()
@@ -1074,4 +1132,15 @@ example = file[1644]
 indexes = np.argsort(example)
 for i in indexes:
     print(phrase_names[i])
+"""
+"""
+file_name = "all results mds"
+arrange_name = "all results mds"
+all_csv_fns = []
+loc = "../data/" + data_type + "/rules/tree_csv/"
+fns_to_add = getCSVsToAverage(loc)
+for f in range(len(fns_to_add)):
+    fns_to_add[f] = "../data/" + data_type + "/rules/tree_csv/" + fns_to_add[f]
+all_csv_fns.extend(fns_to_add)
+arrangeByScore(np.unique(np.asarray(all_csv_fns)), loc   + " " + arrange_name + file_name[:50] + str(len(all_csv_fns)) + ".csv")
 """

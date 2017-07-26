@@ -146,10 +146,10 @@ def bagOfClustersPavPPMI(cluster_names_fn, ranking_fn, file_name, do_p=False, da
 
 
 def pavPPMIAverage(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type="movies", rewrite_files=False,
-            classification="genres", lowest_amt=0, highest_amt=2147000000, limit_entities=False):
+            classification="genres", lowest_amt=0, highest_amt=2147000000, limit_entities=False, save_results_so_far=False):
     pavPPMI_fn = "../data/" + data_type + "/finetune/" + file_name + ".txt"
     all_fns = [pavPPMI_fn]
-    if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
+    if dt.allFnsAlreadyExist(all_fns) and not rewrite_files or save_results_so_far:
         print("Skipping task", pavPPMI.__name__)
         return
     else:
