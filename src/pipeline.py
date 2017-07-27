@@ -802,7 +802,7 @@ deep_size = [200]
 """"""
 
 data_type = "placetypes"
-classification_task = ["opencyc", "geonames", "foursquare"]
+classification_task = ["foursquare"]
 lowest_amt = 50
 highest_amt = 10
 #init_vector_path = "../data/"+data_type+"/bow/ppmi/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+classification_task
@@ -813,16 +813,26 @@ vector_path_replacement = loc+data_type+"/nnet/spaces/places100.txt"
 get_nnet_vectors_path = loc + data_type + "/nnet/spaces/places100.txt"
 file_name = "places mds 100"
 deep_size = [100]
-
-hidden_activation = "tanh"
-dropout_noise = 0.5
-output_activation = "softmax"
-trainer = "adadelta"
-loss="categorical_crossentropy"
-class_weight = None
-lr = 0.01
-nnet_dev = False
-ep=2000
+if classification_task[0] == "geonames" or classification_task[0] == "foursquare":
+    hidden_activation = "tanh"
+    dropout_noise = 0.5
+    output_activation = "softmax"
+    trainer = "adadelta"
+    loss="categorical_crossentropy"
+    class_weight = None
+    lr = 0.01
+    nnet_dev = False
+    ep=2000
+else:
+    hidden_activation = "tanh"
+    dropout_noise = 0.5
+    output_activation = "sigmoid"
+    trainer = "adagrad"
+    loss="binary_crossentropy"
+    class_weight = None
+    nnet_dev = False
+    ep =2000
+    lr = 0.01
 
 """
 hidden_activation = "tanh"
@@ -840,15 +850,6 @@ class_weight = "balanced"
 rewrite_files = True
 """
 """
-hidden_activation = "tanh"
-dropout_noise = 0.5
-output_activation = "sigmoid"
-trainer = "adagrad"
-loss="binary_crossentropy"
-class_weight = None
-nnet_dev = False
-ep =2000
-lr = 0.01
 """
 learn_rate= [ 0.001]
 cutoff_start = 0.2
@@ -908,7 +909,7 @@ svm_classify = False
 rewrite_files = False
 max_depth = 3
 
-skip_nn = True
+skip_nn = False
 
 cross_val = 5
 one_for_all = False

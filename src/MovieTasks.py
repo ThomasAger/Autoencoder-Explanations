@@ -58,22 +58,26 @@ def  getVectors(input_folder, file_names_fn, extension, output_folder, only_word
     entity_names = dt.import1dArray(file_names_fn)
     matching_filenames = []
     failed_fns = []
-    for e in entity_names:
-        found = False
-        for f in working_filenames:
+    if data_type == "wines":
+        for e in entity_names:
+            found = False
+            for f in working_filenames:
 
-            if "zz" in f:
-                new_f = f[2:]
-            else:
-                new_f = f
-            if dt.removeEverythingFromString(e) == dt.removeEverythingFromString(new_f):
-                matching_filenames.append(f)
-                found = True
-                break
-        if not found:
-            failed_fns.append(e)
+                if "zz" in f:
+                    new_f = f[2:]
+                else:
+                    new_f = f
+                if dt.removeEverythingFromString(e) == dt.removeEverythingFromString(new_f):
+                    matching_filenames.append(f)
+                    found = True
+                    break
+            if not found:
+                failed_fns.append(e)
 
-    working_filenames = np.unique(np.asarray(matching_filenames))
+        working_filenames = np.unique(np.asarray(matching_filenames))
+
+    test_dupes = np.unique(np.asarray(working_filenames))
+    print(len(test_dupes))
 
     for key, value in phrase_dict.items():
         if value >= only_words_in_x_entities:
@@ -206,7 +210,7 @@ def  getVectors(input_folder, file_names_fn, extension, output_folder, only_word
             for p in range(len(all_phrases_complete)):
                 dt.write1dArray(all_phrases_complete[p], output_folder+"frequency/phrases/class-" + phrase_list[p] +
                                  "-"+str(only_words_in_x_entities) + "-"+str(words_without_x_entities)+"-"+ classification)
-                print("Wrote", phrase_list[p])
+
 
 
         dt.write2dArray(all_phrases_complete, all_phrase_fn)
@@ -225,7 +229,7 @@ def  getVectors(input_folder, file_names_fn, extension, output_folder, only_word
             for p in range(len(all_phrases_complete)):
                 dt.write1dArray(all_phrases_complete[p], output_folder+"binary/phrases/class-" + phrase_list[p] +
                                 "-"+str(only_words_in_x_entities) + "-"+str(words_without_x_entities)+"-"+ classification)
-                print("Wrote binary", phrase_list[p])
+
 
 
         all_phrase_fn = output_folder + "binary/phrases/" + "class-all-" + str(
@@ -316,8 +320,9 @@ def printIndividualFromAll(data_type, type, lowest_count, max,  classification, 
         for la in all:
             convert = dt.convertLine(la)
             dt.write1dArray(convert, fn+ type+"/class-"+str(names[c]+"-"+str(lowest_count)+"-"+str(max)+"-"+str(classification)))
-            print("Wrote " + str(names[c]))
+
             c+=1
+    print("wrote individual from all")
 
 def writeClassesFromNames(folder_name, file_names, output_folder):
     names = dt.getFolder(folder_name)
