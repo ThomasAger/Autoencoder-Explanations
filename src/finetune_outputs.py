@@ -33,7 +33,6 @@ import scipy.sparse as sp
 
 def writeBagOfClusters(cluster_dict, data_type, lowest_amt, highest_amt, classification):
     bag_of_clusters = []
-    names_array = [""] * len(cluster_dict)
     # Note, prior we used the PPMI values directly here somehow...
     loc = "../data/"+data_type+"/bow/frequency/phrases/"
     final_fn = ""
@@ -49,20 +48,10 @@ def writeBagOfClusters(cluster_dict, data_type, lowest_amt, highest_amt, classif
         for f in cluster_dict[c]:
             if ":" in f:
                 f = f[:-1]
-            # Create a temp name
-            if counter < 20:
-                if counter > 0:
-                    names_array[c] = "class-temp" + names_array[c] + f[0]
-                else:
-                    names_array[c] = "class-temp" + names_array[c]
-                final_fn = final_fn + f[0]
             # Import the class
             class_to_add = dt.import1dArray(loc + "class-" + f + "-" + str(lowest_amt) + "-" + str(highest_amt) + "-" + classification, "f")
-            try:
-                # Add the current class to the older one
-                accum_freqs = np.add(accum_freqs, class_to_add)
-            except ValueError:
-                print("k")
+            # Add the current class to the older one
+            accum_freqs = np.add(accum_freqs, class_to_add)
             counter += 1
         # Append this clusters frequences to the group of them
         bag_of_clusters.append(accum_freqs)
@@ -70,9 +59,7 @@ def writeBagOfClusters(cluster_dict, data_type, lowest_amt, highest_amt, classif
     ppmi_fn = "../data/"+data_type+"/bow/ppmi/" + "class-" + final_fn + str(lowest_amt) + "-" + str(highest_amt) + "-" + classification
     bag_csr = sp.csr_matrix(np.asarray(bag_of_clusters))
 
-    dt.write2dArray(mt.convertPPMI(bag_csr), ppmi_fn)
-    mt.printIndividualFromAll(data_type, "ppmi", lowest_amt, highest_amt, classification, all_fn=ppmi_fn, names_array=names_array)
-    return names_array
+    return mt.convertPPMI(bag_csr)
 
 def pavPPMI(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type="movies", rewrite_files=False,limit_entities=False,
             classification="genres", lowest_amt=0, highest_amt=2147000000):
@@ -133,12 +120,10 @@ def bagOfClustersPavPPMI(cluster_names_fn, ranking_fn, file_name, do_p=False, da
 
     ranking = dt.import2dArray(ranking_fn)
     names = dt.import2dArray(cluster_names_fn, "s")
-    frq = []
 
-    names = writeBagOfClusters(names, data_type, lowest_amt, highest_amt, classification)
+    frq = writeBagOfClusters(names, data_type, lowest_amt, highest_amt, classification)
 
-    for name in names:
-        frq.append(readPPMI("".join(name), data_type, lowest_amt, highest_amt, classification))
+
 
     pav_classes = []
 

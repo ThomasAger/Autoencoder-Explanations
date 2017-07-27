@@ -438,8 +438,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                 similarity_threshold = sim_t
                                 add_all_terms = add_all_terms
                                 clusters_fn = loc + data_type + "/cluster/hierarchy_directions/" + file_name + ".txt"
-                                cluster_names_fn = loc + data_type + "/cluster/hierarchy_names/" + file_name + ".txt"
-                                cluster_dict_fn = cluster_names_fn
+                                cluster_dict_fn = loc + data_type + "/cluster/hierarchy_names/" + file_name + ".txt"
                             else:
                                 high_threshold = 0.5
                                 low_threshold = 0.1
@@ -485,21 +484,21 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                             if cluster_duplicates:
                                 file_name = file_name + " UNIQUE"
                             file_name = file_name + str(max_depth)
-                            tree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name, 10000,
+                            tree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_dict_fn, file_name, 10000,
                                       max_depth=max_depth, balance="balanced", criterion="entropy", save_details=True, cv_splits=cv_splits, split_to_use=splits,
                                       data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files, development=dt_dev, limit_entities=limit_entities,
                                               limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn = clusters_fn,
                                               cluster_duplicates = cluster_duplicates, save_results_so_far=save_results_so_far)
 
 
-                            tree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name + "None", 10000,
+                            tree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_dict_fn, file_name + "None", 10000,
                                                   max_depth=None, balance="balanced", criterion="entropy", save_details=False,
                                               data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
                                               cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
                                               limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn = clusters_fn,
                                               cluster_duplicates=cluster_duplicates, save_results_so_far=save_results_so_far)
 
-                            wekatree.DecisionTree(ranking_fn, classification_path, label_names_fn , cluster_names_fn , file_name,
+                            wekatree.DecisionTree(ranking_fn, classification_path, label_names_fn , cluster_dict_fn , file_name,
                                save_details=False, data_type=data_type,split_to_use=splits, pruning=2,
                                               limited_label_fn=limited_label_fn, rewrite_files=rewrite_files,
                                csv_fn=csv_name, cv_splits=cv_splits, limit_entities=limit_entities, vector_names_fn=vector_names_fn, save_results_so_far=save_results_so_far)
@@ -581,7 +580,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                     if average_ppmi:
                                         file_name = file_name + " APPMI"
                                     elif bag_of_clusters:
-                                        file_name = file_name + " BOCF"
+                                        file_name = file_name + " BOCFi"
 
                                     if average_ppmi or not average_ppmi and not bag_of_clusters:
                                         class_path = loc + data_type + "/finetune/" + file_name + ".txt"
@@ -589,13 +588,13 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                         class_path = loc + data_type + "/finetune/boc/" + file_name + ".txt"
 
                                     if average_ppmi:
-                                        fto.pavPPMIAverage(cluster_names_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=rewrite_files,
+                                        fto.pavPPMIAverage(cluster_dict_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=rewrite_files,
                                                 classification=classification, lowest_amt=lowest_amt, limit_entities=limit_entities, highest_amt=highest_count)
                                     elif bag_of_clusters:
-                                        fto.bagOfClustersPavPPMI(cluster_names_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=rewrite_files,
+                                        fto.bagOfClustersPavPPMI(cluster_dict_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=rewrite_files,
                                                     classification=classification, lowest_amt=lowest_amt, limit_entities=limit_entities,highest_amt=highest_count)
                                     else:
-                                        fto.pavPPMI(cluster_names_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=rewrite_files,
+                                        fto.pavPPMI(cluster_dict_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=rewrite_files,
                                                     classification=classification, lowest_amt=lowest_amt, limit_entities=limit_entities,highest_amt=highest_count)
 
                                     """ FINETUNING """
@@ -653,14 +652,14 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
 
 
 
-                                        tree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name, 10000,
+                                        tree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_dict_fn, file_name, 10000,
                                                               max_depth=max_depth, balance="balanced", criterion="entropy", save_details=True,
                                                           data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
                                                           cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
                                                           limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn=clusters_fn,
                                               cluster_duplicates=cluster_duplicates)
 
-                                        tree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_names_fn, file_name + "None", 10000,
+                                        tree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_dict_fn, file_name + "None", 10000,
                                                               max_depth=None, balance="balanced", criterion="entropy", save_details=False,
                                                           data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
                                                           cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
@@ -668,7 +667,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                               cluster_duplicates=cluster_duplicates)
 
                                         wekatree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn,
-                                                              cluster_names_fn, file_name,
+                                                              cluster_dict_fn, file_name,
                                                               save_details=True, data_type=data_type,
                                                               split_to_use=splits, pruning=2,
                                                               limited_label_fn=limited_label_fn, rewrite_files=rewrite_files,
@@ -786,10 +785,10 @@ init_vector_path = loc+data_type+"/pca/class-all-50-10-alld100"
 vector_path_replacement = loc+data_type+"/pca/class-all-50-10-alld100"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 """
-"""
+
 data_type = "movies"
-classification_task = ["uk-ratings"]
-file_name = "films200-genres"
+classification_task = ["keywords"]
+file_name = "f200ge"
 lowest_amt = 100
 highest_amt = 10
 init_vector_path = loc+data_type+"/nnet/spaces/films200-genres.txt"
@@ -798,9 +797,9 @@ init_vector_path = loc+data_type+"/nnet/spaces/films200-genres.txt"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films200-genres.txt"
 vector_path_replacement = loc+data_type+"/nnet/spaces/films200-genres.txt"
 deep_size = [200]
-"""
-""""""
 
+""""""
+"""
 data_type = "placetypes"
 classification_task = ["foursquare", "geonames", "opencyc"]
 lowest_amt = 50
@@ -813,6 +812,7 @@ vector_path_replacement = loc+data_type+"/nnet/spaces/places100.txt"
 get_nnet_vectors_path = loc + data_type + "/nnet/spaces/places100.txt"
 file_name = "places mds 100"
 deep_size = [100]
+"""
 if classification_task[0] == "geonames" or classification_task[0] == "foursquare":
     hidden_activation = "tanh"
     dropout_noise = 0.5
@@ -831,7 +831,7 @@ else:
     loss="binary_crossentropy"
     class_weight = None
     nnet_dev = False
-    ep =2000
+    ep =300
     lr = 0.01
 
 """
@@ -909,9 +909,9 @@ svm_classify = False
 rewrite_files = False
 max_depth = 3
 
-skip_nn = True
+skip_nn = False
 
-cross_val = 5
+cross_val = 1
 one_for_all = False
 
 
