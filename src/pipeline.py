@@ -581,7 +581,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                     if average_ppmi:
                                         file_name = file_name + " APPMI"
                                     elif bag_of_clusters:
-                                        file_name = file_name + " BOC"
+                                        file_name = file_name + " BOCF"
 
                                     if average_ppmi or not average_ppmi and not bag_of_clusters:
                                         class_path = loc + data_type + "/finetune/" + file_name + ".txt"
@@ -802,7 +802,7 @@ deep_size = [200]
 """"""
 
 data_type = "placetypes"
-classification_task = ["foursquare"]
+classification_task = ["foursquare", "geonames", "opencyc"]
 lowest_amt = 50
 highest_amt = 10
 #init_vector_path = "../data/"+data_type+"/bow/ppmi/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+classification_task
@@ -894,7 +894,7 @@ repeat_finetune = [1]
 
 
 
-epochs=[300,1000,5000,10000]
+epochs=[300,1000,2000]
 
 """
 sim_t = 0.0#1.0
@@ -909,7 +909,7 @@ svm_classify = False
 rewrite_files = False
 max_depth = 3
 
-skip_nn = False
+skip_nn = True
 
 cross_val = 5
 one_for_all = False

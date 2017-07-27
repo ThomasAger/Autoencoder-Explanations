@@ -320,7 +320,7 @@ def printIndividualFromAll(data_type, type, lowest_count, max,  classification, 
         for la in all:
             convert = dt.convertLine(la)
             dt.write1dArray(convert, fn+ type+"/class-"+str(names[c]+"-"+str(lowest_count)+"-"+str(max)+"-"+str(classification)))
-
+            print(c, len(names), names[c])
             c+=1
     print("wrote individual from all")
 
@@ -963,9 +963,9 @@ def main(min, max, data_type, raw_fn, extension, cut_first_line, additional_name
     """
 
 
-min=100
+min=50
 max=10
-
+"""
 class_type = "movies"
 classification = "all"
 raw_fn = "../data/raw/previous work/movievectors/tokens/"
@@ -974,7 +974,7 @@ cut_first_line = True
 entity_name_fn = "../data/raw/previous work/filmIds.txt"
 use_all_files = None#""
 word_count_amt = 0
-
+"""
 """
 data_type = "wines"
 classification = "types"
@@ -985,7 +985,6 @@ use_all_files =  "../data/raw/previous work/winevectors/"
 entity_name_fn = "../data/"+data_type+"/nnet/spaces/entitynames.txt"
 word_count_amt = 1000
 """
-"""
 class_type = "placetypes"
 classification = "all"
 raw_fn = "../data/raw/previous work/placevectors/"
@@ -994,7 +993,7 @@ cut_first_line = False
 entity_name_fn = "../data/"+class_type+"/nnet/spaces/entitynames.txt"
 use_all_files = None#""
 word_count_amt = 0
-"""
+
 get_all = False
 additional_name = ""
 #make_individual = True

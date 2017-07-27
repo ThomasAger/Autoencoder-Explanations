@@ -36,6 +36,7 @@ def writeBagOfClusters(cluster_dict, data_type, lowest_amt, highest_amt, classif
     names_array = [""] * len(cluster_dict)
     # Note, prior we used the PPMI values directly here somehow...
     loc = "../data/"+data_type+"/bow/frequency/phrases/"
+    final_fn = ""
     for c in range(len(cluster_dict)):
         # Remove the colons
         for f in range(len(cluster_dict[c])):
@@ -53,7 +54,8 @@ def writeBagOfClusters(cluster_dict, data_type, lowest_amt, highest_amt, classif
                 if counter > 0:
                     names_array[c] = "class-temp" + names_array[c] + f[0]
                 else:
-                    names_array[c] = "class-temp" + names_array[c] + f
+                    names_array[c] = "class-temp" + names_array[c]
+                final_fn = final_fn + f[0]
             # Import the class
             class_to_add = dt.import1dArray(loc + "class-" + f + "-" + str(lowest_amt) + "-" + str(highest_amt) + "-" + classification, "f")
             try:
@@ -65,7 +67,7 @@ def writeBagOfClusters(cluster_dict, data_type, lowest_amt, highest_amt, classif
         # Append this clusters frequences to the group of them
         bag_of_clusters.append(accum_freqs)
     # Obtain the PPMI values for these frequences
-    ppmi_fn = "../data/"+data_type+"/bow/ppmi/" + "class-temp-" + str(lowest_amt) + "-" + str(highest_amt) + "-" + classification
+    ppmi_fn = "../data/"+data_type+"/bow/ppmi/" + "class-" + final_fn + str(lowest_amt) + "-" + str(highest_amt) + "-" + classification
     bag_csr = sp.csr_matrix(np.asarray(bag_of_clusters))
 
     dt.write2dArray(mt.convertPPMI(bag_csr), ppmi_fn)
