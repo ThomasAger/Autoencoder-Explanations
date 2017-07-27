@@ -581,8 +581,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                     if average_ppmi:
                                         file_name = file_name + " APPMI"
                                     elif bag_of_clusters:
-                                        # BOCF for BOC Fixed, before we were using the PPMI values directly
-                                        file_name = file_name + " BOCF"
+                                        file_name = file_name + " BOC"
 
                                     if average_ppmi or not average_ppmi and not bag_of_clusters:
                                         class_path = loc + data_type + "/finetune/" + file_name + ".txt"
@@ -596,7 +595,6 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                         fto.bagOfClustersPavPPMI(cluster_names_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=rewrite_files,
                                                     classification=classification, lowest_amt=lowest_amt, limit_entities=limit_entities,highest_amt=highest_count)
                                     else:
-                                        print("running pavPPMI")
                                         fto.pavPPMI(cluster_names_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=rewrite_files,
                                                     classification=classification, lowest_amt=lowest_amt, limit_entities=limit_entities,highest_amt=highest_count)
 
@@ -788,9 +786,9 @@ init_vector_path = loc+data_type+"/pca/class-all-50-10-alld100"
 vector_path_replacement = loc+data_type+"/pca/class-all-50-10-alld100"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 """
-
+"""
 data_type = "movies"
-classification_task = ["us-ratings"]
+classification_task = ["uk-ratings"]
 file_name = "films200-genres"
 lowest_amt = 100
 highest_amt = 10
@@ -799,12 +797,12 @@ init_vector_path = loc+data_type+"/nnet/spaces/films200-genres.txt"
 #file_name = "films200-genres100ndcg0.85200 tdev3004FTL0"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films200-genres.txt"
 vector_path_replacement = loc+data_type+"/nnet/spaces/films200-genres.txt"
-deep_size = [100]
-
-""""""
+deep_size = [200]
 """
+""""""
+
 data_type = "placetypes"
-classification_task = ["opencyc", "geonames", "foursquare"]
+classification_task = ["foursquare"]
 lowest_amt = 50
 highest_amt = 10
 #init_vector_path = "../data/"+data_type+"/bow/ppmi/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+classification_task
@@ -815,18 +813,27 @@ vector_path_replacement = loc+data_type+"/nnet/spaces/places100.txt"
 get_nnet_vectors_path = loc + data_type + "/nnet/spaces/places100.txt"
 file_name = "places mds 100"
 deep_size = [100]
-"""
-"""
-hidden_activation = "tanh"
-dropout_noise = 0.5
-output_activation = "softmax"
-trainer = "adadelta"
-loss="categorical_crossentropy"
-class_weight = None
-lr = 0.01
-nnet_dev = False
-ep=2000
-"""
+if classification_task[0] == "geonames" or classification_task[0] == "foursquare":
+    hidden_activation = "tanh"
+    dropout_noise = 0.5
+    output_activation = "softmax"
+    trainer = "adadelta"
+    loss="categorical_crossentropy"
+    class_weight = None
+    lr = 0.01
+    nnet_dev = False
+    ep=2000
+else:
+    hidden_activation = "tanh"
+    dropout_noise = 0.5
+    output_activation = "sigmoid"
+    trainer = "adagrad"
+    loss="binary_crossentropy"
+    class_weight = None
+    nnet_dev = False
+    ep =2000
+    lr = 0.01
+
 """
 hidden_activation = "tanh"
 dropout_noise = 0.2
@@ -842,17 +849,8 @@ loss="categorical_crossentropy"
 class_weight = "balanced"
 rewrite_files = True
 """
-
-hidden_activation = "tanh"
-dropout_noise = 0.5
-output_activation = "sigmoid"
-trainer = "adagrad"
-loss="binary_crossentropy"
-class_weight = None
-nnet_dev = False
-ep =1400
-lr = 0.01
-
+"""
+"""
 learn_rate= [ 0.001]
 cutoff_start = 0.2
 
@@ -870,11 +868,11 @@ sim_t = 1.0#1.0
 min_score = 0.4
 largest_cluster = 1
 dissim = 0.0
-dissim_amt = [600]
+dissim_amt = [400]
 breakoff = [False]
 score_limit = [0.9]
-amount_to_start = [1000,2000]
-cluster_multiplier = [1,2,3]#50
+amount_to_start = [1000, 2000, 3000]
+cluster_multiplier = [2]#50
 score_type = ["kappa", "ndcg"]
 use_breakoff_dissim = [False]
 get_all = [False]
@@ -896,7 +894,7 @@ repeat_finetune = [1]
 
 
 
-epochs=[300,500,1000,2000]
+epochs=[300,1000,5000,10000]
 
 """
 sim_t = 0.0#1.0
@@ -911,9 +909,9 @@ svm_classify = False
 rewrite_files = False
 max_depth = 3
 
-skip_nn = True
+skip_nn = False
 
-cross_val = 1
+cross_val = 5
 one_for_all = False
 
 
