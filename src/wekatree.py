@@ -39,6 +39,7 @@ class DecisionTree:
         f1_fn = '../data/' + data_type + '/rules/tree_scores/' + file_names[1] + '.scores'
         all_fns.append(acc_fn)
         all_fns.append(f1_fn)
+        all_fns.append(csv_fn)
 
         print(dt.allFnsAlreadyExist(all_fns), rewrite_files)
 

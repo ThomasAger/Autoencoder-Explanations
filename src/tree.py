@@ -19,7 +19,7 @@ class DecisionTree:
                  training_data,  max_depth=None, balance=None, criterion="entropy", save_details=False, data_type="movies",cv_splits=5,
                  csv_fn="../data/temp/no_csv_provided.csv", rewrite_files=False, split_to_use=-1, development=False,
                  limit_entities=False, limited_label_fn=None, vector_names_fn=None, clusters_fn="", cluster_duplicates=False,
-                 save_results_so_far=True):
+                 save_results_so_far=False):
 
 
         all_fns = []
@@ -32,15 +32,14 @@ class DecisionTree:
         all_top_rankings_fn = "../data/"+data_type+"/rules/rankings/" + filename + ".txt"
         all_top_clusters_fn = "../data/"+data_type+"/rules/clusters/" + filename + ".txt"
 
-        dt.write1dArray(["False"], "../data/temp/skip.txt")
-        all_fns = [acc_fn, f1_fn, prediction_fn]
+        all_fns = [acc_fn, f1_fn, prediction_fn, csv_fn]
 
         if max_depth is not None:
             all_fns.append(all_top_names_fn)
             all_fns.append(all_top_rankings_fn)
             all_fns.append(all_top_clusters_fn)
 
-        if dt.allFnsAlreadyExist(all_fns) and not rewrite_files or save_results_so_far:
+        if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
             print("Skipping task", "DecisionTree")
             return
         else:
@@ -249,7 +248,7 @@ class DecisionTree:
         dt.write1dArray(f1_array, f1_fn)
         dt.write2dArray(all_predictions, prediction_fn)
 
-        if dt.fileExists(csv_fn) and rewrite_files is False:
+        if dt.fileExists(csv_fn):
             print("File exists, writing to csv")
             try:
                 dt.write_to_csv(csv_fn, file_names, scores)

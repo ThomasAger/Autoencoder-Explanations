@@ -56,7 +56,15 @@ def writeBagOfClusters(cluster_dict, data_type, lowest_amt, highest_amt, classif
             counter += 1
         bag_of_clusters.append(accum_freqs)
     ppmi_fn = "../data/" + data_type + "/bow/ppmi/class-temp-" + str(lowest_amt) + "-" + str(highest_amt) + "-" + classification
-    bag_csr = sp.csr_matrix(np.asarray(bag_of_clusters))
+    try:
+        bag_csr = sp.csr_matrix(np.asarray(bag_of_clusters))
+    except ValueError:
+        count = 0
+        for d in bag_of_clusters:
+            if len(d) != 1383:
+                print(cluster_dict[count])
+            count+=1
+        exit()
     dt.write2dArray(mt.convertPPMI(bag_csr), ppmi_fn)
     mt.printIndividualFromAll(data_type, "ppmi", lowest_amt, highest_amt, classification, all_fn=ppmi_fn, names_array=names_array)
     return names_array

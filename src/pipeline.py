@@ -162,11 +162,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                    limit_entities_a,bag_of_clusters_a,add_all_terms_a,only_most_similar_a,dont_cluster_a,
                                    top_dt_clusters_a,by_class_finetune_a, cluster_duplicates_a, repeat_finetune_a))
     all_csv_fns = []
-    skip_all = False
     original_fn = []
     for vt in variables_to_execute:
-        if skip_all is True:
-            break
         file_name = average_csv_fn
         dissim_amt = vt[0]
         breakoff = vt[1]
@@ -233,8 +230,6 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
 
                 split_fns.append(fn)
             original_deep_size = deep_size
-            if skip_all is True:
-                break
             for splits in range(cv_splits):
                 deep_size = original_deep_size
                 file_name = split_fns[0]
@@ -264,8 +259,6 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                     deep_fns.append(split_fns[splits] + " SFT" + str(s))
                 csv_fns = []
                 counter = 0
-                if skip_all is True:
-                    break
                 for d in range(len(deep_size)):
                     file_name = deep_fns[d]
                     print(deep_size, init_vector_path)
@@ -322,8 +315,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                             new_file_names.append(new_fn)
 
                     #for j in range(len(new_file_names)):
-                    if skip_all is True:
-                        break
+
                     for x in range(len(deep_size)):
                         if limit_entities is False:
                             new_classification_task = "all"
@@ -515,13 +507,13 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                             variables_to_execute = []
 
                             for d in learn_rate_a:
-                                e = epochs_a[0]
-                                for b in ft_loss_a:
-                                    for s in ft_optimizer_a:
-                                        for a in is_identity_a:
-                                            for c in amount_of_finetune_a:
-                                                for xa in average_ppmi_a:
-                                                    variables_to_execute.append((d, b, s, a, c, e, xa))
+                                for e in epochs_a:
+                                    for b in ft_loss_a:
+                                        for s in ft_optimizer_a:
+                                            for a in is_identity_a:
+                                                for c in amount_of_finetune_a:
+                                                    for xa in average_ppmi_a:
+                                                        variables_to_execute.append((d, b, s, a, c, e, xa))
                             orig_fn = file_name
                             for v in variables_to_execute:
                                 learn_rate = v[0]
@@ -729,6 +721,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                     """
                                 file_name = orig_fn
 
+
                             if len(new_file_names) > 1:
                                 init_vector_path = vector_path
 
@@ -751,15 +744,18 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
             #if not skip_nn:
             #    for a in range(len(csv_fns_nn_a)):
             #        dt.averageCSVs(csv_fns_nn_a[a])
+    loc ="../data/"+data_type+"/rules/tree_csv/"
     if cross_val > 0:
         for fn in original_fn:
-            fn = fn.split("/")[len(fn.split("/"))-1]
-            fns_to_add = dt.getCSVsToAverage("../data/"+data_type+"/rules/tree_csv/",fn)
-            for f in range(len(fns_to_add)):
-                fns_to_add[f] = "../data/"+data_type+"/rules/tree_csv/" + fns_to_add[f]
-            all_csv_fns.extend(fns_to_add)
-    dt.arrangeByScore(np.unique(np.asarray(all_csv_fns)),"../data/"+data_type+"/rules/tree_csv/"
-               + " " + arrange_name + file_name[:50] + str(len(all_csv_fns)) + ".csv")
+            avg_fn = fn[:-4] +"AVG.csv"
+            if dt.fileExists(avg_fn) is False:
+                fn = fn.split("/")[len(fn.split("/"))-1]
+                fns_to_add = dt.getCSVsToAverage("../data/"+data_type+"/rules/tree_csv/",fn)
+                all_csv_fns.append(fns_to_add)
+            else:
+                all_csv_fns.append(avg_fn)
+
+    dt.arrangeByScore(np.unique(np.asarray(all_csv_fns)),loc + " " + arrange_name + file_name[:50] + str(len(all_csv_fns)) + ".csv")
     jvm.stop()
 
 arrange_name = "cluster ratings mds"
@@ -806,7 +802,7 @@ deep_size = [200]
 """"""
 
 data_type = "placetypes"
-classification_task = ["opencyc"]
+classification_task = ["opencyc", "geonames", "foursquare"]
 lowest_amt = 50
 highest_amt = 10
 #init_vector_path = "../data/"+data_type+"/bow/ppmi/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+classification_task
@@ -817,7 +813,7 @@ vector_path_replacement = loc+data_type+"/nnet/spaces/places100.txt"
 get_nnet_vectors_path = loc + data_type + "/nnet/spaces/places100.txt"
 file_name = "places mds 100"
 deep_size = [100]
-"""
+
 hidden_activation = "tanh"
 dropout_noise = 0.5
 output_activation = "softmax"
@@ -827,7 +823,7 @@ class_weight = None
 lr = 0.01
 nnet_dev = False
 ep=2000
-"""
+
 """
 hidden_activation = "tanh"
 dropout_noise = 0.2
@@ -843,7 +839,7 @@ loss="categorical_crossentropy"
 class_weight = "balanced"
 rewrite_files = True
 """
-
+"""
 hidden_activation = "tanh"
 dropout_noise = 0.5
 output_activation = "sigmoid"
@@ -853,7 +849,7 @@ class_weight = None
 nnet_dev = False
 ep =2000
 lr = 0.01
-
+"""
 learn_rate= [ 0.001]
 cutoff_start = 0.2
 
@@ -884,7 +880,7 @@ add_all_terms = [False]
 find_most_similar = True#False
 only_most_similar = [True]
 dont_cluster = [0]
-save_results_so_far = True
+save_results_so_far = False
 
 average_ppmi = [False, True]
 bag_of_clusters = [True, True]
@@ -912,7 +908,7 @@ svm_classify = False
 rewrite_files = False
 max_depth = 3
 
-skip_nn = False
+skip_nn = True
 
 cross_val = 5
 one_for_all = False

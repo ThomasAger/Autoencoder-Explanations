@@ -968,6 +968,7 @@ entity_name_fn = "../data/raw/previous work/filmIds.txt"
 use_all_files = None#""
 word_count_amt = 0
 """
+"""
 data_type = "wines"
 classification = "types"
 raw_fn = "../data/raw/previous work/winevectors/"
@@ -976,15 +977,17 @@ cut_first_line = True
 use_all_files =  "../data/raw/previous work/winevectors/"
 entity_name_fn = "../data/"+data_type+"/nnet/spaces/entitynames.txt"
 word_count_amt = 1000
-
 """
-data_type = "placetypes"
-classification = "foursquare"
+
+class_type = "placetypes"
+classification = "all"
 raw_fn = "../data/raw/previous work/placevectors/"
 extension = "photos"
 cut_first_line = False
-entity_name_fn = "../data/"+classification+"/nnet/spaces/entitynames.txt"
-"""
+entity_name_fn = "../data/"+class_type+"/nnet/spaces/entitynames.txt"
+use_all_files = None#""
+word_count_amt = 0
+
 get_all = False
 additional_name = ""
 #make_individual = True
@@ -992,7 +995,7 @@ make_individual = True
 sparse_matrix = False
 print("??")
 
-if  __name__ =='__main__':main(min, max, data_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn, use_all_files,
+if  __name__ =='__main__':main(min, max, class_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn, use_all_files,
                                sparse_matrix, word_count_amt, classification)
 
 

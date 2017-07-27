@@ -339,12 +339,12 @@ def findDifference(string1, string2):
             break
         else:
             index = len(string1)
-    print(string1[index:])
-    print(string2[index:])
-"""
-findDifference("moviesppmirankE200DS[200, 100, 50]DN0.3reluCV1SFT0S0L0200ndcg0.8400IT3000.txt",
-               "moviesppmirankE200DS[200, 100, 50]DN0.3reluCV1SFT0S0L0200ndcg0.9400IT3000.txt")
-"""
+    if len(string1[index:]) < 5:
+        print(string1[index:])
+    if len(string2[index:]) < 5:
+        print(string2[index:])
+
+
 
 
 def write2dCSV(array, name):
@@ -890,24 +890,28 @@ def removeCSVText(filename):
             break
     filename = " ".join(filename)
     return original_fn, filename
-
+"""
+string1 = "places mds 100E2000DS[100]DN0.5CTopencycHAtanhCV5 S2OA sigmoid SFT0 allL050kappa KMeans CA200 MC1 MS0.4 ATS1000 DS400 tdev3RPFT BOC300.csv"
+string2 = "places mds 100E2000DS[100]DN0.5CTopencycHAtanhCV5 S3OA sigmoid SFT0 allL050kappa KMeans CA200 MC1 MS0.4 ATS1000 DS400 tdev3RPFT BOC300.csv"
+og_st1, st1 = removeCSVText(string1)
+og_st2, st2 = removeCSVText(string2)
+findDifference(st1, st2)
+"""
 def getCSVsToAverage(csv_folder_fn,  starting_fn=""):
     fns = getFns(csv_folder_fn)
     fns_to_average = []
     og_st_fn, st_fn = removeCSVText(starting_fn)
+    print(og_st_fn)
     for f in fns:
         if len(st_fn) > 0:
-            og_f, f = removeCSVText(f)
-            if og_st_fn == og_f:
-                print(f)
-                if len(f) == len(st_fn):
-                    print("SUCCESS")
-                else:
-                    print(og_st_fn)
-                    print(len(f), len(og_st_fn), "FAIL")
+            og_f, cut_fn = removeCSVText(f)
+            if st_fn == cut_fn:
+                print(og_f)
+                print(cut_fn)
                 fns_to_average.append(f)
         else:
             fns_to_average.append(f)
+    """
     # Get an array of grouped filenames, where filenames are grouped if they are to be averaged
     # Determine this by checking if the only differentiator is the CSV number
     average_groups = []
@@ -930,7 +934,10 @@ def getCSVsToAverage(csv_folder_fn,  starting_fn=""):
         for i in range(len(g)):
             g[i] = csv_folder_fn + g[i]
         average_fns.append(average_csv(g))
-    return average_fns
+    """
+    for i in range(len(fns_to_average)):
+        fns_to_average[i] = csv_folder_fn + fns_to_average[i]
+    return averageCSVs(fns_to_average)
 
 def stringToArray(string):
     array = string.split()
