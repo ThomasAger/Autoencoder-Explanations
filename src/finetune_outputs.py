@@ -34,37 +34,40 @@ import scipy.sparse as sp
 def writeBagOfClusters(cluster_dict, data_type, lowest_amt, highest_amt, classification):
     bag_of_clusters = []
     names_array = [""] * len(cluster_dict)
+    # Note, prior we used the PPMI values directly here somehow...
+    loc = "../data/"+data_type+"/bow/frequency/phrases/"
     for c in range(len(cluster_dict)):
+        # Remove the colons
         for f in range(len(cluster_dict[c])):
             if ":" in cluster_dict[c][f]:
                 cluster_dict[c][f] = cluster_dict[c][f][:-1]
-        accum_freqs = [0.0] * len(dt.import1dArray("../data/"+data_type+"/bow/ppmi/" + "class-" + cluster_dict[c][0] + "-" + str(lowest_amt) + "-" + str(highest_amt) + "-" + classification))
+        # Add all of the frequences together to make a bag-of-clusters
+        accum_freqs = [0.0] * len(dt.import1dArray(loc + "class-" + cluster_dict[c][0] + "-" + str(lowest_amt) + "-" + str(highest_amt) + "-" + classification))
         counter = 0
+        # For all the cluster terms
         for f in cluster_dict[c]:
             if ":" in f:
                 f = f[:-1]
+            # Create a temp name
             if counter < 20:
                 if counter > 0:
-                    names_array[c] = names_array[c] + f[0]
+                    names_array[c] = "class-temp" + names_array[c] + f[0]
                 else:
-                    names_array[c] = names_array[c] + f
-            class_to_add = dt.import1dArray("../data/"+data_type+"/bow/ppmi/" + "class-" + f + "-" + str(lowest_amt) + "-" + str(highest_amt) + "-" + classification, "f")
+                    names_array[c] = "class-temp" + names_array[c] + f
+            # Import the class
+            class_to_add = dt.import1dArray(loc + "class-" + f + "-" + str(lowest_amt) + "-" + str(highest_amt) + "-" + classification, "f")
             try:
+                # Add the current class to the older one
                 accum_freqs = np.add(accum_freqs, class_to_add)
             except ValueError:
                 print("k")
             counter += 1
+        # Append this clusters frequences to the group of them
         bag_of_clusters.append(accum_freqs)
-    ppmi_fn = "../data/" + data_type + "/bow/ppmi/class-temp-" + str(lowest_amt) + "-" + str(highest_amt) + "-" + classification
-    try:
-        bag_csr = sp.csr_matrix(np.asarray(bag_of_clusters))
-    except ValueError:
-        count = 0
-        for d in bag_of_clusters:
-            if len(d) != 1383:
-                print(cluster_dict[count])
-            count+=1
-        exit()
+    # Obtain the PPMI values for these frequences
+    ppmi_fn = "../data/"+data_type+"/bow/ppmi/" + "class-temp-" + str(lowest_amt) + "-" + str(highest_amt) + "-" + classification
+    bag_csr = sp.csr_matrix(np.asarray(bag_of_clusters))
+
     dt.write2dArray(mt.convertPPMI(bag_csr), ppmi_fn)
     mt.printIndividualFromAll(data_type, "ppmi", lowest_amt, highest_amt, classification, all_fn=ppmi_fn, names_array=names_array)
     return names_array
@@ -78,7 +81,7 @@ def pavPPMI(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type="movi
         return
     else:
         print("Running task", pavPPMI.__name__)
-
+    print("certainly still running that old pavPPMI task, yes sir")
     if limit_entities is False:
         classification = "all"
 
@@ -118,10 +121,10 @@ def bagOfClustersPavPPMI(cluster_names_fn, ranking_fn, file_name, do_p=False, da
     pavPPMI_fn = "../data/" + data_type + "/finetune/boc/" + file_name + ".txt"
     all_fns = [pavPPMI_fn]
     if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
-        print("Skipping task", pavPPMI.__name__)
+        print("Skipping task", bagOfClustersPavPPMI.__name__)
         return
     else:
-        print("Running task", pavPPMI.__name__)
+        print("Running task", bagOfClustersPavPPMI.__name__)
 
     if limit_entities is False:
         classification = "all"

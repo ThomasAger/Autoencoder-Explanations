@@ -945,6 +945,9 @@ def stringToArray(string):
         array[e] = eval(removeEverythingFromString(array[e]))
     return array
 
+def reObtainName(loc, name):
+    print(name)
+
 def chunks(l, n):
     return [l[i:i + n] for i in range(0, len(l), n)]
 import time

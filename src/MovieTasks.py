@@ -939,26 +939,28 @@ make_individual = True
 """
 def main(min, max, data_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn,
          use_all_files, sparse_matrix, word_count_amt, classification):
-
+    """
     getVectors(raw_fn, entity_name_fn, extension, "../data/"+data_type+"/bow/",
            min, max, cut_first_line, get_all, additional_name,  make_individual, classification, use_all_files, 1000, data_type,
                sparse_matrix)
 
     bow = sp.csr_matrix(dt.import2dArray("../data/"+data_type+"/bow/frequency/phrases/class-all-"+str(min)+"-" + str(max)+"-"+classification))
     dt.write2dArray(convertPPMI( bow), "../data/"+data_type+"/bow/ppmi/class-all-"+str(min)+"-"+str(max)+"-" + classification)
-
+        """
     print("indiviual from all")
     printIndividualFromAll(data_type, "ppmi", min, max,  classification)
+    """
     printIndividualFromAll(data_type, "binary/phrases", min, max,  classification)
 
     convertToTfIDF(data_type, min, max, "../data/"+data_type+"/bow/frequency/phrases/class-all-"+str(min)+"-"+str(max)+"-"+classification, classification)
 
     printIndividualFromAll(data_type, "tfidf", min, max,  classification)
+    """
 
 
-min=50
+min=100
 max=10
-"""
+
 class_type = "movies"
 classification = "all"
 raw_fn = "../data/raw/previous work/movievectors/tokens/"
@@ -967,7 +969,7 @@ cut_first_line = True
 entity_name_fn = "../data/raw/previous work/filmIds.txt"
 use_all_files = None#""
 word_count_amt = 0
-"""
+
 """
 data_type = "wines"
 classification = "types"
@@ -978,7 +980,7 @@ use_all_files =  "../data/raw/previous work/winevectors/"
 entity_name_fn = "../data/"+data_type+"/nnet/spaces/entitynames.txt"
 word_count_amt = 1000
 """
-
+"""
 class_type = "placetypes"
 classification = "all"
 raw_fn = "../data/raw/previous work/placevectors/"
@@ -987,7 +989,7 @@ cut_first_line = False
 entity_name_fn = "../data/"+class_type+"/nnet/spaces/entitynames.txt"
 use_all_files = None#""
 word_count_amt = 0
-
+"""
 get_all = False
 additional_name = ""
 #make_individual = True
