@@ -307,7 +307,11 @@ class DecisionTree:
                     fns.append(feature_names[id])
                     features.append(rankings[id])
                     dt_clusters.append(clusters[id])
-        fn_ids = np.unique(fns, return_index=True)[1]
+        if len(fns) != 1:
+            fn_test = np.unique(["".join(map(str, i)) for i in fns], return_index=True)
+            fn_ids = fn_test[1]
+        else:
+            fn_ids = [0]
         final_fns = []
         clusters = list(clusters)
         final_rankings = []
