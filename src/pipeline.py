@@ -578,7 +578,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                     if f > 0:
                                         ranking_fn = nnet_ranking_fn
                                     if average_ppmi:
-                                        file_name = file_name + " APPMI"
+                                        file_name = file_name + " APPMIFi"
                                     elif bag_of_clusters:
                                         file_name = file_name + " BOCFi"
 
@@ -787,7 +787,7 @@ get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 """
 
 data_type = "movies"
-classification_task = ["keywords"]
+classification_task = ["uk-ratings", "us-ratings"]
 file_name = "f200ge"
 lowest_amt = 100
 highest_amt = 10
@@ -796,7 +796,7 @@ init_vector_path = loc+data_type+"/nnet/spaces/films200-genres.txt"
 #file_name = "films200-genres100ndcg0.85200 tdev3004FTL0"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films200-genres.txt"
 vector_path_replacement = loc+data_type+"/nnet/spaces/films200-genres.txt"
-deep_size = [200]
+deep_size = [100]
 
 """"""
 """
@@ -831,7 +831,7 @@ else:
     loss="binary_crossentropy"
     class_weight = None
     nnet_dev = False
-    ep =300
+    ep =1400
     lr = 0.01
 
 """
@@ -894,7 +894,7 @@ repeat_finetune = [1]
 
 
 
-epochs=[300,1000,2000]
+epochs=[300,1000]
 
 """
 sim_t = 0.0#1.0
