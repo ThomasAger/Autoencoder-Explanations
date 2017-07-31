@@ -42,7 +42,9 @@ def writeBagOfClusters(cluster_dict, data_type, lowest_amt, highest_amt, classif
             if ":" in cluster_dict[c][f]:
                 cluster_dict[c][f] = cluster_dict[c][f][:-1]
         # Add all of the frequences together to make a bag-of-clusters
-        accum_freqs = [0.0] * len(dt.import1dArray(loc + "class-" + cluster_dict[c][0] + "-" + str(lowest_amt) + "-" + str(highest_amt) + "-" + classification))
+        p1 = loc + "class-" + cluster_dict[c][0]
+        p2 = "-" + str(lowest_amt) + "-" + str(highest_amt) + "-" + classification
+        accum_freqs = [0.0] * len(dt.import1dArray(p1 + p2 ))
         counter = 0
         # For all the cluster terms
         for f in cluster_dict[c]:

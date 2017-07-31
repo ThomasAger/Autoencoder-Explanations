@@ -174,7 +174,7 @@ def  getVectors(input_folder, file_names_fn, extension, output_folder, only_word
 
         # Import entities specific to the thing
         # Trim the phrases of entities that aren't included in the classfication
-        if classification != "all" and classification != "mixed" and classification != "genres" and classification != "ratings":
+        if classification != "all" and classification != "mixed" and classification != "genres" and classification != "ratings" and classification != "types":
             classification_entities = dt.import1dArray("../data/" + data_type + "/classify/" + classification + "/available_entities.txt")
             all_phrases_complete = dt.match_entities(all_phrases_complete, classification_entities, file_names)
         elif classification == "all":
@@ -360,7 +360,7 @@ def writeClassesFromNames(folder_name, file_names, output_folder):
                 binary_class.append(0)
         dt.write1dArray(binary_class, output_folder + "class-"+str(c)+"")
         class_all.append(binary_class)
-    dt.write2dArray(class_all, output_folder + "class-all")
+    dt.write2dArray(np.asarray(class_all).transpose(), output_folder + "class-all")
     print("Wrote class-all")
 
 def writeFromMultiClass(multi_class_fn, output_folder, entity_names_fn, data_type, classify_name):
@@ -923,10 +923,11 @@ data_type = "wines"
 output_folder = "../data/"+data_type+"/classify/types/"
 folder_name = "../data/raw/previous work/wineclasses/"
 file_names = "../data/"+data_type+"/nnet/spaces/entitynames.txt"
-phrase_names = "../data/"+data_type+"/bow/names/50.txt"
-#writeClassesFromNames(folder_name, file_names, output_folder)
+phrase_names = "../data/"+data_type+"/bow/names/50-10-types.txt"
+writeClassesFromNames(folder_name, file_names, output_folder)
 
 folder_name = "../data/"+data_type+"/bow/binary/phrases/"
+exit()
 """
 #trimRankings("../data/movies/nnet/spaces/films200.txt", "../data/"+data_type+"/classify/genres/available_indexes.txt", phrase_names, folder_name)
 
@@ -944,23 +945,22 @@ make_individual = True
 """
 def main(min, max, data_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn,
          use_all_files, sparse_matrix, word_count_amt, classification):
-    """
+
     getVectors(raw_fn, entity_name_fn, extension, "../data/"+data_type+"/bow/",
            min, max, cut_first_line, get_all, additional_name,  make_individual, classification, use_all_files, 1000, data_type,
                sparse_matrix)
 
     bow = sp.csr_matrix(dt.import2dArray("../data/"+data_type+"/bow/frequency/phrases/class-all-"+str(min)+"-" + str(max)+"-"+classification))
     dt.write2dArray(convertPPMI( bow), "../data/"+data_type+"/bow/ppmi/class-all-"+str(min)+"-"+str(max)+"-" + classification)
-        """
+
     print("indiviual from all")
     printIndividualFromAll(data_type, "ppmi", min, max,  classification)
-    """
+
     printIndividualFromAll(data_type, "binary/phrases", min, max,  classification)
 
     convertToTfIDF(data_type, min, max, "../data/"+data_type+"/bow/frequency/phrases/class-all-"+str(min)+"-"+str(max)+"-"+classification, classification)
 
     printIndividualFromAll(data_type, "tfidf", min, max,  classification)
-    """
 
 
 min=50
@@ -975,14 +975,14 @@ entity_name_fn = "../data/raw/previous work/filmIds.txt"
 use_all_files = None#""
 word_count_amt = 0
 """
-"""
-data_type = "wines"
+
+class_type = "wines"
 classification = "types"
 raw_fn = "../data/raw/previous work/winevectors/"
 extension = ""
 cut_first_line = True
 use_all_files =  "../data/raw/previous work/winevectors/"
-entity_name_fn = "../data/"+data_type+"/nnet/spaces/entitynames.txt"
+entity_name_fn = "../data/"+class_type+"/nnet/spaces/entitynames.txt"
 word_count_amt = 1000
 """
 class_type = "placetypes"
@@ -993,7 +993,7 @@ cut_first_line = False
 entity_name_fn = "../data/"+class_type+"/nnet/spaces/entitynames.txt"
 use_all_files = None#""
 word_count_amt = 0
-
+"""
 get_all = False
 additional_name = ""
 #make_individual = True
