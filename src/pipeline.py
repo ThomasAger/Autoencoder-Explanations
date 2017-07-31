@@ -34,7 +34,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
          use_pruned, max_depth, min_score, min_size, limit_entities_a, svm_classify, get_nnet_vectors_path, arcca, loc, largest_cluster,
          skip_nn, dissim, dissim_amt_a, hp_opt, find_most_similar, use_breakoff_dissim_a, get_all_a, half_ndcg_half_kappa_a,
          sim_t, one_for_all, ft_loss_a, ft_optimizer_a, bag_of_clusters_a, just_output, arrange_name, only_most_similar_a,
-         dont_cluster_a, top_dt_clusters_a, by_class_finetune_a, cluster_duplicates_a, repeat_finetune_a, save_results_so_far):
+         dont_cluster_a, top_dt_clusters_a, by_class_finetune_a, cluster_duplicates_a, repeat_finetune_a, save_results_so_far,
+         finetune_ppmi_a, average_nopav_ppmi_a):
 
 
     prune_val = 2
@@ -69,6 +70,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
             by_class_finetune_a = dt.stringToArray(by_class_finetune_a)[0]
             cluster_duplicates_a = dt.stringToArray(cluster_duplicates_a)[0]
             repeat_finetune_a = dt.stringToArray(repeat_finetune_a)[0]
+            finetune_ppmi_a = dt.stringToArray(finetune_ppmi_a)[0]
+            average_nopav_ppmi_a = dt.stringToArray(average_nopav_ppmi_a)[0]
         else:
             dissim_amt_a = dt.stringToArray(dissim_amt_a)
             breakoff_a = dt.stringToArray(breakoff_a)
@@ -96,6 +99,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
             by_class_finetune_a = dt.stringToArray(by_class_finetune_a)
             cluster_duplicates_a = dt.stringToArray(cluster_duplicates_a)
             repeat_finetune_a = dt.stringToArray(repeat_finetune_a)
+            finetune_ppmi_a = dt.stringToArray(finetune_ppmi_a)
+            average_nopav_ppmi_a = dt.stringToArray(average_nopav_ppmi_a)
 
         ep = int(ep)
         dropout_noise = float(dropout_noise)
@@ -156,6 +161,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
         by_class_finetune_a = [by_class_finetune_a[0]]
         cluster_duplicates_a = [cluster_duplicates_a[0]]
         repeat_finetune_a = [repeat_finetune_a[0]]
+        finetune_ppmi_a = [finetune_ppmi_a[0]]
+        average_nopav_ppmi_a = [average_nopav_ppmi_a[0]]
 
     variables_to_execute = list(product(dissim_amt_a,breakoff_a,score_limit_a, amount_to_start_a,cluster_multiplier_a,
                                    kappa_a,classification_task_a,use_breakoff_dissim_a,get_all_a,half_ndcg_half_kappa_a,
@@ -497,12 +504,12 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                               cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
                                               limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn = clusters_fn,
                                               cluster_duplicates=cluster_duplicates, save_results_so_far=save_results_so_far)
-
+                            """
                             wekatree.DecisionTree(ranking_fn, classification_path, label_names_fn , cluster_dict_fn , file_name,
                                save_details=False, data_type=data_type,split_to_use=splits, pruning=2,
                                               limited_label_fn=limited_label_fn, rewrite_files=rewrite_files,
                                csv_fn=csv_name, cv_splits=cv_splits, limit_entities=limit_entities, vector_names_fn=vector_names_fn, save_results_so_far=save_results_so_far)
-
+                            """
                             variables_to_execute = []
 
                             for d in learn_rate_a:
@@ -512,7 +519,9 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                             for a in is_identity_a:
                                                 for c in amount_of_finetune_a:
                                                     for xa in average_ppmi_a:
-                                                        variables_to_execute.append((d, b, s, a, c, e, xa))
+                                                        for fpa in finetune_ppmi_a:
+                                                            for anpp in average_nopav_ppmi_a:
+                                                                variables_to_execute.append((d, b, s, a, c, e, xa, fpa, anpp))
                             orig_fn = file_name
                             for v in variables_to_execute:
                                 learn_rate = v[0]
@@ -522,6 +531,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                 amount_of_finetune = v[4]
                                 epochs = v[5]
                                 average_ppmi = v[6]
+                                finetune_ppmi = v[7]
+                                average_nopav_ppmi = v[7]
 
                                 if top_dt_clusters:
                                     ranking_fn = loc+ data_type + "/rules/rankings/" + file_name + ".txt"
@@ -572,7 +583,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                 """
                                 # Decision tree
                                 if repeat_finetune > 0:
-                                    file_name = file_name + "RPFT"
+                                    file_name = file_name + "RPFT" + str(repeat_finetune)
 
                                 for f in range(repeat_finetune+1):
                                     if f > 0:
@@ -581,6 +592,11 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                         file_name = file_name + " APPMIFi"
                                     elif bag_of_clusters:
                                         file_name = file_name + " BOCFi"
+                                    elif finetune_ppmi:
+                                        file_name = file_name + " PPMI"
+                                    elif average_nopav_ppmi:
+                                        file_name = file_name + " APPMINP"
+
 
                                     if average_ppmi or not average_ppmi and not bag_of_clusters:
                                         class_path = loc + data_type + "/finetune/" + file_name + ".txt"
@@ -592,6 +608,12 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                 classification=classification, lowest_amt=lowest_amt, limit_entities=limit_entities, highest_amt=highest_count)
                                     elif bag_of_clusters:
                                         fto.bagOfClustersPavPPMI(cluster_dict_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=rewrite_files,
+                                                    classification=classification, lowest_amt=lowest_amt, limit_entities=limit_entities,highest_amt=highest_count)
+                                    elif finetune_ppmi:
+                                        fto.PPMIFT(cluster_dict_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=rewrite_files,
+                                                    classification=classification, lowest_amt=lowest_amt, limit_entities=limit_entities,highest_amt=highest_count)
+                                    elif average_nopav_ppmi:
+                                        fto.avgPPMI(cluster_dict_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=rewrite_files,
                                                     classification=classification, lowest_amt=lowest_amt, limit_entities=limit_entities,highest_amt=highest_count)
                                     else:
                                         fto.pavPPMI(cluster_dict_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=rewrite_files,
@@ -665,7 +687,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                           cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
                                                           limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn=clusters_fn,
                                               cluster_duplicates=cluster_duplicates)
-
+                                        """
                                         wekatree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn,
                                                               cluster_dict_fn, file_name,
                                                               save_details=True, data_type=data_type,
@@ -674,7 +696,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                               csv_fn=csv_name, cv_splits=cv_splits,
                                                               limit_entities=limit_entities,
                                                               vector_names_fn=vector_names_fn)
-
+                                        """
 
                                 current_fn = file_name
 
@@ -757,7 +779,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
     dt.arrangeByScore(np.unique(np.asarray(all_csv_fns)),loc + " " + arrange_name + file_name[:50] + str(len(all_csv_fns)) + ".csv")
     jvm.stop()
 
-arrange_name = "cluster ratings mds"
+arrange_name = "cluster ratings ftppmi"
 
 just_output = True
 arcca = False
@@ -787,8 +809,13 @@ get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 """
 
 data_type = "movies"
-classification_task = ["uk-ratings", "us-ratings"]
-file_name = "f200ge"
+classification_task = ["genres", "keywords", "us-ratings", "uk-ratings"]
+#arrange_name = arrange_name + classification_task[0]
+skip_nn = True
+if skip_nn is False:
+    file_name = "f200ge"
+else:
+    file_name = "films200-genres"
 lowest_amt = 100
 highest_amt = 10
 init_vector_path = loc+data_type+"/nnet/spaces/films200-genres.txt"
@@ -796,7 +823,10 @@ init_vector_path = loc+data_type+"/nnet/spaces/films200-genres.txt"
 #file_name = "films200-genres100ndcg0.85200 tdev3004FTL0"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films200-genres.txt"
 vector_path_replacement = loc+data_type+"/nnet/spaces/films200-genres.txt"
-deep_size = [100]
+if classification_task[0] == "us-ratings":
+    deep_size = [100]
+else:
+    deep_size = [200]
 
 """"""
 """
@@ -831,7 +861,10 @@ else:
     loss="binary_crossentropy"
     class_weight = None
     nnet_dev = False
-    ep =1400
+    if classification_task[0] == "us-ratings":
+        ep = 1400
+    else:
+        ep = 300
     lr = 0.01
 
 """
@@ -871,7 +904,7 @@ dissim = 0.0
 dissim_amt = [400]
 breakoff = [False]
 score_limit = [0.9]
-amount_to_start = [1000, 2000, 3000]
+amount_to_start = [2000]
 cluster_multiplier = [2]#50
 score_type = ["kappa", "ndcg"]
 use_breakoff_dissim = [False]
@@ -884,7 +917,9 @@ dont_cluster = [0]
 save_results_so_far = False
 
 average_ppmi = [False, True]
-bag_of_clusters = [True, True]
+bag_of_clusters = [False, True]
+finetune_ppmi = [False, True]
+average_nopav_ppmi_a = [False, True]
 
 top_dt_clusters = [False]
 by_class_finetune = [False]
@@ -894,7 +929,7 @@ repeat_finetune = [1]
 
 
 
-epochs=[300,1000]
+epochs=[300]
 
 """
 sim_t = 0.0#1.0
@@ -904,12 +939,10 @@ score_limit = [0.0]
 """
 hp_opt = True
 
-dt_dev = True
+dt_dev = False
 svm_classify = False
 rewrite_files = False
 max_depth = 3
-
-skip_nn = False
 
 cross_val = 1
 one_for_all = False
@@ -930,7 +963,7 @@ for c in range(chunk_amt):
                                    min_score, min_size, limit_entities, svm_classify, get_nnet_vectors_path, arcca, largest_cluster,
                  skip_nn, dissim, dissim_amt, hp_opt, find_most_similar, use_breakoff_dissim, get_all, half_ndcg_half_kappa, sim_t,
                  one_for_all, bag_of_clusters, arrange_name, only_most_similar, dont_cluster, top_dt_clusters, by_class_finetune,
-                 cluster_duplicates, repeat_finetune, save_results_so_far]
+                 cluster_duplicates, repeat_finetune, save_results_so_far, finetune_ppmi, average_nopav_ppmi_a]
 
     sys.stdout.write("python pipeline.py ")
     variable_string = "python $SRCPATH/pipeline.py "
@@ -1029,6 +1062,8 @@ if len(args) > 0:
     cluster_duplicates = args[59]
     repeat_finetune = args[60]
     save_results_so_far  = args[61]
+    finetune_ppmi = args[61]
+    average_nopav_ppmi_a = args[62]
 
 
 if  __name__ =='__main__':main(data_type, classification_task, file_name, init_vector_path, hidden_activation,
@@ -1041,4 +1076,4 @@ if  __name__ =='__main__':main(data_type, classification_task, file_name, init_v
                                skip_nn, dissim, dissim_amt, hp_opt, find_most_similar, use_breakoff_dissim, get_all,
                                half_ndcg_half_kappa, sim_t, one_for_all, ft_loss, ft_optimizer, bag_of_clusters, just_output,
                                arrange_name, only_most_similar, dont_cluster, top_dt_clusters, by_class_finetune, cluster_duplicates,
-                               repeat_finetune, save_results_so_far)
+                               repeat_finetune, save_results_so_far, finetune_ppmi, average_nopav_ppmi_a)

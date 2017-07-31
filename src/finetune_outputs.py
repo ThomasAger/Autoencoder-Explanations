@@ -81,6 +81,8 @@ def pavPPMI(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type="movi
 
     for name in names:
         name = name.split()[0]
+        if ":" in name:
+            name = name[:-1]
         frq.append(readPPMI(name, data_type, lowest_amt, highest_amt, classification))
 
     pav_classes = []
@@ -104,6 +106,32 @@ def pavPPMI(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type="movi
     dt.write2dArray(pav_classes, pavPPMI_fn)
     return pav_classes
 
+def PPMIFT(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type="movies", rewrite_files=False,limit_entities=False,
+            classification="genres", lowest_amt=0, highest_amt=2147000000):
+    pavPPMI_fn = "../data/" + data_type + "/finetune/" + file_name + ".txt"
+    all_fns = [pavPPMI_fn]
+    if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
+        print("Skipping task", pavPPMI.__name__)
+        return
+    else:
+        print("Running task", pavPPMI.__name__)
+    print("certainly still running that old pavPPMI task, yes sir")
+    if limit_entities is False:
+        classification = "all"
+
+    ranking = dt.import2dArray(ranking_fn)
+    names = dt.import1dArray(cluster_names_fn)
+    frq = []
+    counter = 0
+
+    for name in names:
+        name = name.split()[0]
+        if ":" in name:
+            name = name[:-1]
+        frq.append(readPPMI(name, data_type, lowest_amt, highest_amt, classification))
+
+    dt.write2dArray(frq, pavPPMI_fn)
+    return frq
 
 def bagOfClustersPavPPMI(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type="movies", rewrite_files=False,limit_entities=False,
             classification="genres", lowest_amt=0, highest_amt=2147000000):
@@ -192,6 +220,44 @@ def pavPPMIAverage(cluster_names_fn, ranking_fn, file_name, do_p=False, data_typ
 
     dt.write2dArray(pav_classes, pavPPMI_fn)
     return pav_classes
+
+def avgPPMI(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type="movies", rewrite_files=False,
+            classification="genres", lowest_amt=0, highest_amt=2147000000, limit_entities=False, save_results_so_far=False):
+    pavPPMI_fn = "../data/" + data_type + "/finetune/" + file_name + ".txt"
+    all_fns = [pavPPMI_fn]
+    if dt.allFnsAlreadyExist(all_fns) and not rewrite_files or save_results_so_far:
+        print("Skipping task", pavPPMI.__name__)
+        return
+    else:
+        print("Running task", pavPPMI.__name__)
+
+    if limit_entities is False:
+        classification = "all"
+
+    ranking = dt.import2dArray(ranking_fn)
+    names = dt.import2dArray(cluster_names_fn, "s")
+
+    for n in range(len(names)):
+        for x in range(len(names[n])):
+            if ":" in names[n][x]:
+                names[n][x] = names[n][x][:-1]
+
+    frq = []
+    counter = 0
+
+    for n in range(len(names)):
+        name_frq = []
+        for name in names[n]:
+            name_frq.append(readPPMI(name, data_type, lowest_amt, highest_amt, classification))
+        avg_frq = []
+        name_frq = np.asarray(name_frq).transpose()
+        for name in name_frq:
+            avg_frq.append(np.average(name))
+        frq.append(np.asarray(avg_frq))
+
+
+    dt.write2dArray(frq, pavPPMI_fn)
+    return frq
 
 def readFreq(name, classification, lowest_amt, highest_amt):
     file = open("../data/movies/bow/frequency/phrases/" + "class-" + name + "-" + str(lowest_amt) + "-" + str(highest_amt) + "-"+classification)

@@ -355,9 +355,12 @@ class DecisionTree:
         recurse(left, right, threshold, features, 0)
         dt.write1dArray(rules_array, "../data/" + data_type + "/rules/text_rules/"+filename+".txt")
         cleaned = jsbeautifier.beautify_file("../data/" + data_type + "/rules/text_rules/"+filename+".txt")
-        file = open("../data/" + data_type + "/rules/text_rules/"+filename+".txt", "w")
-        file.write(cleaned)
-        file.close()
+        try:
+            file = open("../data/" + data_type + "/rules/text_rules/"+filename+".txt", "w")
+            file.write(cleaned)
+            file.close()
+        except OSError:
+            print("Couldn't save")
 
 
 
