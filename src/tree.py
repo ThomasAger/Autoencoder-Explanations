@@ -188,12 +188,62 @@ class DecisionTree:
                                          max_depth=max_depth)
                     rewrite_dot_file = dt.import1dArray(dot_file_fn)
                     new_dot_file = []
+                    max = 3
+                    min = -3
+                    """
+                    for f in original_vectors:
+                        for n in f:
+                            if n > max:
+                                max = n
+                            if n < min:
+                                min = n
+                    """
+                    print(max)
+                    print(min)
+                    boundary = max - min
+                    boundary = boundary / 5
+                    bound_1 = 0 - boundary * 2
+                    bound_2 = 0 - boundary * 1
+                    bound_3 = 0
+                    bound_4 = 0 + boundary
+                    bound_5 = 0 + boundary * 2
                     for s in rewrite_dot_file:
+                        if ":" in s:
+                            s = s.split("<=")
+                            no_num = s[0]
+                            num = s[1]
+                            num = num.split()
+                            end = " ".join(num[:-1])
+                            num_split = num[0].split("\\")
+                            num = num_split[0]
+                            end = num_split[1] + "\\" + end
+                            num = float(num)
+                            level = int(num % boundary)#
+                            replacement = ""
+                            if level <= bound_2:
+                                replacement = "VERY LOW"
+                            elif level <= bound_3:
+                                replacement = "LOW"
+                            elif level <= bound_4:
+                                replacement = "AVERAGE"
+                            elif level <= bound_5:
+                                replacement = "HIGH"
+                            elif level >= bound_5:
+                                replacement = "VERY HIGH"
+                            new_string_a = [no_num, replacement, end]
+                            new_string = " ".join(new_string_a)
+                            new_dot_file.append(new_string)
+                        else:
+                            new_dot_file.append(s)
+
+                        """
                         new_string = s
                         if "->" not in s and "digraph" not in s and "node" not in s and "(...)" not in s and "}" not in s:
                             index = s.index("value")
                             new_string = s[:index] + '"] ;'
                         new_dot_file.append(new_string)
+                        """
+                        #new_dot_file.append(s)
                     dt.write1dArray(new_dot_file, dot_file_fn)
                     graph = pydot.graph_from_dot_file(graph_fn)
 

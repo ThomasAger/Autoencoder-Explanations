@@ -534,7 +534,7 @@ def splitDirections(directions_fn, scores_fn, names_fn, is_gini, amt_high_direct
     return high_direction_names, low_direction_names, high_directions, low_directions
 
 
-def createTermClusters(hv_directions, lv_directions, hv_names, lv_names, amt_of_clusters):
+def createTermClusters(hv_directions, lv_directions, hv_names, lv_names, amt_of_clusters, dont_cluster):
     least_similar_clusters = []
     least_similar_cluster_ids = []
     least_similar_cluster_names = []
@@ -559,53 +559,64 @@ def createTermClusters(hv_directions, lv_directions, hv_names, lv_names, amt_of_
             print(str(i + 1) + "/" + str(amt_of_clusters), "Least Similar Term", hv_names[ti])
 
             # Add remaining high value directions to the low value direction list
+    if dont_cluster == 0:
+        hv_directions = np.asarray(hv_directions)
+        hv_names = np.asarray(hv_names)
 
-    hv_directions = np.asarray(hv_directions)
-    hv_names = np.asarray(hv_names)
+        hv_directions = np.delete(hv_directions, hv_to_delete, 0)
+        hv_names = np.delete(hv_names, hv_to_delete, 0)
 
-    hv_directions = np.delete(hv_directions, hv_to_delete, 0)
-    hv_names = np.delete(hv_names, hv_to_delete, 0)
+        for i in range(len(hv_directions)):
+            lv_directions.insert(0, hv_directions[i])
+            lv_names.insert(0, hv_names[i])
 
-    for i in range(len(hv_directions)):
-        lv_directions.insert(0, hv_directions[i])
-        lv_names.insert(0, hv_names[i])
+        # Initialize dictionaries for printing / visualizing
+        cluster_name_dict = OrderedDict()
+        for c in least_similar_cluster_names:
+            cluster_name_dict[c] = []
 
-    # Initialize dictionaries for printing / visualizing
-    cluster_name_dict = OrderedDict()
-    for c in least_similar_cluster_names:
-        cluster_name_dict[c] = []
+        # For every low value direction, find the high value direction its most similar to and append it to the directions
+        every_cluster_direction = []
+        for i in least_similar_clusters:
+            every_cluster_direction.append([i])
 
-    # For every low value direction, find the high value direction its most similar to and append it to the directions
-    every_cluster_direction = []
-    for i in least_similar_clusters:
-        every_cluster_direction.append([i])
+        # Finding the most similar directions to each cluster_centre
+        # Creating a dictionary of {cluster_centre: [cluster_direction(1), ..., cluster_direction(n)]} pairs
+        for d in range(len(lv_directions)):
+            i = st.getXMostSimilarIndex(lv_directions[d], least_similar_clusters, [], 1)[0]
+            every_cluster_direction[i].append(lv_directions[d])
+            print(str(d + 1) + "/" + str(len(lv_directions)), "Most Similar to", lv_names[d], "Is", least_similar_cluster_names[i])
+            cluster_name_dict[least_similar_cluster_names[i]].append(lv_names[d])
 
-    # Finding the most similar directions to each cluster_centre
-    # Creating a dictionary of {cluster_centre: [cluster_direction(1), ..., cluster_direction(n)]} pairs
-    for d in range(len(lv_directions)):
-        i = st.getXMostSimilarIndex(lv_directions[d], least_similar_clusters, [], 1)[0]
-        every_cluster_direction[i].append(lv_directions[d])
-        print(str(d + 1) + "/" + str(len(lv_directions)), "Most Similar to", lv_names[d], "Is", least_similar_cluster_names[i])
-        cluster_name_dict[least_similar_cluster_names[i]].append(lv_names[d])
+        # Mean of all directions = cluster direction
+        cluster_directions = []
+        for l in range(len(least_similar_clusters)):
+            cluster_directions.append(dt.mean_of_array(every_cluster_direction[l]))
+    else:
+        cluster_name_dict = OrderedDict()
+        for c in least_similar_cluster_names:
+            cluster_name_dict[c] = []
 
-    # Mean of all directions = cluster direction
-    cluster_directions = []
-    for l in range(len(least_similar_clusters)):
-        cluster_directions.append(dt.mean_of_array(every_cluster_direction[l]))
+        # For every low value direction, find the high value direction its most similar to and append it to the directions
+        every_cluster_direction = []
+        for i in least_similar_clusters:
+            every_cluster_direction.append([i])
+        cluster_directions = least_similar_clusters
 
-    return least_similar_clusters, least_similar_cluster_names, cluster_name_dict, cluster_directions
+    return cluster_directions, least_similar_cluster_names, cluster_name_dict, least_similar_clusters
 
 
 
 def getClusters(directions_fn, scores_fn, names_fn, is_gini, amt_high_directions, amt_low_directions, filename,
-                amt_of_clusters, high_threshold, low_threshold, data_type, rewrite_files=False, half_kappa_half_ndcg = ""):
+                amt_of_clusters, high_threshold, low_threshold, data_type, rewrite_files=False, half_kappa_half_ndcg = "",
+                dont_cluster=0):
 
-    cluster_names_fn = "../data/" + data_type + "/cluster/names/" + filename + ".txt"
-    clusters_fn = "../data/" + data_type + "/cluster/clusters/" + filename + ".txt"
+    cluster_names_fn = "../data/" + data_type + "/cluster/first_terms/" + filename + ".txt"
+    clusters_fn = "../data/" + data_type + "/cluster/first_term_clusters/" + filename + ".txt"
     dict_fn = "../data/" + data_type + "/cluster/dict/" + filename + ".txt"
-    cluster_center_fn = "../data/" + data_type + "/cluster/directions/" + filename + ".txt"
+    cluster_directions_fn = "../data/" + data_type + "/cluster/clusters/" + filename + ".txt"
 
-    all_fns = [cluster_names_fn, clusters_fn, dict_fn, cluster_center_fn]
+    all_fns = [cluster_names_fn, clusters_fn, dict_fn, cluster_directions_fn]
     if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
         print("Skipping task", getClusters.__name__)
         return
@@ -617,8 +628,15 @@ def getClusters(directions_fn, scores_fn, names_fn, is_gini, amt_high_directions
                                             names_fn, is_gini,
                                        amt_high_directions, amt_low_directions, high_threshold, low_threshold, half_kappa_half_ndcg)
 
-
-    cluster_center_directions, least_similar_cluster_names, cluster_name_dict, least_similar_clusters = createTermClusters(hd, ld, hdn, ldn, amt_of_clusters)
+    if amt_low_directions != amt_of_clusters:
+        cluster_directions, least_similar_cluster_names, cluster_name_dict, least_similar_clusters = createTermClusters(hd, ld, hdn, ldn, amt_of_clusters, dont_cluster)
+    else:
+        least_similar_clusters = hd
+        cluster_directions = hd
+        least_similar_cluster_names = hdn
+        cluster_name_dict = OrderedDict()
+        for n in hdn:
+            cluster_name_dict[n] = ""
 
     #word_vector_names = nameClustersMedoid(cluster_name_dict)
     additional_text = ""
@@ -640,7 +658,7 @@ def getClusters(directions_fn, scores_fn, names_fn, is_gini, amt_high_directions
     dt.write2dArray(least_similar_clusters, clusters_fn)
     dt.writeArrayDict(cluster_name_dict, dict_fn)
     #dt.write1dArray(word_vector_names, word_vector_names_fn)
-    dt.write2dArray(cluster_center_directions, cluster_center_fn)
+    dt.write2dArray(cluster_directions,cluster_directions_fn)
 
 
 class Cluster:

@@ -51,6 +51,7 @@ class NeuralNetwork:
     fine_tune_weights_fn = None
     finetune_weights = None
     past_weights = None
+    identity_activation = None
 
     def __init__(self,  class_path=None, get_scores=False,  randomize_finetune_weights=False, dropout_noise = None,
                  amount_of_hidden=0,
@@ -64,7 +65,7 @@ class NeuralNetwork:
                  from_ae=True, save_outputs=False, label_names_fn="",
                  rewrite_files=False, cv_splits=1,cutoff_start=0.2, development=False,
                  class_weight=None, csv_fn=None, tune_vals=False, get_nnet_vectors_path=None, classification_name="all",
-                 limit_entities=False, limited_label_fn="", vector_names_fn=""):
+                 limit_entities=False, limited_label_fn="", vector_names_fn="", identity_activation="linear"):
 
         total_file_name = "../data/" + data_type + "/nnet/spaces/" + file_name
         weights_fn = "../data/" + data_type + "/nnet/weights/" + file_name + "L0.txt"
@@ -106,6 +107,7 @@ class NeuralNetwork:
         self.corrupt_finetune_weights = corrupt_finetune_weights
         self.deep_size = deep_size
         self.fine_tune_weights_fn = fine_tune_weights_fn
+        self.identity_activation = identity_activation
 
         print(data_type)
 
@@ -473,7 +475,7 @@ class NeuralNetwork:
         if self.is_identity:
             for a in range(self.amount_of_finetune):
                 print("Identity layer", self.hidden_layer_size, self.hidden_layer_size, self.hidden_activation)
-                model.add(Dense(output_dim=self.hidden_layer_size, input_dim=self.hidden_layer_size, activation="linear",
+                model.add(Dense(output_dim=self.hidden_layer_size, input_dim=self.hidden_layer_size, activation=self.identity_activation,
                       init="identity"))
 
         if self.randomize_finetune_weights:

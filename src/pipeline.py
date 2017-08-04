@@ -35,7 +35,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
          skip_nn, dissim, dissim_amt_a, hp_opt, find_most_similar, use_breakoff_dissim_a, get_all_a, half_ndcg_half_kappa_a,
          sim_t, one_for_all, ft_loss_a, ft_optimizer_a, bag_of_clusters_a, just_output, arrange_name, only_most_similar_a,
          dont_cluster_a, top_dt_clusters_a, by_class_finetune_a, cluster_duplicates_a, repeat_finetune_a, save_results_so_far,
-         finetune_ppmi_a, average_nopav_ppmi_a):
+         finetune_ppmi_a, average_nopav_ppmi_a, boc_average_a, identity_activation_a):
 
 
     prune_val = 2
@@ -72,6 +72,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
             repeat_finetune_a = dt.stringToArray(repeat_finetune_a)[0]
             finetune_ppmi_a = dt.stringToArray(finetune_ppmi_a)[0]
             average_nopav_ppmi_a = dt.stringToArray(average_nopav_ppmi_a)[0]
+            boc_average_a = dt.stringToArray(boc_average_a)[0]
+            identity_activation_a = dt.stringToArray(identity_activation_a)[0]
         else:
             dissim_amt_a = dt.stringToArray(dissim_amt_a)
             breakoff_a = dt.stringToArray(breakoff_a)
@@ -101,6 +103,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
             repeat_finetune_a = dt.stringToArray(repeat_finetune_a)
             finetune_ppmi_a = dt.stringToArray(finetune_ppmi_a)
             average_nopav_ppmi_a = dt.stringToArray(average_nopav_ppmi_a)
+            boc_average_a = dt.stringToArray(boc_average_a)
+            identity_activation_a = dt.stringToArray(identity_activation_a)
 
         ep = int(ep)
         dropout_noise = float(dropout_noise)
@@ -163,10 +167,12 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
         repeat_finetune_a = [repeat_finetune_a[0]]
         finetune_ppmi_a = [finetune_ppmi_a[0]]
         average_nopav_ppmi_a = [average_nopav_ppmi_a[0]]
+        boc_average_a = [boc_average_a[0]]
+        identity_activation_a = [identity_activation_a[0]]
 
     variables_to_execute = list(product(dissim_amt_a,breakoff_a,score_limit_a, amount_to_start_a,cluster_multiplier_a,
                                    kappa_a,classification_task_a,use_breakoff_dissim_a,get_all_a,half_ndcg_half_kappa_a,
-                                   limit_entities_a,bag_of_clusters_a,add_all_terms_a,only_most_similar_a,dont_cluster_a,
+                                   limit_entities_a,add_all_terms_a,only_most_similar_a,dont_cluster_a,
                                    top_dt_clusters_a,by_class_finetune_a, cluster_duplicates_a, repeat_finetune_a))
     all_csv_fns = []
     original_fn = []
@@ -183,14 +189,13 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
         get_all = vt[8]
         half_ndcg_half_kappa = vt[9]
         limit_entities = vt[10]
-        bag_of_clusters = vt[11]
-        add_all_terms = vt[12]
-        only_most_similar = vt[13]
-        dont_cluster = vt[14]
-        top_dt_clusters = vt[15]
-        by_class_finetune = vt[16]
-        cluster_duplicates = vt[17]
-        repeat_finetune = vt[18]
+        add_all_terms = vt[11]
+        only_most_similar = vt[12]
+        dont_cluster = vt[13]
+        top_dt_clusters = vt[14]
+        by_class_finetune = vt[15]
+        cluster_duplicates = vt[16]
+        repeat_finetune = vt[17]
         class_task_index = 0
 
         for c in range(len(classification_task_a)):
@@ -432,6 +437,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                 dissim_amt = 0
                                 cluster_multiplier = 2000000
                             file_name = file_name + " CA" +  str(cluster_amt)
+                            dissim_amt = cluster_amt * 2
                             file_name = file_name + " MC" + str(min_size) + " MS" + str(min_score)
                             names_fn = property_names_fn
                             file_name = file_name + " ATS" + str(amount_to_start) + " DS" + str(dissim_amt)
@@ -446,11 +452,12 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                 add_all_terms = add_all_terms
                                 clusters_fn = loc + data_type + "/cluster/hierarchy_directions/" + file_name + ".txt"
                                 cluster_dict_fn = loc + data_type + "/cluster/hierarchy_names/" + file_name + ".txt"
+                                cluster_names_fn = cluster_dict_fn
                             else:
                                 high_threshold = 0.5
                                 low_threshold = 0.1
                                 clusters_fn = loc + data_type + "/cluster/clusters/" + file_name + ".txt"
-                                cluster_names_fn = loc + data_type + "/cluster/names/" + file_name + ".txt"
+                                cluster_names_fn = loc + data_type + "/cluster/dict/" + file_name + ".txt"
                                 cluster_dict_fn = loc + data_type + "/cluster/dict/" + file_name + ".txt"
 
                             if breakoff:
@@ -464,13 +471,13 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                          dont_cluster=dont_cluster)
                             else:
                                 cluster.getClusters(directions_fn, scores_fn, names_fn, False, dissim_amt, amount_to_start, file_name, cluster_amt,
-                                                    dissim, min_score, data_type, rewrite_files=rewrite_files,
-                                                         half_kappa_half_ndcg=half_ndcg_half_kappa)
+                                                    dissim, min_score, data_type, rewrite_files=True,
+                                                         half_kappa_half_ndcg=half_ndcg_half_kappa, dont_cluster=dont_cluster)
 
                             ranking_fn = loc + data_type + "/rank/numeric/" + file_name + ".txt"
 
                             rank.getAllRankings(clusters_fn, vector_path, cluster_names_fn , vector_names_fn, 0.2, 1, False, file_name,
-                                                False, data_type=data_type, rewrite_files=rewrite_files)
+                                                False, data_type=data_type, rewrite_files=True)
                             if skip_nn:
                                 file_name = file_name + " " + classification_task
 
@@ -493,14 +500,14 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                             file_name = file_name + str(max_depth)
                             tree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_dict_fn, file_name, 10000,
                                       max_depth=max_depth, balance="balanced", criterion="entropy", save_details=True, cv_splits=cv_splits, split_to_use=splits,
-                                      data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files, development=dt_dev, limit_entities=limit_entities,
+                                      data_type=data_type, csv_fn=csv_name, rewrite_files=True, development=dt_dev, limit_entities=limit_entities,
                                               limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn = clusters_fn,
                                               cluster_duplicates = cluster_duplicates, save_results_so_far=save_results_so_far)
 
 
                             tree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_dict_fn, file_name + "None", 10000,
                                                   max_depth=None, balance="balanced", criterion="entropy", save_details=False,
-                                              data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
+                                              data_type=data_type, csv_fn=csv_name, rewrite_files=True,
                                               cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
                                               limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn = clusters_fn,
                                               cluster_duplicates=cluster_duplicates, save_results_so_far=save_results_so_far)
@@ -521,7 +528,10 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                     for xa in average_ppmi_a:
                                                         for fpa in finetune_ppmi_a:
                                                             for anpp in average_nopav_ppmi_a:
-                                                                variables_to_execute.append((d, b, s, a, c, e, xa, fpa, anpp))
+                                                                for cak in boc_average_a:
+                                                                    for ida in identity_activation_a:
+                                                                        variables_to_execute.append((d, b, s, a, c, e, xa, fpa, anpp,
+                                                                                             cak, ida))
                             orig_fn = file_name
                             for v in variables_to_execute:
                                 learn_rate = v[0]
@@ -532,13 +542,16 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                 epochs = v[5]
                                 average_ppmi = v[6]
                                 finetune_ppmi = v[7]
-                                average_nopav_ppmi = v[7]
+                                average_nopav_ppmi = v[8]
+                                boc_average = v[9]
+                                identity_activation = v[10]
 
                                 if top_dt_clusters:
                                     ranking_fn = loc+ data_type + "/rules/rankings/" + file_name + ".txt"
                                     cluster_names_fn = loc+ data_type + "/rules/names/" + file_name + ".txt"
                                     clusters_fn = loc+ data_type + "/rules/clusters/" + file_name + ".txt"
                                     file_name = file_name + " TOPDT"
+
 
                                 classes = dt.import1dArray(label_names_fn)
                                 current_fn = file_name
@@ -551,13 +564,13 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                         class_c_fn = loc+ data_type + "/rules/clusters/" + file_name + ".txt"
                                         class_n_fn = loc+ data_type + "/rules/names/" + file_name + ".txt"
                                         rank.getAllRankings(class_c_fn, vector_path, class_n_fn , vector_names_fn, 0.2, 1, False, file_name,
-                                                            False, data_type=data_type, rewrite_files=rewrite_files)
+                                                            False, data_type=data_type, rewrite_files=True)
                                         class_rank_fn = loc+ data_type + "/rank/numeric/" + file_name + ".txt"
                                         class_p_fn = loc + data_type + "/classify/" +  classification_task + "/class-" + c
                                         svm.createSVM(class_rank_fn, class_p_fn, class_n_fn, file_name, lowest_count=lowest_amt,
                                                   highest_count=highest_count, data_type=data_type, get_kappa=False,
                                                   get_f1=True, single_class=True,svm_type=svm_type, getting_directions=False, threads=1,
-                                                  rewrite_files=rewrite_files,
+                                                  rewrite_files=True,
                                                   classification=classification, lowest_amt=lowest_amt, chunk_amt=chunk_amt,
                                                   chunk_id=chunk_id)
 
@@ -585,6 +598,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                 if repeat_finetune > 0:
                                     file_name = file_name + "RPFT" + str(repeat_finetune)
 
+                                file_name = file_name + "FT"
                                 for f in range(repeat_finetune+1):
                                     if f > 0:
                                         ranking_fn = nnet_ranking_fn
@@ -596,31 +610,37 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                         file_name = file_name + " PPMI"
                                     elif average_nopav_ppmi:
                                         file_name = file_name + " APPMINP"
+                                    elif boc_average:
+                                        file_name = file_name + " BOCPPMI"
 
-
-                                    if average_ppmi or not average_ppmi and not bag_of_clusters:
+                                    if average_ppmi or not average_ppmi and not bag_of_clusters and not boc_average:
                                         class_path = loc + data_type + "/finetune/" + file_name + ".txt"
                                     else:
                                         class_path = loc + data_type + "/finetune/boc/" + file_name + ".txt"
 
                                     if average_ppmi:
-                                        fto.pavPPMIAverage(cluster_dict_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=rewrite_files,
+                                        fto.pavPPMIAverage(cluster_dict_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=True,
                                                 classification=classification, lowest_amt=lowest_amt, limit_entities=limit_entities, highest_amt=highest_count)
                                     elif bag_of_clusters:
-                                        fto.bagOfClustersPavPPMI(cluster_dict_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=rewrite_files,
+                                        fto.bagOfClustersPavPPMI(cluster_dict_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=True,
                                                     classification=classification, lowest_amt=lowest_amt, limit_entities=limit_entities,highest_amt=highest_count)
                                     elif finetune_ppmi:
-                                        fto.PPMIFT(cluster_dict_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=rewrite_files,
+                                        fto.PPMIFT(cluster_dict_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=True,
                                                     classification=classification, lowest_amt=lowest_amt, limit_entities=limit_entities,highest_amt=highest_count)
                                     elif average_nopav_ppmi:
-                                        fto.avgPPMI(cluster_dict_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=rewrite_files,
+                                        fto.avgPPMI(cluster_dict_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=True,
+                                                    classification=classification, lowest_amt=lowest_amt, limit_entities=limit_entities,highest_amt=highest_count)
+                                    elif boc_average:
+                                        fto.bagOfClusters(cluster_dict_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=True,
                                                     classification=classification, lowest_amt=lowest_amt, limit_entities=limit_entities,highest_amt=highest_count)
                                     else:
-                                        fto.pavPPMI(cluster_dict_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=rewrite_files,
+                                        fto.pavPPMI(cluster_dict_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=True,
                                                     classification=classification, lowest_amt=lowest_amt, limit_entities=limit_entities,highest_amt=highest_count)
 
                                     """ FINETUNING """
 
+                                    if identity_activation is not "linear" and amount_of_finetune > 0:
+                                        file_name = file_name + " " + identity_activation
                                     if is_identity:
                                         file_name = file_name + " IT" + str(amount_of_finetune)
 
@@ -645,7 +665,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                     past_model_bias_fn = [loc + data_type + "/nnet/bias/" + new_file_names[x] + ".txt"]
 
                                     """ DECISION TREES FOR NNET RANKINGS """
-                                    nnet_ranking_fn = loc + data_type + "/nnet/clusters/" + file_name + "FT.txt"
+                                    nnet_ranking_fn = loc + data_type + "/nnet/clusters/" + file_name + ".txt"
 
                                     csv_name = loc + data_type + "/rules/tree_csv/" + file_name + ".csv"
                                     if cv_splits == 0:
@@ -654,7 +674,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                         if splits == 0:
                                             original_fn.append(csv_name)
 
-                                    file_name = file_name + "FT"
+
                                     if arcca is False:
                                         if skip_nn:
                                             from_ae = False
@@ -665,10 +685,11 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                     identity_swap=identity_swap, amount_of_finetune=amount_of_finetune,
                                                     hidden_activation=hidden_activation, output_activation=output_activation, epochs=epochs,
                                                     learn_rate=learn_rate, is_identity=is_identity, batch_size=batch_size,
-                                                    past_model_weights_fn=past_model_weights_fn, loss=loss, rewrite_files=rewrite_files,
+                                                    past_model_weights_fn=past_model_weights_fn, loss=loss, rewrite_files=True,
                                                     file_name=file_name, from_ae=from_ae, finetune_size=finetune_size, data_type=data_type,
                                                                get_nnet_vectors_path= get_nnet_vectors_path, limit_entities=True,
-                                                 vector_names_fn=vector_names_fn, classification_name=classification_name)
+                                                 vector_names_fn=vector_names_fn, classification_name=classification_name,
+                                                                 identity_activation=identity_activation)
 
                                         #new_file_names[x] = file_name
 
@@ -676,14 +697,14 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
 
                                         tree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_dict_fn, file_name, 10000,
                                                               max_depth=max_depth, balance="balanced", criterion="entropy", save_details=True,
-                                                          data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
+                                                          data_type=data_type, csv_fn=csv_name, rewrite_files=True,
                                                           cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
                                                           limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn=clusters_fn,
                                               cluster_duplicates=cluster_duplicates)
 
                                         tree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_dict_fn, file_name + "None", 10000,
                                                               max_depth=None, balance="balanced", criterion="entropy", save_details=False,
-                                                          data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
+                                                          data_type=data_type, csv_fn=csv_name, rewrite_files=True,
                                                           cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
                                                           limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn=clusters_fn,
                                               cluster_duplicates=cluster_duplicates)
@@ -779,7 +800,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
     dt.arrangeByScore(np.unique(np.asarray(all_csv_fns)),loc + " " + arrange_name + file_name[:50] + str(len(all_csv_fns)) + ".csv")
     jvm.stop()
 
-arrange_name = "cluster ratings ftppmi"
+arrange_name = "cluster ratings mdsVSnomds"
 
 just_output = True
 arcca = False
@@ -809,7 +830,7 @@ get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 """
 
 data_type = "movies"
-classification_task = ["genres", "keywords", "us-ratings", "uk-ratings"]
+classification_task = ["genres"]
 #arrange_name = arrange_name + classification_task[0]
 skip_nn = True
 if skip_nn is False:
@@ -888,8 +909,8 @@ learn_rate= [ 0.001]
 cutoff_start = 0.2
 
 
-is_identity = [False]
-amount_of_finetune = [1]
+is_identity = [True]
+amount_of_finetune = [0, 1, 2, 3]
 ft_loss = ["mse"]
 ft_optimizer = ["adagrad"]
 min_size = 1
@@ -901,12 +922,12 @@ sim_t = 1.0#1.0
 min_score = 0.4
 largest_cluster = 1
 dissim = 0.0
-dissim_amt = [400]
+dissim_amt = [2]
 breakoff = [False]
 score_limit = [0.9]
 amount_to_start = [2000]
-cluster_multiplier = [2]#50
-score_type = ["kappa", "ndcg"]
+cluster_multiplier = [ 1, 2]#50
+score_type = ["ndcg", "kappa"]
 use_breakoff_dissim = [False]
 get_all = [False]
 half_ndcg_half_kappa = [False]
@@ -916,17 +937,19 @@ only_most_similar = [True]
 dont_cluster = [0]
 save_results_so_far = False
 
+
 average_ppmi = [False, True]
-bag_of_clusters = [False, True]
+bag_of_clusters = [ True, False]
 finetune_ppmi = [False, True]
 average_nopav_ppmi_a = [False, True]
+boc_average = [False, True]
+identity_activation = ["linear", "tanh"]
 
 top_dt_clusters = [False]
 by_class_finetune = [False]
 use_pruned = False
 cluster_duplicates = [False]
-repeat_finetune = [1]
-
+repeat_finetune = [0]
 
 
 epochs=[300]
@@ -963,7 +986,8 @@ for c in range(chunk_amt):
                                    min_score, min_size, limit_entities, svm_classify, get_nnet_vectors_path, arcca, largest_cluster,
                  skip_nn, dissim, dissim_amt, hp_opt, find_most_similar, use_breakoff_dissim, get_all, half_ndcg_half_kappa, sim_t,
                  one_for_all, bag_of_clusters, arrange_name, only_most_similar, dont_cluster, top_dt_clusters, by_class_finetune,
-                 cluster_duplicates, repeat_finetune, save_results_so_far, finetune_ppmi, average_nopav_ppmi_a]
+                 cluster_duplicates, repeat_finetune, save_results_so_far, finetune_ppmi, average_nopav_ppmi_a, boc_average,
+                 identity_activation]
 
     sys.stdout.write("python pipeline.py ")
     variable_string = "python $SRCPATH/pipeline.py "
@@ -1062,8 +1086,10 @@ if len(args) > 0:
     cluster_duplicates = args[59]
     repeat_finetune = args[60]
     save_results_so_far  = args[61]
-    finetune_ppmi = args[61]
-    average_nopav_ppmi_a = args[62]
+    finetune_ppmi = args[62]
+    average_nopav_ppmi_a = args[63]
+    boc_average = args[64]
+    identity_activation = args[65]
 
 
 if  __name__ =='__main__':main(data_type, classification_task, file_name, init_vector_path, hidden_activation,
@@ -1076,4 +1102,4 @@ if  __name__ =='__main__':main(data_type, classification_task, file_name, init_v
                                skip_nn, dissim, dissim_amt, hp_opt, find_most_similar, use_breakoff_dissim, get_all,
                                half_ndcg_half_kappa, sim_t, one_for_all, ft_loss, ft_optimizer, bag_of_clusters, just_output,
                                arrange_name, only_most_similar, dont_cluster, top_dt_clusters, by_class_finetune, cluster_duplicates,
-                               repeat_finetune, save_results_so_far, finetune_ppmi, average_nopav_ppmi_a)
+                               repeat_finetune, save_results_so_far, finetune_ppmi, average_nopav_ppmi_a, boc_average, identity_activation)
