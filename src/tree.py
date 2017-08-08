@@ -12,7 +12,7 @@ from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import cross_val_predict
 from sklearn.model_selection import KFold
 import random
-
+from sklearn.externals import joblib
 class DecisionTree:
     clf = None
     def __init__(self, features_fn, classes_fn,  class_names_fn, cluster_names_fn, filename,
@@ -21,13 +21,13 @@ class DecisionTree:
                  limit_entities=False, limited_label_fn=None, vector_names_fn=None, clusters_fn="", cluster_duplicates=False,
                  save_results_so_far=False):
 
+        label_names = dt.import1dArray(class_names_fn)
 
         all_fns = []
         file_names = ['ACC ' + filename, 'F1 ' + filename]
         acc_fn = '../data/' + data_type + '/rules/tree_scores/' + file_names[0] + '.scores'
         prediction_fn = '../data/' + data_type + '/rules/tree_output/' + filename + '.scores'
         f1_fn = '../data/' + data_type + '/rules/tree_scores/' + file_names[1] + '.scores'
-
         all_top_names_fn = "../data/"+data_type+"/rules/names/" + filename + ".txt"
         all_top_rankings_fn = "../data/"+data_type+"/rules/rankings/" + filename + ".txt"
         all_top_clusters_fn = "../data/"+data_type+"/rules/clusters/" + filename + ".txt"
@@ -38,6 +38,12 @@ class DecisionTree:
             all_fns.append(all_top_names_fn)
             all_fns.append(all_top_rankings_fn)
             all_fns.append(all_top_clusters_fn)
+
+        if save_details:
+            orig_dot_file_fn = '../data/' + data_type + '/rules/tree_data/' + label_names[0] + " " + filename  + 'orig.txt'
+            all_fns.append(orig_dot_file_fn)
+            model_name_fn = "../data/" + data_type + "/rules/tree_model/" + label_names[0] + " " + filename + ".model"
+            all_fns.append(model_name_fn)
 
         if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
             print("Skipping task", "DecisionTree")
@@ -57,7 +63,6 @@ class DecisionTree:
 
         print("vectors", len(vectors), len(vectors[0]))
         cluster_names = dt.import2dArray(cluster_names_fn, "s")
-        label_names = dt.import1dArray(class_names_fn)
         clusters = dt.import2dArray(clusters_fn, "f")
         original_vectors = vectors
         if limit_entities is False:
@@ -89,7 +94,6 @@ class DecisionTree:
 
         all_y_test = []
         all_predictions = []
-
         for l in range(len(labels)):
             """
             pipeline = Pipeline([('clf', tree.DecisionTreeClassifier(criterion=criterion, random_state=20000, class_weight=balance))])
@@ -153,8 +157,13 @@ class DecisionTree:
                 ac_y_test = ac_y_dev
 
             for splits in range(len(ac_y_test)):
-                clf = tree.DecisionTreeClassifier(max_depth=max_depth, criterion=criterion, class_weight=balance)
-                clf.fit(ac_x_train[splits], ac_y_train[splits])
+                model_name_fn = "../data/" + data_type + "/rules/tree_model/" + label_names[l] + " " + filename + ".model"
+                if dt.fileExists(model_name_fn):
+                    clf = joblib.load(model_name_fn)
+                else:
+                    clf = tree.DecisionTreeClassifier(max_depth=max_depth, criterion=criterion, class_weight=balance)
+                    clf.fit(ac_x_train[splits], ac_y_train[splits])
+                    joblib.dump(clf, model_name_fn)
                 predictions.append(clf.predict(ac_x_test[splits]))
 
             for i in range(len(predictions)):
@@ -171,9 +180,10 @@ class DecisionTree:
 
                 # Export a tree for each label predicted by the clf
                 if save_details:
-                    dot_file_fn = '../data/' + data_type + '/rules/tree_data/' + label_names[l] + " " + filename + "CV" + str(i) + '.txt'
-                    graph_fn = '../data/' + data_type + '/rules/tree_data/' + label_names[l] + " " + filename + "CV" + str(i) + '.txt'
-                    graph_png_fn = '../data/' + data_type + '/rules/tree_images/' + label_names[l] + " " + filename + "CV" + str(i) + '.png'
+                    orig_dot_file_fn = '../data/' + data_type + '/rules/tree_data/' + label_names[l] + " " + filename  + 'orig.txt'
+                    new_dot_file_fn = '../data/' + data_type + '/rules/tree_data/' + label_names[l] + " " + filename  + '.txt'
+                    orig_graph_png_fn = '../data/' + data_type + '/rules/tree_images/' + label_names[l] + " " + filename + 'orig.png'
+                    new_graph_png_fn = '../data/' + data_type + '/rules/tree_images/' + label_names[l] + " " + filename + '.png'
                     output_names = []
                     for c in cluster_names:
                         line = ""
@@ -184,9 +194,9 @@ class DecisionTree:
                             if counter == 4:
                                 break
                         output_names.append(line)
-                    tree.export_graphviz(clf, feature_names=output_names, class_names=class_names, out_file=dot_file_fn,
+                    tree.export_graphviz(clf, feature_names=output_names, class_names=class_names, out_file=orig_dot_file_fn,
                                          max_depth=max_depth)
-                    rewrite_dot_file = dt.import1dArray(dot_file_fn)
+                    rewrite_dot_file = dt.import1dArray(orig_dot_file_fn)
                     new_dot_file = []
                     max = 3
                     min = -3
@@ -216,19 +226,18 @@ class DecisionTree:
                             end = " ".join(num[:-1])
                             num_split = num[0].split("\\")
                             num = num_split[0]
-                            end = num_split[1] + "\\" + end
+                            end = end[len(num):]
                             num = float(num)
-                            level = int(num % boundary)#
                             replacement = ""
-                            if level <= bound_2:
+                            if num <= bound_2:
                                 replacement = "VERY LOW"
-                            elif level <= bound_3:
-                                replacement = "LOW"
-                            elif level <= bound_4:
-                                replacement = "AVERAGE"
-                            elif level <= bound_5:
-                                replacement = "HIGH"
-                            elif level >= bound_5:
+                            elif num <= bound_3:
+                                replacement = "VERY LOW - LOW"
+                            elif num <= bound_4:
+                                replacement = "VERY LOW - AVERAGE"
+                            elif num <= bound_5:
+                                replacement = "VERY LOW - HIGH"
+                            elif num >= bound_5:
                                 replacement = "VERY HIGH"
                             new_string_a = [no_num, replacement, end]
                             new_string = " ".join(new_string_a)
@@ -244,14 +253,17 @@ class DecisionTree:
                         new_dot_file.append(new_string)
                         """
                         #new_dot_file.append(s)
-                    dt.write1dArray(new_dot_file, dot_file_fn)
-                    graph = pydot.graph_from_dot_file(graph_fn)
-
+                    dt.write1dArray(new_dot_file, new_dot_file_fn)
+                    orig_graph = pydot.graph_from_dot_file(orig_dot_file_fn)
+                    new_graph = pydot.graph_from_dot_file(new_dot_file_fn)
                     try:
-                        graph.write_png(graph_png_fn)
+                        orig_graph.write_png(orig_graph_png_fn)
+                        new_graph.write_png(new_graph_png_fn)
                     except FileNotFoundError:
-                        graph_png_fn = "//?/" + graph_png_fn
-                        graph.write_png(graph_png_fn)
+                        orig_graph_png_fn = "//?/" + orig_graph_png_fn
+                        orig_graph.write_png(orig_graph_png_fn)
+                        new_graph_png_fn = "//?/" + new_graph_png_fn
+                        new_graph.write_png(new_graph_png_fn)
                     self.get_code(clf, output_names, class_names, label_names[l] + " " + filename, data_type)
                     dt_clusters, features, fns, inds = self.getNodesToDepth(clf, original_vectors, cluster_names, clusters)
                     print(filename+label_names[l])
