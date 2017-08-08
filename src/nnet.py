@@ -136,12 +136,6 @@ class NeuralNetwork:
         print("Imported classes", len(entity_classes), len(entity_classes[0]))
 
 
-        if fine_tune_weights_fn is None:
-            vector_names = dt.import1dArray(vector_names_fn)
-            limited_labels = dt.import1dArray(limited_label_fn)
-            entity_vectors = np.asarray(dt.match_entities(entity_vectors, limited_labels, vector_names))
-
-
         if fine_tune_weights_fn is not None:
             if len(entity_vectors) != len(entity_classes):
                 entity_classes = entity_classes.transpose()
@@ -155,6 +149,12 @@ class NeuralNetwork:
         elif len(entity_vectors) != len(entity_classes):
             entity_vectors = entity_vectors.transpose()
             print("Transposed vectors, now in form", len(entity_vectors), len(entity_vectors[0]))
+
+
+        if fine_tune_weights_fn is None:
+            vector_names = dt.import1dArray(vector_names_fn)
+            limited_labels = dt.import1dArray(limited_label_fn)
+            entity_vectors = np.asarray(dt.match_entities(entity_vectors, limited_labels, vector_names))
 
         self.input_size = len(entity_vectors[0])
         self.output_size = len(entity_classes[0])
