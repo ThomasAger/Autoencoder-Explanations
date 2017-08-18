@@ -517,23 +517,16 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                               limited_label_fn=limited_label_fn, rewrite_files=rewrite_files,
                                csv_fn=csv_name, cv_splits=cv_splits, limit_entities=limit_entities, vector_names_fn=vector_names_fn, save_results_so_far=save_results_so_far)
                             """
-                            variables_to_execute = []
+                            variables_to_execute_a = []
 
-                            for d in learn_rate_a:
-                                for e in epochs_a:
-                                    for b in ft_loss_a:
-                                        for s in ft_optimizer_a:
-                                            for a in is_identity_a:
-                                                for c in amount_of_finetune_a:
-                                                    for xa in average_ppmi_a:
-                                                        for fpa in finetune_ppmi_a:
-                                                            for anpp in average_nopav_ppmi_a:
-                                                                for cak in boc_average_a:
-                                                                    for ida in identity_activation_a:
-                                                                        variables_to_execute.append((d, b, s, a, c, e, xa, fpa, anpp,
-                                                                                             cak, ida))
+                            variables_to_execute_a = list(
+                                product(learn_rate_a, ft_loss_a, ft_optimizer_a, is_identity_a,
+                                        amount_of_finetune_a,
+                                        epochs_a, average_ppmi_a, finetune_ppmi_a, average_nopav_ppmi_a,
+                                        boc_average_a, bag_of_clusters_a,
+                                        identity_activation_a))
                             orig_fn = file_name
-                            for v in variables_to_execute:
+                            for v in variables_to_execute_a:
                                 learn_rate = v[0]
                                 ft_loss = v[1]
                                 ft_optimizer = v[2]
@@ -544,7 +537,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                 finetune_ppmi = v[7]
                                 average_nopav_ppmi = v[8]
                                 boc_average = v[9]
-                                identity_activation = v[10]
+                                bag_of_clusters = v[10]
+                                identity_activation = v[11]
 
                                 if top_dt_clusters:
                                     ranking_fn = loc+ data_type + "/rules/rankings/" + file_name + ".txt"
@@ -604,19 +598,20 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                         ranking_fn = nnet_ranking_fn
                                     if average_ppmi:
                                         file_name = file_name + " APPMIFi"
+                                        class_path = loc + data_type + "/finetune/" + file_name + ".txt"
                                     elif bag_of_clusters:
                                         file_name = file_name + " BOCFi"
+                                        class_path = loc + data_type + "/finetune/boc/" + file_name + ".txt"
                                     elif finetune_ppmi:
                                         file_name = file_name + " PPMI"
+                                        class_path = loc + data_type + "/finetune/" + file_name + ".txt"
                                     elif average_nopav_ppmi:
                                         file_name = file_name + " APPMINP"
+                                        class_path = loc + data_type + "/finetune/" + file_name + ".txt"
                                     elif boc_average:
                                         file_name = file_name + " BOCPPMI"
-
-                                    if average_ppmi or not average_ppmi and not bag_of_clusters and not boc_average:
-                                        class_path = loc + data_type + "/finetune/" + file_name + ".txt"
-                                    else:
                                         class_path = loc + data_type + "/finetune/boc/" + file_name + ".txt"
+
 
                                     if average_ppmi:
                                         fto.pavPPMIAverage(cluster_dict_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=rewrite_files,
@@ -800,7 +795,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
     dt.arrangeByScore(np.unique(np.asarray(all_csv_fns)),loc + " " + arrange_name + file_name[:50] + str(len(all_csv_fns)) + ".csv")
     jvm.stop()
 
-arrange_name = "cluster ratings mdsVSnomds"
+arrange_name = "cluster ratings arcca"
 
 just_output = True
 arcca = False
@@ -828,9 +823,9 @@ init_vector_path = loc+data_type+"/pca/class-all-50-10-alld100"
 vector_path_replacement = loc+data_type+"/pca/class-all-50-10-alld100"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 """
-"""
+
 data_type = "movies"
-classification_task = ["genres"]
+classification_task = ["genres", "keywords", "us-ratings", "uk-ratings"]
 #arrange_name = arrange_name + classification_task[0]
 skip_nn = True
 if skip_nn is False:
@@ -848,9 +843,9 @@ if classification_task[0] == "us-ratings":
     deep_size = [100]
 else:
     deep_size = [200]
-"""
-""""""
 
+""""""
+"""
 data_type = "placetypes"
 classification_task = ["geonames", "foursquare", "opencyc"]
 lowest_amt = 50
@@ -866,7 +861,7 @@ else:
 vector_path_replacement = loc+data_type+"/nnet/spaces/places100.txt"
 get_nnet_vectors_path = loc + data_type + "/nnet/spaces/places100.txt"
 deep_size = [100]
-
+"""
 if classification_task[0] == "geonames" or classification_task[0] == "foursquare":
     hidden_activation = "tanh"
     dropout_noise = 0.5
@@ -890,7 +885,7 @@ else:
     elif classification_task[0] == "opencyc":
         ep = 2000
     else:
-        epc = 300
+        ep = 300
     lr = 0.01
 
 """
@@ -915,7 +910,7 @@ cutoff_start = 0.2
 
 
 is_identity = [True]
-amount_of_finetune = [0, 1, 2, 3]
+amount_of_finetune = [1]
 ft_loss = ["mse"]
 ft_optimizer = ["adagrad"]
 min_size = 1
@@ -931,7 +926,7 @@ dissim_amt = [2]
 breakoff = [False]
 score_limit = [0.9]
 amount_to_start = [2000]
-cluster_multiplier = [ 1, 2]#50
+cluster_multiplier = [ 2]#50
 score_type = ["kappa", "ndcg"]
 use_breakoff_dissim = [False]
 get_all = [False]
@@ -939,16 +934,16 @@ half_ndcg_half_kappa = [False]
 add_all_terms = [False]
 find_most_similar = True#False
 only_most_similar = [True]
-dont_cluster = [2000, 0]
+dont_cluster = [0]
 save_results_so_far = False
 
 
-average_ppmi = [False, True]
-bag_of_clusters = [ True, False]
-finetune_ppmi = [False, True]
-average_nopav_ppmi_a = [False, True]
-boc_average = [False, True]
-identity_activation = ["linear", "tanh"]
+average_ppmi = [False]
+bag_of_clusters = [True]
+finetune_ppmi = [False]
+average_nopav_ppmi_a = [False]
+boc_average = [ False]
+identity_activation = ["linear", "sigmoid","tanh"]
 
 top_dt_clusters = [False]
 by_class_finetune = [False]
@@ -972,12 +967,12 @@ svm_classify = False
 rewrite_files = False
 max_depth = 3
 
-cross_val = 5
+cross_val = 1
 one_for_all = False
 
 
 
-threads=10
+threads=1
 chunk_amt = 0
 chunk_id = 0
 for c in range(chunk_amt):

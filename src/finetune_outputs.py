@@ -278,6 +278,7 @@ def avgPPMI(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type="movi
         for name in name_frq:
             avg_frq.append(np.average(name))
         frq.append(np.asarray(avg_frq))
+        print(n)
 
 
     dt.write2dArray(frq, pavPPMI_fn)
