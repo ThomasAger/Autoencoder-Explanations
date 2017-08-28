@@ -23,6 +23,8 @@ class DecisionTree:
 
         label_names = dt.import1dArray(class_names_fn)
 
+        filename = filename + str(max_depth)
+
         all_fns = []
         file_names = ['ACC ' + filename, 'F1 ' + filename]
         acc_fn = '../data/' + data_type + '/rules/tree_scores/' + file_names[0] + '.scores'
@@ -32,6 +34,9 @@ class DecisionTree:
         all_top_rankings_fn = "../data/"+data_type+"/rules/rankings/" + filename + ".txt"
         all_top_clusters_fn = "../data/"+data_type+"/rules/clusters/" + filename + ".txt"
 
+        fns_name = "../data/" + data_type + "/rules/names/" + filename + label_names[0] + ".txt"
+        features_name = "../data/" + data_type + "/rules/rankings/" + filename + label_names[0] + ".txt"
+        dt_clusters_name = "../data/" + data_type + "/rules/clusters/" + filename + label_names[0] + ".txt"
         all_fns = [acc_fn, f1_fn, prediction_fn, csv_fn]
 
         if max_depth is not None:
@@ -274,9 +279,12 @@ class DecisionTree:
                     self.get_code(clf, output_names, class_names, label_names[l] + " " + filename, data_type)
                     dt_clusters, features, fns, inds = self.getNodesToDepth(clf, original_vectors, cluster_names, clusters)
                     print(filename+label_names[l])
-                    dt.write2dArray(fns, "../data/"+data_type+"/rules/names/"+filename+label_names[l]+".txt")
-                    dt.write2dArray(features, "../data/"+data_type+"/rules/rankings/"+filename+label_names[l]+".txt")
-                    dt.write2dArray(dt_clusters, "../data/"+data_type+"/rules/clusters/"+filename+label_names[l]+".txt")
+                    fns_name = "../data/"+data_type+"/rules/names/"+filename+label_names[l]+".txt"
+                    features_name = "../data/"+data_type+"/rules/rankings/"+filename+label_names[l]+".txt"
+                    dt_clusters_name = "../data/"+data_type+"/rules/clusters/"+filename+label_names[l]+".txt"
+                    dt.write2dArray(fns, fns_name)
+                    dt.write2dArray(features, features_name)
+                    dt.write2dArray(dt_clusters, dt_clusters_name)
                     all_top_rankings.extend(features)
                     all_top_clusters.extend(dt_clusters)
                     all_top_names.extend(fns)

@@ -31,7 +31,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
          breakoff_a, kappa_a, score_limit_a, rewrite_files, cluster_multiplier_a, threads, dropout_noise, learn_rate_a, epochs_a, cross_val, ep,
          output_activation, cs, deep_size, classification, direction_count, lowest_amt, loss, development, add_all_terms_a,
          average_ppmi_a, optimizer_name, class_weight, amount_to_start_a, chunk_amt, chunk_id, lr, vector_path_replacement, dt_dev,
-         use_pruned, max_depth, min_score, min_size, limit_entities_a, svm_classify, get_nnet_vectors_path, arcca, loc, largest_cluster,
+         use_pruned, max_depth_a, min_score, min_size, limit_entities_a, svm_classify, get_nnet_vectors_path, arcca, loc, largest_cluster,
          skip_nn, dissim, dissim_amt_a, hp_opt, find_most_similar, use_breakoff_dissim_a, get_all_a, half_ndcg_half_kappa_a,
          sim_t, one_for_all, ft_loss_a, ft_optimizer_a, bag_of_clusters_a, just_output, arrange_name, only_most_similar_a,
          dont_cluster_a, top_dt_clusters_a, by_class_finetune_a, cluster_duplicates_a, repeat_finetune_a, save_results_so_far,
@@ -77,6 +77,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
             ppmi_only_a = dt.stringToArray(ppmi_only_a)[0]
             boc_only_a = dt.stringToArray(boc_only_a)[0]
             pav_only_a = dt.stringToArray(pav_only_a)[0]
+            max_depth_a = dt.stringToArray(max_depth_a)[0]
         else:
             dissim_amt_a = dt.stringToArray(dissim_amt_a)
             breakoff_a = dt.stringToArray(breakoff_a)
@@ -111,6 +112,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
             ppmi_only_a = dt.stringToArray(ppmi_only_a)
             boc_only_a = dt.stringToArray(boc_only_a)
             pav_only_a = dt.stringToArray(pav_only_a)
+            max_depth_a = dt.stringToArray(max_depth_a)
 
         ep = int(ep)
         dropout_noise = float(dropout_noise)
@@ -178,11 +180,12 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
         ppmi_only_a = [ppmi_only_a[0]]
         boc_only_a = [boc_only_a[0]]
         pav_only_a = [pav_only_a[0]]
+        max_depth_a = [max_depth_a[0]]
 
     variables_to_execute = list(product(dissim_amt_a,breakoff_a,score_limit_a, amount_to_start_a,cluster_multiplier_a,
                                    kappa_a,classification_task_a,use_breakoff_dissim_a,get_all_a,half_ndcg_half_kappa_a,
                                    limit_entities_a,add_all_terms_a,only_most_similar_a,dont_cluster_a,
-                                   top_dt_clusters_a,by_class_finetune_a, cluster_duplicates_a, repeat_finetune_a))
+                                   top_dt_clusters_a,by_class_finetune_a, cluster_duplicates_a, repeat_finetune_a, max_depth_a))
     all_csv_fns = []
     original_fn = []
     for vt in variables_to_execute:
@@ -205,6 +208,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
         by_class_finetune = vt[15]
         cluster_duplicates = vt[16]
         repeat_finetune = vt[17]
+        max_depth = vt[18]
         class_task_index = 0
 
         for c in range(len(classification_task_a)):
@@ -506,7 +510,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
 
                             if cluster_duplicates:
                                 file_name = file_name + " UNIQUE"
-                            file_name = file_name + str(max_depth)
+
                             tree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_dict_fn, file_name, 10000,
                                       max_depth=max_depth, balance="balanced", criterion="entropy", save_details=True, cv_splits=cv_splits, split_to_use=splits,
                                       data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files, development=dt_dev, limit_entities=limit_entities,
@@ -972,7 +976,7 @@ half_ndcg_half_kappa = [False]
 add_all_terms = [False]
 find_most_similar = True#False
 only_most_similar = [True]
-dont_cluster = [0, 2000]
+dont_cluster = [0]
 save_results_so_far = False
 
 ppmi_only = [0] #amt of ppmi to test
@@ -1004,10 +1008,10 @@ score_limit = [0.0]
 """
 hp_opt = True
 
-dt_dev = True
+dt_dev = False
 svm_classify = False
 rewrite_files = False
-max_depth = 3
+max_depth = [3]
 
 cross_val = 1
 one_for_all = False
