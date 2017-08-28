@@ -31,7 +31,7 @@ def readPPMI(name, data_type, lowest_amt, highest_amt, classification):
 import MovieTasks as mt
 import scipy.sparse as sp
 
-def writeBagOfClusters(cluster_dict, data_type, lowest_amt, highest_amt, classification):
+def writeBagOfClusters(cluster_dict, data_type, lowest_amt, highest_amt, classification, fn):
     bag_of_clusters = []
     # Note, prior we used the PPMI values directly here somehow...
     loc = "../data/"+data_type+"/bow/frequency/phrases/"
@@ -60,8 +60,9 @@ def writeBagOfClusters(cluster_dict, data_type, lowest_amt, highest_amt, classif
     # Obtain the PPMI values for these frequences
     ppmi_fn = "../data/"+data_type+"/bow/ppmi/" + "class-" + final_fn + str(lowest_amt) + "-" + str(highest_amt) + "-" + classification
     bag_csr = sp.csr_matrix(np.asarray(bag_of_clusters))
-
-    return mt.convertPPMI(bag_csr)
+    ppmi_csr = mt.convertPPMI(bag_csr)
+    dt.write2dArray(ppmi_csr, "../data/" + data_type + "/bow/ppmi/" + fn + ".txt")
+    return ppmi_csr
 
 def pavPPMI(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type="movies", rewrite_files=False,limit_entities=False,
             classification="genres", lowest_amt=0, highest_amt=2147000000):
@@ -138,7 +139,8 @@ def PPMIFT(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type="movie
 def bagOfClustersPavPPMI(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type="movies", rewrite_files=False,limit_entities=False,
             classification="genres", lowest_amt=0, highest_amt=2147000000):
     pavPPMI_fn = "../data/" + data_type + "/finetune/boc/" + file_name + ".txt"
-    all_fns = [pavPPMI_fn]
+    new_fn = "../data/" + data_type + "/bow/ppmi/" + file_name + ".txt"
+    all_fns = [pavPPMI_fn, new_fn]
     if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
         print("Skipping task", bagOfClustersPavPPMI.__name__)
         return
@@ -151,7 +153,7 @@ def bagOfClustersPavPPMI(cluster_names_fn, ranking_fn, file_name, do_p=False, da
     ranking = dt.import2dArray(ranking_fn)
     names = dt.import2dArray(cluster_names_fn, "s")
 
-    frq = writeBagOfClusters(names, data_type, lowest_amt, highest_amt, classification)
+    frq = writeBagOfClusters(names, data_type, lowest_amt, highest_amt, classification, file_name)
 
 
 

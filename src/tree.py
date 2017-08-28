@@ -41,9 +41,9 @@ class DecisionTree:
 
         if save_details:
             orig_dot_file_fn = '../data/' + data_type + '/rules/tree_data/' + label_names[0] + " " + filename  + 'orig.txt'
-            all_fns.append(orig_dot_file_fn)
+           # all_fns.append(orig_dot_file_fn)
             model_name_fn = "../data/" + data_type + "/rules/tree_model/" + label_names[0] + " " + filename + ".model"
-            all_fns.append(model_name_fn)
+            #all_fns.append(model_name_fn)
 
         if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
             print("Skipping task", "DecisionTree")
@@ -242,6 +242,12 @@ class DecisionTree:
                             new_string_a = [no_num, replacement, end]
                             new_string = " ".join(new_string_a)
                             new_dot_file.append(new_string)
+                            if "]" in new_string:
+                                if '"' not in new_string[len(new_string)-10:]:
+                                    for c in range(len(new_string)):
+                                        if new_string[c+1] == "]":
+                                            new_string = new_string[:c] + '"' + new_string[c:]
+                                            break
                         else:
                             new_dot_file.append(s)
 
@@ -264,6 +270,7 @@ class DecisionTree:
                         orig_graph.write_png(orig_graph_png_fn)
                         new_graph_png_fn = "//?/" + new_graph_png_fn
                         new_graph.write_png(new_graph_png_fn)
+
                     self.get_code(clf, output_names, class_names, label_names[l] + " " + filename, data_type)
                     dt_clusters, features, fns, inds = self.getNodesToDepth(clf, original_vectors, cluster_names, clusters)
                     print(filename+label_names[l])

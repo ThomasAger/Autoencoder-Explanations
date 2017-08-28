@@ -457,8 +457,7 @@ class NeuralNetwork:
             print("Identity swapped layer", self.input_size, self.hidden_layer_size, self.hidden_activation)
             for a in range(self.amount_of_finetune):
                 model.add(Dense(output_dim=self.hidden_layer_size, input_dim=self.input_size,
-                                     activation=self.hidden_activation,
-                                     init="identity"))
+                                     activation=self.hidden_activation, init = self.layer_init))
 
         finetune_size = len(self.fine_tune_weights[0][0])
         if self.from_ae:

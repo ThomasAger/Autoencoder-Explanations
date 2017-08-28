@@ -477,6 +477,20 @@ def nameClustersRemoveOutliersWeightDistance(cluster_directions):
     return words
 
 # Splitting into high and low directions based on threshold
+def makePPMI(names_fn, scores_fn, amt, data_type, ppmi_fn, name_fn):
+    scores = np.asarray(dt.import1dArray(scores_fn, "f"))
+    names = np.asarray(dt.import1dArray(names_fn))
+
+    names = names[np.flipud(np.argsort(scores))][:amt]
+    if dt.allFnsAlreadyExist([ppmi_fn, name_fn]) is False:
+        ppmi_file = []
+        for name in names:
+            ppmi_file.append(dt.import1dArray("../data/"+data_type+"/bow/ppmi/" + "class-" + name + "-100-10-all"))
+        dt.write2dArray( ppmi_file, ppmi_fn)
+        dt.write1dArray( names, name_fn)
+    else:
+        print("already_made PPMI of this size")
+
 def splitDirections(directions_fn, scores_fn, names_fn, is_gini, amt_high_directions, amt_low_directions, high_threshold, low_threshold, half_kappa_half_ndcg):
     directions = np.asarray(dt.import2dArray(directions_fn))
     scores = np.asarray(dt.import1dArray(scores_fn, "f"))
