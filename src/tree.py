@@ -37,7 +37,7 @@ class DecisionTree:
         fns_name = "../data/" + data_type + "/rules/names/" + filename + label_names[0] + ".txt"
         features_name = "../data/" + data_type + "/rules/rankings/" + filename + label_names[0] + ".txt"
         dt_clusters_name = "../data/" + data_type + "/rules/clusters/" + filename + label_names[0] + ".txt"
-        all_fns = [acc_fn, f1_fn, prediction_fn, csv_fn]
+        all_fns = [acc_fn, f1_fn, prediction_fn]
 
         if max_depth is not None:
             all_fns.append(all_top_names_fn)
@@ -272,7 +272,13 @@ class DecisionTree:
                         new_graph.write_png(new_graph_png_fn)
                     except FileNotFoundError:
                         orig_graph_png_fn = "//?/" + orig_graph_png_fn
-                        orig_graph.write_png(orig_graph_png_fn)
+                        try:
+                            orig_graph.write_png(orig_graph_png_fn)
+                        except FileNotFoundError:
+                            orig_graph_png_fn = orig_graph_png_fn.split(".")
+                            orig_graph_png_fn = orig_graph_png_fn[0][:40] + str(random.random()) + ".png"
+                            new_graph_png_fn = new_graph_png_fn.split(".")
+                            new_graph_png_fn = new_graph_png_fn[0][:40] + str(random.random()) + ".png"
                         new_graph_png_fn = "//?/" + new_graph_png_fn
                         new_graph.write_png(new_graph_png_fn)
 

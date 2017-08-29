@@ -498,7 +498,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                 file_name = file_name + " tdev"
 
 
-                            csv_name = loc + data_type + "/rules/tree_csv/" + file_name + ".csv"
+                            csv_name = loc + data_type + "/rules/tree_csv/" + file_name +  str(max_depth) +".csv"
 
                             csv_fns_dt[counter] = csv_name
                             if cv_splits == 0:
@@ -703,7 +703,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                         clusters_fn = class_path
                                         cluster_dict_fn = name_fn
 
-                                    csv_name = loc + data_type + "/rules/tree_csv/" + file_name + ".csv"
+                                    csv_name = loc + data_type + "/rules/tree_csv/" + file_name +  str(max_depth) +".csv"
                                     if cv_splits == 0:
                                         all_csv_fns.append(csv_name)
                                     else:
@@ -837,7 +837,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
     dt.arrangeByScore(np.unique(np.asarray(all_csv_fns)),loc + " " + arrange_name + file_name[:50] + str(len(all_csv_fns)) + ".csv")
     jvm.stop()
 
-arrange_name = "cluster ratings clusterVSnocluster"
+
 
 just_output = True
 arcca = False
@@ -867,9 +867,9 @@ get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 """
 
 data_type = "movies"
-classification_task = ["ratings"]
+classification_task = ["keywords"]
 #arrange_name = arrange_name + classification_task[0]
-skip_nn = True
+skip_nn = False
 if skip_nn is False:
     file_name = "f200ge"
 else:
@@ -968,7 +968,7 @@ dissim_amt = [2]
 breakoff = [False]
 score_limit = [0.9]
 amount_to_start = [2000]
-cluster_multiplier = [ 2]#50
+cluster_multiplier = [2]#50
 score_type = ["ndcg", "kappa"]
 use_breakoff_dissim = [False]
 get_all = [False]
@@ -1008,7 +1008,7 @@ score_limit = [0.0]
 """
 hp_opt = True
 
-dt_dev = False
+dt_dev = True
 svm_classify = False
 rewrite_files = False
 max_depth = [3]
@@ -1016,7 +1016,7 @@ max_depth = [3]
 cross_val = 1
 one_for_all = False
 
-
+arrange_name = "cluster ratings BCS" + str(max_depth)
 
 threads=1
 chunk_amt = 0
