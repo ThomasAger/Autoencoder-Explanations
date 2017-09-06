@@ -6,7 +6,7 @@
 from __future__ import print_function
 from time import time
 
-from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
+from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.decomposition import NMF, LatentDirichletAllocation
 from sklearn.datasets import fetch_20newsgroups
 
@@ -35,15 +35,6 @@ t0 = time()
 dataset = fetch_20newsgroups(shuffle=True, random_state=1,
                              remove=('headers', 'footers', 'quotes'))
 data_samples = dataset.data[:n_samples]
-print("done in %0.3fs." % (time() - t0))
-
-# Use tf-idf features for NMF.
-print("Extracting tf-idf features for NMF...")
-tfidf_vectorizer = TfidfVectorizer(max_df=0.95, min_df=2,
-                                   max_features=n_features,
-                                   stop_words='english')
-t0 = time()
-tfidf = tfidf_vectorizer.fit_transform(data_samples)
 print("done in %0.3fs." % (time() - t0))
 
 # Use tf (raw term count) features for LDA.
