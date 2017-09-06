@@ -51,23 +51,23 @@ else:
     tf = tf.transpose()
     dt.write2dArray(tf, all_fn)
     mt.printIndividualFromAll("newsgroups",  "frequency/phrases", lowest_amt, 0.95, classification, all_fn=all_fn, names_array=feature_names)
-tf = sp.csr_matrix(tf)
-dt.write2dArray(mt.convertPPMI( tf), "../data/newsgroups/bow/ppmi/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-" + classification)
-mt.printIndividualFromAll("newsgroups",  "ppmi", lowest_amt, 0.95, classification, all_fn=all_fn, names_array=feature_names)
+ppmi_fn = "../data/newsgroups/bow/ppmi/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-" + classification
+if dt.fileExists(ppmi_fn) is False:
+    tf = sp.csr_matrix(tf)
+    dt.write2dArray(mt.convertPPMI( tf), ppmi_fn)
+    mt.printIndividualFromAll("newsgroups",  "ppmi", lowest_amt, 0.95, classification, all_fn=all_fn, names_array=feature_names)
 
-# Convert them to vectors
+classes_dense = [[]*len(tf[0])]*np.amax(classes)
 
+for c in range(len(classes)):
+    classes_dense[classes[c]][c] = 1
+names = list(newsgroups_train.target_names)
+dt.write1dArray(names, "../data/newsgroups/classify/newsgroups/names.txt")
 
+for c in range(len(classes_dense)):
+    dt.write1dArray(classes_dense[c], "../data/newsgroups/classify/newsgroups/class-" + names[c])
 
+classes_dense = np.asarray(classes_dense).transpose()
 
-
-# Convert vectors to our format
-
-
-
-
-# Convert classes to our format
-
-
-
+dt.write2dArray(classes_dense,"../data/newsgroups/classify/newsgroups/class-all")
 
