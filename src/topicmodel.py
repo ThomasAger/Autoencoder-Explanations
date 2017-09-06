@@ -7,21 +7,30 @@ import tree
 from itertools import product
 from sklearn.externals import joblib
 
-def print_top_words(model, feature_names, n_top_words):
+def print_top_words(model, feature_names):
+    names = []
     for topic_idx, topic in enumerate(model.components_):
-        message = "Topic #%d: " % topic_idx
+        message = ""
         message += " ".join([feature_names[i]
-                             for i in topic.argsort()[:-n_top_words - 1:-1]])
-        print(message)
+                             for i in topic.argsort()])
+        print(message[:100])
+        names.append(message)
     print()
+    return names
 
 def save_model(model, feature_names, n_top_words):
     print("test")
 
 def LDA(tf, names, components, file_name,   doc_topic_prior, topic_word_prior,  data_type):
-    #if dt.fileExists("../data/"+data_type+"/LDA/"+file_name+".txt"):
-    #    return
-    n_top_words = 20
+    rep_name = "../data/"+data_type+"/LDA/rep/"+file_name+".txt"
+    model_name = "../data/"+data_type+"/LDA/model/"+file_name+".txt"
+    names_name = "../data/"+data_type+"/LDA/names/"+file_name+".txt"
+
+    all_names = [rep_name, model_name, names_name]
+
+    if dt.allFnsAlreadyExist(all_names):
+        print("Already completed")
+        return
     print(len(tf), print(len(tf[0])))
 
     print("Fitting LDA models with tf features,")
@@ -32,17 +41,19 @@ def LDA(tf, names, components, file_name,   doc_topic_prior, topic_word_prior,  
     print("done in %0.3fs." % (time() - t0))
 
     print("\nTopics in LDA model:")
-    #tf_feature_names = tf_vectorizer.get_feature_names()
-    print_top_words(lda, names, n_top_words)
-    dt.write2dArray(new_rep.transpose(), "../data/"+data_type+"/LDA/"+file_name+".txt")
-    joblib.dump(lda, "../data/"+data_type+"/LDAmodel/"+file_name+".txt")
+    topics = print_top_words(lda, names)
+    dt.write2dArray(topics, "../data/" + data_type + "/LDA/names/" + file_name + ".txt")
+    dt.write2dArray(new_rep.transpose(), rep_name)
+    joblib.dump(lda, model_name)
 
 def main(data_type, class_labels_fn, class_names_fn, feature_names_fn, max_depth, limit_entities,
          limited_label_fn, vector_names_fn, dt_dev, doc_topic_prior, topic_word_prior, n_topics, file_name, final_csv_name):
 
-
-
+    print("importing class all")
+    tf = dt.import2dArray("../data/"+data_type+"/bow/frequency/phrases/class-all-100-10-all")
+    names = dt.import1dArray("../data/"+data_type+"/bow/names/100.txt")
     variables_to_execute = list(product(doc_topic_prior, topic_word_prior, n_topics))
+    print("executing", len(variables_to_execute), "variations")
     csvs = []
 
     for vt in variables_to_execute:
@@ -52,19 +63,18 @@ def main(data_type, class_labels_fn, class_names_fn, feature_names_fn, max_depth
 
         file_name = file_name + "DTP" + str(doc_topic_prior) + "TWP" + str(topic_word_prior) + "NT" + str(n_topics)
 
-        LDA(dt.import2dArray("../data/"+data_type+"/bow/frequency/phrases/class-all-100-10-all"),
-            dt.import1dArray("../data/"+data_type+"/bow/names/100.txt"), n_topics, file_name,
+        LDA(tf, names, n_topics, file_name,
             doc_topic_prior, topic_word_prior, data_type)
 
         #NMFFrob(dt.import2dArray("../data/"+data_type+"/bow/ppmi/class-all-100-10-all"),  dt.import1dArray("../data/"+data_type+"/bow/names/100.txt"), 200, file_name)
 
-        topic_model_fn = "../data/" + data_type + "/LDA/" + file_name + ".txt"
+        topic_model_fn = "../data/" + data_type + "/LDA/rep/" + file_name + ".txt"
 
         csv_name = "../data/" + data_type + "/rules/tree_csv/" + file_name + ".csv"
         csvs.append(csv_name)
 
         tree.DecisionTree(topic_model_fn, class_labels_fn, class_names_fn, feature_names_fn, file_name, 10000,
-                          max_depth=max_depth, balance="balanced", criterion="entropy", save_details=True, cv_splits=0,
+                          max_depth=max_depth, balance="balanced", criterion="entropy", save_details=True, cv_splits=1,
                           split_to_use=0,
                           data_type=data_type, csv_fn=csv_name, rewrite_files=False, development=dt_dev,
                           limit_entities=limit_entities,
@@ -72,9 +82,9 @@ def main(data_type, class_labels_fn, class_names_fn, feature_names_fn, max_depth
                           cluster_duplicates=True, save_results_so_far=False)
 
         tree.DecisionTree(topic_model_fn, class_labels_fn, class_names_fn, feature_names_fn, file_name + "None", 10000,
-                          max_depth=None, balance="balanced", criterion="entropy", save_details=True,
+                          max_depth=None, balance="balanced", criterion="entropy", save_details=False,
                           data_type=data_type, csv_fn=csv_name, rewrite_files=False,
-                          cv_splits=0, split_to_use=0, development=dt_dev, limit_entities=limit_entities,
+                          cv_splits=1, split_to_use=0, development=dt_dev, limit_entities=limit_entities,
                           limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn=topic_model_fn,
                           cluster_duplicates=True, save_results_so_far=False)
 
