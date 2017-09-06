@@ -199,88 +199,96 @@ class DecisionTree:
                             if counter == 4:
                                 break
                         output_names.append(line)
-                    tree.export_graphviz(clf, feature_names=output_names, class_names=class_names, out_file=orig_dot_file_fn,
-                                         max_depth=max_depth)
-                    rewrite_dot_file = dt.import1dArray(orig_dot_file_fn)
-                    new_dot_file = []
-                    max = 3
-                    min = -3
-                    """
-                    for f in original_vectors:
-                        for n in f:
-                            if n > max:
-                                max = n
-                            if n < min:
-                                min = n
-                    """
-                    print(max)
-                    print(min)
-                    boundary = max - min
-                    boundary = boundary / 5
-                    bound_1 = 0 - boundary * 2
-                    bound_2 = 0 - boundary * 1
-                    bound_3 = 0
-                    bound_4 = 0 + boundary
-                    bound_5 = 0 + boundary * 2
-                    for s in rewrite_dot_file:
-                        if ":" in s:
-                            s = s.split("<=")
-                            no_num = s[0]
-                            num = s[1]
-                            num = num.split()
-                            end = " ".join(num[:-1])
-                            num_split = num[0].split("\\")
-                            num = num_split[0]
-                            end = end[len(num):]
-                            num = float(num)
-                            replacement = ""
-                            if num <= bound_2:
-                                replacement = "VERY LOW"
-                            elif num <= bound_3:
-                                replacement = "VERY LOW - LOW"
-                            elif num <= bound_4:
-                                replacement = "VERY LOW - AVERAGE"
-                            elif num <= bound_5:
-                                replacement = "VERY LOW - HIGH"
-                            elif num >= bound_5:
-                                replacement = "VERY HIGH"
-                            new_string_a = [no_num, replacement, end]
-                            new_string = " ".join(new_string_a)
-                            new_dot_file.append(new_string)
-                            if "]" in new_string:
-                                if '"' not in new_string[len(new_string)-10:]:
-                                    for c in range(len(new_string)):
-                                        if new_string[c+1] == "]":
-                                            new_string = new_string[:c] + '"' + new_string[c:]
-                                            break
-                        else:
-                            new_dot_file.append(s)
-
-                        """
-                        new_string = s
-                        if "->" not in s and "digraph" not in s and "node" not in s and "(...)" not in s and "}" not in s:
-                            index = s.index("value")
-                            new_string = s[:index] + '"] ;'
-                        new_dot_file.append(new_string)
-                        """
-                        #new_dot_file.append(s)
-                    dt.write1dArray(new_dot_file, new_dot_file_fn)
-                    orig_graph = pydot.graph_from_dot_file(orig_dot_file_fn)
-                    new_graph = pydot.graph_from_dot_file(new_dot_file_fn)
+                    failed = False
                     try:
-                        orig_graph.write_png(orig_graph_png_fn)
-                        new_graph.write_png(new_graph_png_fn)
+                        tree.export_graphviz(clf, feature_names=output_names, class_names=class_names, out_file=orig_dot_file_fn,
+                                         max_depth=max_depth)
                     except FileNotFoundError:
-                        orig_graph_png_fn = "//?/" + orig_graph_png_fn
                         try:
-                            orig_graph.write_png(orig_graph_png_fn)
+                            orig_dot_file_fn = "//?/" + orig_dot_file_fn
+                            tree.export_graphviz(clf, feature_names=output_names, class_names=class_names, out_file=orig_dot_file_fn,
+                                         max_depth=max_depth)
                         except FileNotFoundError:
-                            orig_graph_png_fn = orig_graph_png_fn.split(".")
-                            orig_graph_png_fn = orig_graph_png_fn[0][:40] + str(random.random()) + ".png"
-                            new_graph_png_fn = new_graph_png_fn.split(".")
-                            new_graph_png_fn = new_graph_png_fn[0][:40] + str(random.random()) + ".png"
-                        new_graph_png_fn = "//?/" + new_graph_png_fn
-                        new_graph.write_png(new_graph_png_fn)
+                            failed = True
+                            print("doesnt work fam")
+                    if failed == False:
+                        rewrite_dot_file = dt.import1dArray(orig_dot_file_fn)
+                        new_dot_file = []
+                        max = 3
+                        min = -3
+                        """
+                        for f in original_vectors:
+                            for n in f:
+                                if n > max:
+                                    max = n
+                                if n < min:
+                                    min = n
+                        """
+                        print(max)
+                        print(min)
+                        boundary = max - min
+                        boundary = boundary / 5
+                        bound_1 = 0 - boundary * 2
+                        bound_2 = 0 - boundary * 1
+                        bound_3 = 0
+                        bound_4 = 0 + boundary
+                        bound_5 = 0 + boundary * 2
+                        for s in rewrite_dot_file:
+                            if ":" in s:
+                                s = s.split("<=")
+                                no_num = s[0]
+                                num = s[1]
+                                num = num.split()
+                                end = " ".join(num[:-1])
+                                num_split = num[0].split("\\")
+                                num = num_split[0]
+                                end = end[len(num):]
+                                num = float(num)
+                                replacement = ""
+                                if num <= bound_2:
+                                    replacement = "VERY LOW"
+                                elif num <= bound_3:
+                                    replacement = "VERY LOW - LOW"
+                                elif num <= bound_4:
+                                    replacement = "VERY LOW - AVERAGE"
+                                elif num <= bound_5:
+                                    replacement = "VERY LOW - HIGH"
+                                elif num >= bound_5:
+                                    replacement = "VERY HIGH"
+                                new_string_a = [no_num, replacement, end]
+                                new_string = " ".join(new_string_a)
+                                new_dot_file.append(new_string)
+                                if "]" in new_string:
+                                    if '"' not in new_string[len(new_string)-10:]:
+                                        for c in range(len(new_string)):
+                                            if new_string[c+1] == "]":
+                                                new_string = new_string[:c] + '"' + new_string[c:]
+                                                break
+                            else:
+                                new_dot_file.append(s)
+
+                            """
+                            new_string = s
+                            if "->" not in s and "digraph" not in s and "node" not in s and "(...)" not in s and "}" not in s:
+                                index = s.index("value")
+                                new_string = s[:index] + '"] ;'
+                            new_dot_file.append(new_string)
+                            """
+                            #new_dot_file.append(s)
+                        dt.write1dArray(new_dot_file, new_dot_file_fn)
+                        try:
+                            orig_graph = pydot.graph_from_dot_file(orig_dot_file_fn)
+                            new_graph = pydot.graph_from_dot_file(new_dot_file_fn)
+                            orig_graph.write_png(orig_graph_png_fn)
+                            new_graph.write_png(new_graph_png_fn)
+                        except FileNotFoundError:
+                            orig_graph_png_fn = "//?/" + orig_graph_png_fn
+                            try:
+                                orig_graph.write_png(orig_graph_png_fn)
+                                new_graph_png_fn = "//?/" + new_graph_png_fn
+                                new_graph.write_png(new_graph_png_fn)
+                            except FileNotFoundError:
+                                print("failed graph")
 
                     self.get_code(clf, output_names, class_names, label_names[l] + " " + filename, data_type)
                     dt_clusters, features, fns, inds = self.getNodesToDepth(clf, original_vectors, cluster_names, clusters)

@@ -510,7 +510,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
 
                             if cluster_duplicates:
                                 file_name = file_name + " UNIQUE"
-
+                            #file_name = "NMF 200"
+                            #ranking_fn = "../data/movies/NMF/all-100-10frob.txt"
                             tree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_dict_fn, file_name, 10000,
                                       max_depth=max_depth, balance="balanced", criterion="entropy", save_details=True, cv_splits=cv_splits, split_to_use=splits,
                                       data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files, development=dt_dev, limit_entities=limit_entities,
@@ -869,7 +870,7 @@ get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 data_type = "movies"
 classification_task = ["keywords"]
 #arrange_name = arrange_name + classification_task[0]
-skip_nn = False
+skip_nn = True
 if skip_nn is False:
     file_name = "f200ge"
 else:
@@ -922,12 +923,12 @@ else:
     loss="binary_crossentropy"
     class_weight = None
     nnet_dev = False
-    if classification_task[0] == "us-ratings":
+    if classification_task[0] == "ratings":
         ep = 1400
-    elif classification_task[0] == "opencyc":
-        ep = 2000
+    elif classification_task[0] == "keywords":
+        ep = 1500
     else:
-        ep = 300
+        ep = 600
     lr = 0.01
 
 """
@@ -1008,7 +1009,7 @@ score_limit = [0.0]
 """
 hp_opt = True
 
-dt_dev = True
+dt_dev = False
 svm_classify = False
 rewrite_files = False
 max_depth = [3]

@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-print("failed")
 from __future__ import unicode_literals
 
 import numpy as np
@@ -230,12 +229,12 @@ init_vector_path = "../data/"+data_type+"/nnet/spaces/wines100trimmed.txt"
 """
 
 data_type = "movies"
-classification_task = "uk-ratings"
+classification_task = "ratings"
 lowest_amt = 100
 highest_amt = 10
 #init_vector_path = "../data/"+data_type+"/nnet/spaces/films200-"+classification_task+".txt"
 file_name = "f200ge"
-init_vector_path = loc+data_type+"/nnet/spaces/f200geE1400DS[100]DN0.5CTuk-ratingsHAtanhCV1 S0 SFT0 allL0s.txt"
+init_vector_path = loc+data_type+"/nnet/spaces/films100.txt"
 """
 data_type = "placetypes"
 classification_task = "foursquare"
@@ -277,7 +276,7 @@ average_ppmi = False
 amount_to_start = 1000
 
 cross_val = 1
-vector_path_replacement = loc + data_type+"/nnet/spaces/f200geE1400DS[100]DN0.5CTuk-ratingsHAtanhCV1 S0 SFT0 allL0.txt"
+vector_path_replacement = loc+data_type+"/nnet/spaces/films100.txt"
 rewrite_files = False
 threads=3
 chunk_amt = 20
