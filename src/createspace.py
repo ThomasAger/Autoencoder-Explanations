@@ -1,4 +1,11 @@
-
+from sklearn.datasets import fetch_20newsgroups
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.preprocessing import FunctionTransformer
+import data as dt
+import numpy as np
+import MovieTasks as mt
+import scipy.sparse as sp
+# Import the newsgroups
 from sklearn.decomposition import TruncatedSVD
 import numpy as np
 
@@ -102,26 +109,20 @@ def main(data_type, clf, min, max, depth, rewrite_files):
 
     #Get MDS
 
-    if dt.allFnsAlreadyExist([dm_shorten_fn]) is False:
-        if dt.allFnsAlreadyExist([shorten_fn]) and not rewrite_files:
-            tf = dt.import2dArray(term_frequency_fn)
-        else:
-            short = dt.shorten2dFloats()
-            dt.write2dArray(short, shorten_fn)
-            tf = np.asarray(short).transpose()
-            print("wrote shorten")
+    newsgroups_train = fetch_20newsgroups(subset='train', shuffle=False)
+    newsgroups_test = fetch_20newsgroups(subset='test', shuffle=False)
+    vectors = np.concatenate((newsgroups_train.data, newsgroups_test.data), axis=0)
+    tf_vectorizer = CountVectorizer(max_df=2, min_df=0.95, stop_words='english')
+    tf = tf_vectorizer.fit(vectors)
 
-        if dt.allFnsAlreadyExist([dm_fn]) and not rewrite_files:
-            dm = dt.import2dArray(dm_fn)
-            print("read dm")
-        else:
-            dm = getDissimilarityMatrix(tf)
-            dt.write2dArray(dm, dm_fn)
-            print("wrote dm")
 
-        dt.write2dArray(dt.shorten2dFloats(dm_fn), dm_shorten_fn)
-        dm = dt.import2dArray(dm_shorten_fn)
-        print("wrote shorten")
+    if dt.allFnsAlreadyExist([dm_fn]) and not rewrite_files:
+        dm = dt.import2dArray(dm_fn)
+        print("read dm")
+    else:
+        dm = getDissimilarityMatrix(tf)
+        dt.write2dArray(dm, dm_fn)
+        print("wrote dm")
 
     if dt.allFnsAlreadyExist([mds_fn]) and not rewrite_files:
         mds = dt.import2dArray(mds_fn)
@@ -162,7 +163,7 @@ def main(data_type, clf, min, max, depth, rewrite_files):
 data_type = "newsgroups"
 clf = "all"
 
-min=50
+min=2
 max=0.95
 depth = 100
 
