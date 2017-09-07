@@ -104,9 +104,9 @@ def main(data_type, clf, min, max, depth, rewrite_files):
 
     if dt.allFnsAlreadyExist([dm_shorten_fn]) is False:
         if dt.allFnsAlreadyExist([shorten_fn]) and not rewrite_files:
-            tf = dt.import2dArray(shorten_fn)
+            tf = dt.import2dArray(term_frequency_fn)
         else:
-            short = dt.shorten2dFloats(term_frequency_fn)
+            short = dt.shorten2dFloats()
             dt.write2dArray(short, shorten_fn)
             tf = np.asarray(short).transpose()
             print("wrote shorten")
@@ -159,11 +159,11 @@ def main(data_type, clf, min, max, depth, rewrite_files):
         dt.write2dArray(pca, pca_fn)
         print("wrote pca")
 
-data_type = "wines"
+data_type = "newsgroups"
 clf = "all"
 
 min=50
-max=10
+max=0.95
 depth = 100
 
 rewrite_files = True

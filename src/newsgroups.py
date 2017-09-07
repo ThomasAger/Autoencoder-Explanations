@@ -32,13 +32,14 @@ print(classes[train_len+1])
 print(classes[train_len+2])
 
 classification = "all"
-lowest_amt = 50
+lowest_amt = 10
 highest_amt = 0.95
 all_fn = "../data/newsgroups/bow/frequency/phrases/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-" + classification
 if dt.fileExists(all_fn):
     tf = dt.import2dArray(all_fn)
 else:
     tf_vectorizer = CountVectorizer(max_df=highest_amt, min_df=lowest_amt, stop_words='english')
+    print("completed vectorizer")
     tf = tf_vectorizer.fit(vectors)
     feature_names = tf.get_feature_names()
     dt.write1dArray(feature_names, "../data/newsgroups/bow/names/" + str(lowest_amt) + "-" + str(highest_amt) + "-" + classification + ".txt")
@@ -56,18 +57,20 @@ if dt.fileExists(ppmi_fn) is False:
     tf = sp.csr_matrix(tf)
     dt.write2dArray(mt.convertPPMI( tf), ppmi_fn)
     mt.printIndividualFromAll("newsgroups",  "ppmi", lowest_amt, 0.95, classification, all_fn=all_fn, names_array=feature_names)
-
-classes_dense = [[]*len(tf[0])]*np.amax(classes)
-
+print("1")
+classes = np.asarray(classes, dtype=np.int32)
+print(2)
+classes_dense = [[0]*np.amax(np.asarray(classes))]*len(tf[0])
+print(3)
 for c in range(len(classes)):
-    classes_dense[classes[c]][c] = 1
+    classes_dense[c][classes[c]-1] = 1
+print(4)
 names = list(newsgroups_train.target_names)
 dt.write1dArray(names, "../data/newsgroups/classify/newsgroups/names.txt")
-
+classes_dense = np.asarray(classes_dense).transpose()
 for c in range(len(classes_dense)):
     dt.write1dArray(classes_dense[c], "../data/newsgroups/classify/newsgroups/class-" + names[c])
 
-classes_dense = np.asarray(classes_dense).transpose()
 
 dt.write2dArray(classes_dense,"../data/newsgroups/classify/newsgroups/class-all")
 
