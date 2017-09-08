@@ -64,8 +64,34 @@ def convertPPMISparse(mat):
         print(j)
     P = P.multiply(colMat)
     colMat = None
+    P = np.fmax(np.zeros((nrows,ncols), dtype=np.float64), np.log(P.data))
+    return P
+
+def convertPPMI(mat):
+    """
+     Compute the PPMI values for the raw co-occurrence matrix.
+     PPMI values will be written to mat and it will get overwritten.
+     """
+    (nrows, ncols) = mat.shape
+    print("no. of rows =", nrows)
+    print("no. of cols =", ncols)
+    colTotals = mat.sum(axis=0)
+    rowTotals = mat.sum(axis=1).T
+    N = np.sum(rowTotals)
+    rowMat = np.ones((nrows, ncols), dtype=np.float)
+    for i in range(nrows):
+        rowMat[i, :] = 0 \
+            if rowTotals[0,i] == 0 \
+            else rowMat[i, :] * (1.0 / rowTotals[0,i])
+        print(i)
+    colMat = np.ones((nrows, ncols), dtype=np.float)
+    for j in range(ncols):
+        colMat[:,j] = 0 if colTotals[0,j] == 0 else (1.0 / colTotals[0,j])
+        print(j)
+    mat = mat.toarray()
+    P = N * mat * rowMat * colMat
     P = np.fmax(np.zeros((nrows,ncols), dtype=np.float64), np.log(P))
-    return sp.csr_matrix(P)
+    return P
 
 
 def getDissimilarityMatrixSparse(tf):
@@ -131,7 +157,7 @@ def main(data_type, clf, highest_amt, lowest_amt, depth, rewrite_files):
     newsgroups_test = fetch_20newsgroups(subset='test', shuffle=False)
 
 
-    vectors = np.concatenate((newsgroups_train.data, newsgroups_test.data), axis=0)
+    vectors = newsgroups_test.data#np.concatenate((newsgroups_train.data, newsgroups_test.data), axis=0)
     newsgroups_test = None
     newsgroups_train = None
     # Get sparse tf rep
@@ -142,6 +168,10 @@ def main(data_type, clf, highest_amt, lowest_amt, depth, rewrite_files):
     # Get sparse PPMI rep from sparse tf rep
     print("done ppmisaprse")
     sparse_ppmi = convertPPMISparse(tf)
+    new_ppmi = convertPPMI(tf)
+    for i in range(len(sparse_ppmi)):
+        print(sparse_ppmi[i])
+        print(new_ppmi[i])
     # Get sparse Dsim matrix from sparse PPMI rep
     dm = getDissimilarityMatrixSparse(sparse_ppmi)
     # Use as input to mds
@@ -159,8 +189,8 @@ def main(data_type, clf, highest_amt, lowest_amt, depth, rewrite_files):
 data_type = "newsgroups"
 clf = "all"
 
-highest_amt = 1
-lowest_amt = 1
+highest_amt = 50
+lowest_amt = 0.95
 depth = 100
 
 rewrite_files = True
