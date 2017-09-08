@@ -5,8 +5,10 @@ import data as dt
 import numpy as np
 import MovieTasks as mt
 import scipy.sparse as sp
+import scipy.sparse.linalg
 import data as dt
 import numpy as np
+from scipy import linalg
 
 from matplotlib import pyplot as plt
 from matplotlib.collections import LineCollection
@@ -32,6 +34,10 @@ def createMDS(dm, depth):
 
 
 
+
+def max_zero(mat):
+    mat[mat < 0] = 0
+    return mat
 def convertPPMISparse(mat):
     """
      Compute the PPMI values for the raw co-occurrence matrix.
@@ -64,9 +70,11 @@ def convertPPMISparse(mat):
         print(j)
     P = P.multiply(colMat)
     colMat = None
-    P = P.toarray()
-    P = np.fmax(np.zeros((nrows,ncols), dtype=np.float64), np.log(P))
-    return P
+    P = P._with_data(np.log(P.data), copy=True)
+    P = P._with_data(max_zero(P.data), copy=True)
+    P = P.eliminate_zeros()
+    return sp.csr_matrix(P)
+
 
 def convertPPMI(mat):
     """
@@ -102,8 +110,9 @@ def getDissimilarityMatrixSparse(tf):
 
     #Calculate norms
     for ei in range(tflen):
-        norms[ei] = sp.linalg.norm(tf[ei])
+        norms[ei] = linalg.norm(tf[ei])
         print("norm", ei)
+
     dot_product = np.empty([tflen, tflen], dtype="float64")
 
     #Calculate dot products
@@ -194,7 +203,7 @@ def main(data_type, clf, highest_amt, lowest_amt, depth, rewrite_files):
     newsgroups_test = fetch_20newsgroups(subset='test', shuffle=False)
 
 
-    vectors = newsgroups_test.data#np.concatenate((newsgroups_train.data, newsgroups_test.data), axis=0)
+    vectors = np.concatenate((newsgroups_train.data, newsgroups_test.data), axis=0)
     newsgroups_test = None
     newsgroups_train = None
     # Get sparse tf rep
@@ -205,8 +214,9 @@ def main(data_type, clf, highest_amt, lowest_amt, depth, rewrite_files):
     # Get sparse PPMI rep from sparse tf rep
     print("done ppmisaprse")
     sparse_ppmi = convertPPMISparse(tf)
+    new_ppmi = convertPPMI(tf)
     # Get sparse Dsim matrix from sparse PPMI rep
-    dm = getDissimilarityMatrix(sparse_ppmi)
+    dm = getDissimilarityMatrixSparse(sparse_ppmi)
     # Use as input to mds
     mds = createMDS(dm, depth)
     # save MDS
@@ -223,7 +233,7 @@ data_type = "newsgroups"
 clf = "all"
 
 highest_amt = 0.95
-lowest_amt = 50
+lowest_amt = 200
 depth = 100
 
 rewrite_files = True
