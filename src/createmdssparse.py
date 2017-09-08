@@ -64,7 +64,8 @@ def convertPPMISparse(mat):
         print(j)
     P = P.multiply(colMat)
     colMat = None
-    P = np.fmax(np.zeros((nrows,ncols), dtype=np.float64), np.log(P.data))
+    P = P.toarray()
+    P = np.fmax(np.zeros((nrows,ncols), dtype=np.float64), np.log(P))
     return P
 
 def convertPPMI(mat):
@@ -93,7 +94,6 @@ def convertPPMI(mat):
     P = np.fmax(np.zeros((nrows,ncols), dtype=np.float64), np.log(P))
     return P
 
-
 def getDissimilarityMatrixSparse(tf):
     tflen = tf.shape[0]
     dm = np.empty([tflen, tflen], dtype="float64")
@@ -113,6 +113,43 @@ def getDissimilarityMatrixSparse(tf):
         print("dp", ei)
 
     norm_multiplied = np.empty([tflen, tflen], dtype="float64")
+
+    # Calculate dot products
+    for ei in range(len(tf)):
+        for ej in range(len(tf)):
+            norm_multiplied[ei][ej] = norms[ei] * norms[ej]
+        print("dp", ei)
+
+    norm_multiplied = dt.shortenFloatsNoFn(norm_multiplied)
+    dot_product = dt.shortenFloatsNoFn(dot_product)
+
+    #Get angular differences
+    for ei in range(len(tf)):
+        for ej in range(len(tf)):
+            ang = pithing * np.arccos(dot_product[ei][ej] / norm_multiplied[ei][ej])
+            dm[ei][ej] = ang
+        print(ei)
+    return dm
+
+
+def getDissimilarityMatrix(tf):
+    dm = np.empty([len(tf), len(tf)], dtype="float64")
+    pithing = 2/pi
+    norms = np.empty(len(tf), dtype="float64")
+
+    #Calculate norms
+    for ei in range(len(tf)):
+        norms[ei] = np.linalg.norm(tf[ei])
+        print("norm", ei)
+    dot_product = np.empty([len(tf), len(tf)], dtype="float64")
+
+    #Calculate dot products
+    for ei in range(len(tf)):
+        for ej in range(len(tf)):
+            dot_product[ei][ej] = np.dot(tf[ei], tf[ej])
+        print("dp", ei)
+
+    norm_multiplied = np.empty([len(tf), len(tf)], dtype="float64")
 
     # Calculate dot products
     for ei in range(len(tf)):
@@ -168,12 +205,8 @@ def main(data_type, clf, highest_amt, lowest_amt, depth, rewrite_files):
     # Get sparse PPMI rep from sparse tf rep
     print("done ppmisaprse")
     sparse_ppmi = convertPPMISparse(tf)
-    new_ppmi = convertPPMI(tf)
-    for i in range(len(sparse_ppmi)):
-        print(sparse_ppmi[i])
-        print(new_ppmi[i])
     # Get sparse Dsim matrix from sparse PPMI rep
-    dm = getDissimilarityMatrixSparse(sparse_ppmi)
+    dm = getDissimilarityMatrix(sparse_ppmi)
     # Use as input to mds
     mds = createMDS(dm, depth)
     # save MDS
@@ -189,8 +222,8 @@ def main(data_type, clf, highest_amt, lowest_amt, depth, rewrite_files):
 data_type = "newsgroups"
 clf = "all"
 
-highest_amt = 50
-lowest_amt = 0.95
+highest_amt = 0.95
+lowest_amt = 50
 depth = 100
 
 rewrite_files = True
