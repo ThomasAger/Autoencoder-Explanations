@@ -5,7 +5,7 @@ import data as dt
 import numpy as np
 import MovieTasks as mt
 import scipy.sparse as sp
-import scipy.sparse.linalg
+import scipy.sparse.linalg as spl
 import data as dt
 import numpy as np
 from scipy import linalg
@@ -72,7 +72,6 @@ def convertPPMISparse(mat):
     colMat = None
     P = P._with_data(np.log(P.data), copy=True)
     P = P._with_data(max_zero(P.data), copy=True)
-    P = P.eliminate_zeros()
     return sp.csr_matrix(P)
 
 
@@ -110,7 +109,7 @@ def getDissimilarityMatrixSparse(tf):
 
     #Calculate norms
     for ei in range(tflen):
-        norms[ei] = linalg.norm(tf[ei])
+        norms[ei] = spl.norm(tf[ei])
         print("norm", ei)
 
     dot_product = np.empty([tflen, tflen], dtype="float64")
@@ -118,7 +117,11 @@ def getDissimilarityMatrixSparse(tf):
     #Calculate dot products
     for ei in range(tflen):
         for ej in range(tflen):
-            dot_product[ei][ej] = tf[ei].dot(tf[ej])
+            if dot_product[ej][ei] != 0:
+                print("cont")
+                dot_product[ei][ej] = dot_product[ej][ei]
+                continue
+            dot_product[ei][ej] = np.dot(tf[ei], tf[ej].T)[0,0]
         print("dp", ei)
 
     norm_multiplied = np.empty([tflen, tflen], dtype="float64")
@@ -203,7 +206,7 @@ def main(data_type, clf, highest_amt, lowest_amt, depth, rewrite_files):
     newsgroups_test = fetch_20newsgroups(subset='test', shuffle=False)
 
 
-    vectors = np.concatenate((newsgroups_train.data, newsgroups_test.data), axis=0)
+    vectors = newsgroups_test.data#np.concatenate((newsgroups_train.data, newsgroups_test.data), axis=0)
     newsgroups_test = None
     newsgroups_train = None
     # Get sparse tf rep

@@ -56,7 +56,7 @@ def getDissimilarityMatrix(tf):
     #Calculate dot products
     for ei in range(len(tf)):
         for ej in range(len(tf)):
-            dot_product[ei][ej] = np.dot(tf[ei], tf[ej])
+            dot_product[ei][ej] = np.dot(tf[ei].todense(), tf[ej].todense())
         print("dp", ei)
 
     norm_multiplied = np.empty([len(tf), len(tf)], dtype="float64")
