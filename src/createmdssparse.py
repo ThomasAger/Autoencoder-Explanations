@@ -44,18 +44,16 @@ def convertPPMISparse(mat):
     rowTotals = mat.sum(axis=1).T
     N = np.sum(rowTotals)
 
-    mat = mat.toarray()
-    P = N * mat
+    P = mat.multiply(N)
     mat = None
     rowMat = np.ones((nrows, ncols), dtype=np.float)
     for i in range(nrows):
         if rowTotals[0, i] == 0: #
-            print("DO I EVER RUN???")
             rowMat[i, :] = 0
         else:
             rowMat[i, :] = rowMat[i, :] * (1.0 / rowTotals[0,i])
         print(i)
-    P = P * rowMat
+    P = P.multiply(rowMat)
     rowMat = None
     colMat = np.ones((nrows, ncols), dtype=np.float)
     for j in range(ncols):
@@ -64,7 +62,7 @@ def convertPPMISparse(mat):
         else:
             colMat[:,j] = (1.0 / colTotals[0,j])
         print(j)
-    P = P * colMat
+    P = P.multiply(colMat)
     colMat = None
     P = np.fmax(np.zeros((nrows,ncols), dtype=np.float64), np.log(P))
     return sp.csr_matrix(P)
@@ -108,6 +106,9 @@ def getDissimilarityMatrixSparse(tf):
     return dm
 
 def main(data_type, clf, highest_amt, lowest_amt, depth, rewrite_files):
+
+    min = lowest_amt
+    max = highest_amt
     dm_fn = "../data/" + data_type + "/mds/class-all-" + str(min) + "-" + str(max) \
                     + "-" + clf  + "dm"
     dm_shorten_fn = "../data/" + data_type + "/mds/class-all-" + str(min) + "-" + str(max) \
@@ -126,11 +127,18 @@ def main(data_type, clf, highest_amt, lowest_amt, depth, rewrite_files):
     if dt.allFnsAlreadyExist([dm_fn, mds_fn, svd_fn, shorten_fn]):
         print("all files exist")
         exit()
-    vectors = fetch_20newsgroups(subset='test', shuffle=False).data
+    newsgroups_train = fetch_20newsgroups(subset='train', shuffle=False)
+    newsgroups_test = fetch_20newsgroups(subset='test', shuffle=False)
+
+
+    vectors = np.concatenate((newsgroups_train.data, newsgroups_test.data), axis=0)
+    newsgroups_test = None
+    newsgroups_train = None
     # Get sparse tf rep
     tf_vectorizer = CountVectorizer(max_df=highest_amt, min_df=lowest_amt, stop_words='english')
     print("completed vectorizer")
     tf = tf_vectorizer.fit_transform(vectors)
+    vectors = None
     # Get sparse PPMI rep from sparse tf rep
     print("done ppmisaprse")
     sparse_ppmi = convertPPMISparse(tf)
@@ -151,8 +159,8 @@ def main(data_type, clf, highest_amt, lowest_amt, depth, rewrite_files):
 data_type = "newsgroups"
 clf = "all"
 
-highest_amt = 0.95
-lowest_amt = 10
+highest_amt = 1
+lowest_amt = 1
 depth = 100
 
 rewrite_files = True
