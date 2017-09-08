@@ -294,6 +294,25 @@ def convertPPMI(mat):
     P = np.fmax(np.zeros((nrows,ncols), dtype=np.float64), np.log(P))
     return P
 
+def convertPPMISparse(mat):
+    """
+     Compute the PPMI values for the raw co-occurrence matrix.
+     PPMI values will be written to mat and it will get overwritten.
+     """
+    (nrows, ncols) = mat.shape
+    colTotals = mat.sum(axis=0)
+    rowTotals = mat.sum(axis=1).T
+    N = np.sum(rowTotals)
+    rowMat = np.ones((nrows, ncols), dtype=np.float)
+    for i in range(nrows):
+        rowMat[i,:] = 0 if rowTotals[0,i] == 0 else rowMat[i,:] * (1.0 / rowTotals[0,i])
+    colMat = np.ones((nrows, ncols), dtype=np.float)
+    for j in range(ncols):
+        colMat[:,j] = 0 if colTotals[0,j] == 0 else (1.0 / colTotals[0,j])
+    P = N * mat.toarray() * rowMat * colMat
+    P = np.fmax(np.zeros((nrows,ncols), dtype=np.float64), np.log(P))
+    return sp.csr_matrix(P)
+
 def convertToTfIDF(data_type, lowest_count, highest_count, freq_arrays_fn, class_type):
     freq = np.asarray(dt.import2dArray(freq_arrays_fn))
     v = TfidfTransformer()

@@ -1,4 +1,11 @@
-
+from sklearn.datasets import fetch_20newsgroups
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.preprocessing import FunctionTransformer
+import data as dt
+import numpy as np
+import MovieTasks as mt
+import scipy.sparse as sp
+# Import the newsgroups
 from sklearn.decomposition import TruncatedSVD
 import numpy as np
 
@@ -19,6 +26,9 @@ from sklearn.metrics import euclidean_distances
 from sklearn.decomposition import PCA
 from sklearn.decomposition import PCA
 from math import pi
+from composes.utils import io_utils
+from composes.transformation.scaling.ppmi_weighting import PpmiWeighting
+
 def createMDS(dm, depth):
     dm = np.asarray(np.nan_to_num(dm), dtype="float64")
     mds = manifold.MDS(n_components=depth, max_iter=1000, eps=1e-9,
@@ -31,16 +41,6 @@ def createMDS(dm, depth):
     npos = nmds.fit_transform(dm.astype(np.float64), init=pos)
 
     return npos
-
-def createSVD(tf, depth):
-    svd = TruncatedSVD(n_components=depth)
-    pos = svd.fit_transform(tf)
-    return pos
-
-def createPCA(tf, depth):
-    pca = PCA(n_components=depth)
-    pos = pca.fit_transform(tf)
-    return pos
 
 def getDissimilarityMatrix(tf):
     dm = np.empty([len(tf), len(tf)], dtype="float64")
@@ -78,7 +78,7 @@ def getDissimilarityMatrix(tf):
         print(ei)
     return dm
 
-def main(data_type, clf, min, max, depth, rewrite_files):
+def main(data_type, clf, highest_amt, lowest_amt, depth, rewrite_files):
     dm_fn = "../data/" + data_type + "/mds/class-all-" + str(min) + "-" + str(max) \
                     + "-" + clf  + "dm"
     dm_shorten_fn = "../data/" + data_type + "/mds/class-all-" + str(min) + "-" + str(max) \
@@ -98,10 +98,6 @@ def main(data_type, clf, min, max, depth, rewrite_files):
         print("all files exist")
         exit()
 
-    tf = None
-
-    #Get MDS
-
 
     if dt.allFnsAlreadyExist([dm_fn]) and not rewrite_files:
         dm = dt.import2dArray(dm_fn)
@@ -113,6 +109,7 @@ def main(data_type, clf, min, max, depth, rewrite_files):
         print("wrote dm")
 
 
+
     if dt.allFnsAlreadyExist([mds_fn]) and not rewrite_files:
         mds = dt.import2dArray(mds_fn)
     else:
@@ -122,41 +119,15 @@ def main(data_type, clf, min, max, depth, rewrite_files):
         dt.write2dArray(mds, mds_fn)
         print("wrote mds")
 
-    # Create SVD
-    if dt.allFnsAlreadyExist([shorten_fn]) and not rewrite_files:
-        short = dt.import2dArray(shorten_fn)
-        short = np.asarray(short).transpose()
-    else:
-        print("starting svd")
-        short = dt.shorten2dFloats(term_frequency_fn)
-        dt.write2dArray(short, shorten_fn)
-        tf = np.asarray(short).transpose()
-        print("wrote shorten")
-
-    if dt.allFnsAlreadyExist([svd_fn]) and not rewrite_files:
-        svd = dt.import2dArray(svd_fn)
-    else:
-        print("begin svd")
-        svd = createSVD(short, depth)
-        dt.write2dArray(svd, svd_fn)
-        print("wrote svd")
-
-    if dt.allFnsAlreadyExist([pca_fn]) and not rewrite_files:
-        pca = dt.import2dArray(pca_fn)
-    else:
-        print("begin pca")
-        pca = createPCA(short, depth)
-        dt.write2dArray(pca, pca_fn)
-        print("wrote pca")
 
 data_type = "newsgroups"
 clf = "all"
 
-min=10
-max=0.95
+highest_amt = 0.95
+lowest_amt = 10
 depth = 100
 
 rewrite_files = True
 
 
-if  __name__ =='__main__':main(data_type, clf, min, max, depth, rewrite_files)
+if  __name__ =='__main__':main(data_type, clf, highest_amt, lowest_amt, depth, rewrite_files)

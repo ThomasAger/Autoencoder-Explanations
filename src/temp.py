@@ -9,6 +9,16 @@ from time import time
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.decomposition import NMF, LatentDirichletAllocation
 from sklearn.datasets import fetch_20newsgroups
+import data as dt
+
+classification = "all"
+highest_amt = 0.95
+lowest_amt = 10
+
+name = "../data/newsgroups/bow/ppmi/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-" + classification
+
+data = dt.import2dArray(name)
+
 
 n_samples = 2000
 n_features = 1000
