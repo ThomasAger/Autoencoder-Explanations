@@ -5,16 +5,6 @@ import data as dt
 import numpy as np
 import MovieTasks as mt
 import scipy.sparse as sp
-# Import the newsgroups
-from sklearn.decomposition import TruncatedSVD
-import numpy as np
-
-from matplotlib import pyplot as plt
-from matplotlib.collections import LineCollection
-
-from sklearn import manifold
-from sklearn.metrics import euclidean_distances
-from sklearn.decomposition import PCA
 import data as dt
 import numpy as np
 
@@ -53,42 +43,52 @@ def convertPPMISparse(mat):
     colTotals = mat.sum(axis=0)
     rowTotals = mat.sum(axis=1).T
     N = np.sum(rowTotals)
+
+    mat = mat.toarray()
+    P = N * mat
+    mat = None
     rowMat = np.ones((nrows, ncols), dtype=np.float)
     for i in range(nrows):
-        rowMat[i, :] = 0 \
-            if rowTotals[0,i] == 0 \
-            else rowMat[i, :] * (1.0 / rowTotals[0,i])
+        if rowTotals[0, i] == 0: #
+            print("DO I EVER RUN???")
+            rowMat[i, :] = 0
+        else:
+            rowMat[i, :] = rowMat[i, :] * (1.0 / rowTotals[0,i])
         print(i)
+    P = P * rowMat
+    rowMat = None
     colMat = np.ones((nrows, ncols), dtype=np.float)
     for j in range(ncols):
-        colMat[:,j] = 0 if colTotals[0,j] == 0 else (1.0 / colTotals[0,j])
+        if colTotals[0,j] == 0:
+            colMat[:,j] = 0
+        else:
+            colMat[:,j] = (1.0 / colTotals[0,j])
         print(j)
-    mat = mat.toarray()
-    P = N * mat * rowMat * colMat
+    P = P * colMat
+    colMat = None
     P = np.fmax(np.zeros((nrows,ncols), dtype=np.float64), np.log(P))
     return sp.csr_matrix(P)
 
+
 def getDissimilarityMatrixSparse(tf):
-    dm = np.empty([len(tf), len(tf)], dtype="float64")
+    tflen = tf.shape[0]
+    dm = np.empty([tflen, tflen], dtype="float64")
     pithing = 2/pi
-    norms = np.empty(len(tf), dtype="float64")
+    norms = np.empty(tflen, dtype="float64")
 
     #Calculate norms
-    for ei in range(len(tf)):
-        norms[ei] = np.linalg.norm(tf[ei])
+    for ei in range(tflen):
+        norms[ei] = sp.linalg.norm(tf[ei])
         print("norm", ei)
-    dot_product = np.empty([len(tf), len(tf)], dtype="float64")
+    dot_product = np.empty([tflen, tflen], dtype="float64")
 
     #Calculate dot products
-    for ei in range(len(tf)):
-        for ej in range(len(tf)):
-            #A = csr_matrix([[1, 2, 0], [0, 0, 3], [4, 0, 5]])
-            #v = np.array([1, 0, -1])
-            #A.dot(v)
-            dot_product[ei][ej] = np.dot(tf[ei], tf[ej])
+    for ei in range(tflen):
+        for ej in range(tflen):
+            dot_product[ei][ej] = tf[ei].dot(tf[ej])
         print("dp", ei)
 
-    norm_multiplied = np.empty([len(tf), len(tf)], dtype="float64")
+    norm_multiplied = np.empty([tflen, tflen], dtype="float64")
 
     # Calculate dot products
     for ei in range(len(tf)):
@@ -130,9 +130,9 @@ def main(data_type, clf, highest_amt, lowest_amt, depth, rewrite_files):
     # Get sparse tf rep
     tf_vectorizer = CountVectorizer(max_df=highest_amt, min_df=lowest_amt, stop_words='english')
     print("completed vectorizer")
-    tf_vectorizer.fit(vectors)
-    tf = tf_vectorizer.transform(vectors)
+    tf = tf_vectorizer.fit_transform(vectors)
     # Get sparse PPMI rep from sparse tf rep
+    print("done ppmisaprse")
     sparse_ppmi = convertPPMISparse(tf)
     # Get sparse Dsim matrix from sparse PPMI rep
     dm = getDissimilarityMatrixSparse(sparse_ppmi)
