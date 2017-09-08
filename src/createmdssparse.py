@@ -26,8 +26,6 @@ from sklearn.metrics import euclidean_distances
 from sklearn.decomposition import PCA
 from sklearn.decomposition import PCA
 from math import pi
-from composes.utils import io_utils
-from composes.transformation.scaling.ppmi_weighting import PpmiWeighting
 
 def createMDS(dm, depth):
     dm = np.asarray(np.nan_to_num(dm), dtype="float64")
@@ -42,7 +40,35 @@ def createMDS(dm, depth):
 
     return npos
 
-def getDissimilarityMatrix(tf):
+
+
+def convertPPMISparse(mat):
+    """
+     Compute the PPMI values for the raw co-occurrence matrix.
+     PPMI values will be written to mat and it will get overwritten.
+     """
+    (nrows, ncols) = mat.shape
+    print("no. of rows =", nrows)
+    print("no. of cols =", ncols)
+    colTotals = mat.sum(axis=0)
+    rowTotals = mat.sum(axis=1).T
+    N = np.sum(rowTotals)
+    rowMat = np.ones((nrows, ncols), dtype=np.float)
+    for i in range(nrows):
+        rowMat[i, :] = 0 \
+            if rowTotals[0,i] == 0 \
+            else rowMat[i, :] * (1.0 / rowTotals[0,i])
+        print(i)
+    colMat = np.ones((nrows, ncols), dtype=np.float)
+    for j in range(ncols):
+        colMat[:,j] = 0 if colTotals[0,j] == 0 else (1.0 / colTotals[0,j])
+        print(j)
+    mat = mat.toarray()
+    P = N * mat * rowMat * colMat
+    P = np.fmax(np.zeros((nrows,ncols), dtype=np.float64), np.log(P))
+    return sp.csr_matrix(P)
+
+def getDissimilarityMatrixSparse(tf):
     dm = np.empty([len(tf), len(tf)], dtype="float64")
     pithing = 2/pi
     norms = np.empty(len(tf), dtype="float64")
@@ -56,6 +82,9 @@ def getDissimilarityMatrix(tf):
     #Calculate dot products
     for ei in range(len(tf)):
         for ej in range(len(tf)):
+            #A = csr_matrix([[1, 2, 0], [0, 0, 3], [4, 0, 5]])
+            #v = np.array([1, 0, -1])
+            #A.dot(v)
             dot_product[ei][ej] = np.dot(tf[ei], tf[ej])
         print("dp", ei)
 
@@ -97,27 +126,26 @@ def main(data_type, clf, highest_amt, lowest_amt, depth, rewrite_files):
     if dt.allFnsAlreadyExist([dm_fn, mds_fn, svd_fn, shorten_fn]):
         print("all files exist")
         exit()
+    vectors = fetch_20newsgroups(subset='test', shuffle=False).data
+    # Get sparse tf rep
+    tf_vectorizer = CountVectorizer(max_df=highest_amt, min_df=lowest_amt, stop_words='english')
+    print("completed vectorizer")
+    tf_vectorizer.fit(vectors)
+    tf = tf_vectorizer.transform(vectors)
+    # Get sparse PPMI rep from sparse tf rep
+    sparse_ppmi = convertPPMISparse(tf)
+    # Get sparse Dsim matrix from sparse PPMI rep
+    dm = getDissimilarityMatrixSparse(sparse_ppmi)
+    # Use as input to mds
+    mds = createMDS(dm, depth)
+    # save MDS
+    dt.write2dArray(mds, mds_fn)
+
+    #dt.write2dArray(dm, dm_fn)
+    #print("wrote dm")
 
 
-    if dt.allFnsAlreadyExist([dm_fn]) and not rewrite_files:
-        dm = dt.import2dArray(dm_fn)
-        print("read dm")
-    else:
-        tf = dt.import2dArray(term_frequency_fn)
-        dm = getDissimilarityMatrix(tf)
-        dt.write2dArray(dm, dm_fn)
-        print("wrote dm")
 
-
-
-    if dt.allFnsAlreadyExist([mds_fn]) and not rewrite_files:
-        mds = dt.import2dArray(mds_fn)
-    else:
-        print("starting mds")
-        dm = np.asarray(dt.import2dArray(dm_shorten_fn)).transpose()
-        mds = createMDS(dm, depth)
-        dt.write2dArray(mds, mds_fn)
-        print("wrote mds")
 
 
 data_type = "newsgroups"
