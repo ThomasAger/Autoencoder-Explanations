@@ -93,17 +93,16 @@ def main(data_type, class_labels_fn, class_names_fn, feature_names_fn, max_depth
                           limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn=topic_model_fn,
                           cluster_duplicates=True, save_results_so_far=False)
 
-    dt.arrangeByScore(np.unique(np.asarray(csvs)), file_name + final_csv_name + ".csv")
+    dt.arrangeByScore(np.unique(np.asarray(csvs)), "../data/"+data_type+"/rules/tree_csv/"+file_name + final_csv_name + ".csv")
 data_type = "placetypes"
 high_amt = 50
 low_amt = 10
-file_name = "all-"+str(high_amt)+"-"+str(low_amt)
+
 classify = ["geonames", "foursquare", "opencyc"]
 feature_names_fn = "../data/" + data_type + "/bow/names/"+str(high_amt)+".txt"
 max_depth = 3
 limit_entities = False
 dt_dev = True
-final_csv_name = "recommended params"
 vector_names_fn = "../data/" + data_type + "/nnet/spaces/entitynames.txt"
 
 
@@ -112,7 +111,8 @@ doc_topic_prior = {0.1, 0.01, 0.001}
 topic_word_prior = {0.1, 0.01, 0.001}
 n_topics = [10,30,50]
 for c in classify:
-
+    file_name = "all-" + str(high_amt) + "-" + str(low_amt) + c
+    final_csv_name = "recommended params"
     class_labels_fn = "../data/" + data_type + "/classify/"+c+"/class-all"
     class_names_fn = "../data/" + data_type + "/classify/"+c+"/names.txt"
     limited_label_fn = "../data/" + data_type + "/classify/" + c + "/available_entities.txt"
