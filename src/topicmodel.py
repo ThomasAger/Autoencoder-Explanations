@@ -47,21 +47,26 @@ def LDA(tf, names, components, file_name,   doc_topic_prior, topic_word_prior,  
     joblib.dump(lda, model_name)
 
 def main(data_type, class_labels_fn, class_names_fn, feature_names_fn, max_depth, limit_entities,
-         limited_label_fn, vector_names_fn, dt_dev, doc_topic_prior, topic_word_prior, n_topics, file_name, final_csv_name):
+         limited_label_fn, vector_names_fn, dt_dev, doc_topic_prior, topic_word_prior, n_topics, file_name, final_csv_name,
+         high_amt, low_amt):
 
     print("importing class all")
-    tf = dt.import2dArray("../data/"+data_type+"/bow/frequency/phrases/class-all-100-10-all")
-    names = dt.import1dArray("../data/"+data_type+"/bow/names/100.txt")
+    tf = dt.import2dArray("../data/"+data_type+"/bow/frequency/phrases/class-all-"+str(high_amt)+"-"+str(low_amt)+"-all")
+    names = dt.import1dArray(feature_names_fn)
     variables_to_execute = list(product(doc_topic_prior, topic_word_prior, n_topics))
     print("executing", len(variables_to_execute), "variations")
     csvs = []
-
+    file_names = []
     for vt in variables_to_execute:
         doc_topic_prior = vt[0]
         topic_word_prior = vt[1]
         n_topics = vt[2]
-
-        file_name = file_name + "DTP" + str(doc_topic_prior) + "TWP" + str(topic_word_prior) + "NT" + str(n_topics)
+        file_names.append(file_name + "DTP" + str(doc_topic_prior) + "TWP" + str(topic_word_prior) + "NT" + str(n_topics))
+    for vt in range(len(variables_to_execute)):
+        doc_topic_prior = variables_to_execute[vt][0]
+        topic_word_prior = variables_to_execute[vt][1]
+        n_topics = variables_to_execute[vt][2]
+        file_name = file_names[vt]
 
         LDA(tf, names, n_topics, file_name,
             doc_topic_prior, topic_word_prior, data_type)
@@ -89,10 +94,12 @@ def main(data_type, class_labels_fn, class_names_fn, feature_names_fn, max_depth
                           cluster_duplicates=True, save_results_so_far=False)
 
     dt.arrangeByScore(np.unique(np.asarray(csvs)), file_name + final_csv_name + ".csv")
-data_type = "movies"
-file_name = "all-100-10"
-classify = ["genres", "keywords", "ratings"]
-feature_names_fn = "../data/" + data_type + "/bow/names/100.txt"
+data_type = "placetypes"
+high_amt = 50
+low_amt = 10
+file_name = "all-"+str(high_amt)+"-"+str(low_amt)
+classify = ["geonames", "foursquare", "opencyc"]
+feature_names_fn = "../data/" + data_type + "/bow/names/"+str(high_amt)+".txt"
 max_depth = 3
 limit_entities = False
 dt_dev = True
@@ -110,4 +117,5 @@ for c in classify:
     class_names_fn = "../data/" + data_type + "/classify/"+c+"/names.txt"
     limited_label_fn = "../data/" + data_type + "/classify/" + c + "/available_entities.txt"
     if  __name__ =='__main__':main(data_type, class_labels_fn, class_names_fn, feature_names_fn, max_depth, limit_entities,
-             limited_label_fn, vector_names_fn, dt_dev, doc_topic_prior, topic_word_prior, n_topics, file_name, final_csv_name)
+             limited_label_fn, vector_names_fn, dt_dev, doc_topic_prior, topic_word_prior, n_topics, file_name, final_csv_name,
+                                   high_amt, low_amt)
