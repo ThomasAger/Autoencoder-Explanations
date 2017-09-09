@@ -112,16 +112,15 @@ def getDissimilarityMatrixSparse(tf):
         norms[ei] = spl.norm(tf[ei])
         print("norm", ei)
 
-    dot_product = np.empty([tflen, tflen], dtype="float64")
+    dot_product = np.zeros([tflen, tflen], dtype="float64")
 
     #Calculate dot products
     for ei in range(tflen):
         for ej in range(tflen):
             if dot_product[ej][ei] != 0:
-                print("cont")
                 dot_product[ei][ej] = dot_product[ej][ei]
                 continue
-            dot_product[ei][ej] = np.dot(tf[ei], tf[ej].T)[0,0]
+            dot_product[ei][ej] = tf[ei].dot(tf[ej].T)[0,0]
         print("dp", ei)
 
     norm_multiplied = np.empty([tflen, tflen], dtype="float64")
@@ -206,7 +205,7 @@ def main(data_type, clf, highest_amt, lowest_amt, depth, rewrite_files):
     newsgroups_test = fetch_20newsgroups(subset='test', shuffle=False)
 
 
-    vectors = newsgroups_test.data#np.concatenate((newsgroups_train.data, newsgroups_test.data), axis=0)
+    vectors = np.concatenate((newsgroups_train.data, newsgroups_test.data), axis=0)
     newsgroups_test = None
     newsgroups_train = None
     # Get sparse tf rep
@@ -217,7 +216,6 @@ def main(data_type, clf, highest_amt, lowest_amt, depth, rewrite_files):
     # Get sparse PPMI rep from sparse tf rep
     print("done ppmisaprse")
     sparse_ppmi = convertPPMISparse(tf)
-    new_ppmi = convertPPMI(tf)
     # Get sparse Dsim matrix from sparse PPMI rep
     dm = getDissimilarityMatrixSparse(sparse_ppmi)
     # Use as input to mds
@@ -235,8 +233,8 @@ def main(data_type, clf, highest_amt, lowest_amt, depth, rewrite_files):
 data_type = "newsgroups"
 clf = "all"
 
-highest_amt = 0.95
-lowest_amt = 200
+highest_amt = 1
+lowest_amt = 1
 depth = 100
 
 rewrite_files = True
