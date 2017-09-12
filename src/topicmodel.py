@@ -94,11 +94,11 @@ def main(data_type, class_labels_fn, class_names_fn, feature_names_fn, max_depth
                           cluster_duplicates=True, save_results_so_far=False)
 
     dt.arrangeByScore(np.unique(np.asarray(csvs)), "../data/"+data_type+"/rules/tree_csv/"+file_name + final_csv_name + ".csv")
-data_type = "placetypes"
-high_amt = 50
+data_type = "movies"
+high_amt = 100
 low_amt = 10
 
-classify = ["geonames", "foursquare", "opencyc"]
+classify = ["genres", "keywords", "ratings"]
 feature_names_fn = "../data/" + data_type + "/bow/names/"+str(high_amt)+".txt"
 max_depth = 3
 limit_entities = False
