@@ -114,20 +114,24 @@ def getDissimilarityMatrixSparse(tf):
 
     dot_product = np.zeros([tflen, tflen], dtype="float64")
 
-    #Calculate dot products
-    for ei in range(tflen):
-        for ej in range(tflen):
-            if dot_product[ej][ei] != 0:
-                dot_product[ei][ej] = dot_product[ej][ei]
-                continue
-            dot_product[ei][ej] = tf[ei].dot(tf[ej].T)[0,0]
-        print("dp", ei)
+    if dt.fileExists("dotproduct.temp"):
+        dt.import2dArray("dotproduct.temp")
+        #Calculate dot products
+        for ei in range(tflen):
+            for ej in range(tflen):
+                if dot_product[ej][ei] != 0:
+                    dot_product[ei][ej] = dot_product[ej][ei]
+                    continue
+                dot_product[ei][ej] = tf[ei].dot(tf[ej].T)[0,0]
+            print("dp", ei)
+
+    dt.write2dArray(dot_product, "dotproduct.temp")
 
     norm_multiplied = np.empty([tflen, tflen], dtype="float64")
 
     # Calculate dot products
-    for ei in range(len(tf)):
-        for ej in range(len(tf)):
+    for ei in range(tflen):
+        for ej in range(tflen):
             norm_multiplied[ei][ej] = norms[ei] * norms[ej]
         print("dp", ei)
 
@@ -135,8 +139,8 @@ def getDissimilarityMatrixSparse(tf):
     dot_product = dt.shortenFloatsNoFn(dot_product)
 
     #Get angular differences
-    for ei in range(len(tf)):
-        for ej in range(len(tf)):
+    for ei in range(tflen):
+        for ej in range(tflen):
             ang = pithing * np.arccos(dot_product[ei][ej] / norm_multiplied[ei][ej])
             dm[ei][ej] = ang
         print(ei)
