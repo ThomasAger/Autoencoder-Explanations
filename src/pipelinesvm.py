@@ -85,10 +85,6 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
         data_type = data_type
         threads = threads
         classification_task = classification_task
-        if data_type == "wines" or data_type == "placetypes":
-            lowest_amt = 50
-        else:
-            lowest_amt = 100
         random_number = random.random()
         deep_size = deep_size
         rewrite_files = rewrite_files
@@ -213,7 +209,7 @@ def main(data_type, classification_task, file_name, init_vector_path, hidden_act
                     else:
                         exit()
 print("ran first part")
-arcca = True
+arcca = False
 if arcca:
     loc = "/scratch/c1214824/data/"
 else:
@@ -227,7 +223,7 @@ lowest_amt = 50
 highest_amt = 10
 init_vector_path = "../data/"+data_type+"/nnet/spaces/wines100trimmed.txt"
 """
-
+"""
 data_type = "movies"
 classification_task = "ratings"
 lowest_amt = 100
@@ -235,6 +231,21 @@ highest_amt = 10
 #init_vector_path = "../data/"+data_type+"/nnet/spaces/films200-"+classification_task+".txt"
 file_name = "f200ge"
 init_vector_path = loc+data_type+"/nnet/spaces/films100.txt"
+"""
+data_type = "newsgroups"
+classification_task = "newsgroups"
+#arrange_name = arrange_name + classification_task[0]
+skip_nn = False
+if skip_nn is False:
+    file_name = "n100mdsnnet"
+else:
+    file_name = "n100mds"
+lowest_amt = 6
+highest_amt = 18836
+init_vector_path = loc+data_type+"/nnet/spaces/mds100.txt"
+get_nnet_vectors_path = loc+data_type+"/nnet/spaces/mds100.txt"
+vector_path_replacement =  loc+data_type+"/nnet/spaces/mds100.txt"
+deep_size = [100]
 """
 data_type = "placetypes"
 classification_task = "foursquare"
@@ -256,7 +267,6 @@ output_activation = "sigmoid"
 trainer = "adagrad"
 loss="binary_crossentropy"
 cutoff_start = 0.2
-deep_size = [200]
 #init_vector_path = "../data/"+data_type+"/bow/ppmi/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+classification_task
 ep =100
 
@@ -276,9 +286,8 @@ average_ppmi = False
 amount_to_start = 1000
 
 cross_val = 1
-vector_path_replacement = loc+data_type+"/nnet/spaces/films100.txt"
 rewrite_files = False
-threads=3
+threads=1
 chunk_amt = 20
 chunk_id = 0
 variables = [data_type, classification_task, file_name, init_vector_path, hidden_activation,

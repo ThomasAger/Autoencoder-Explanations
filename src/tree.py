@@ -57,20 +57,21 @@ class DecisionTree:
             print("Running task", "DecisionTree")
 
 
-        vectors = np.asarray(dt.import2dArray(features_fn)).transpose()
+        vectors = np.asarray(dt.import2dArray(features_fn))
 
         labels = np.asarray(dt.import2dArray(classes_fn, "i"))
 
         print("vectors", len(vectors), len(vectors[0]))
         print("labels", len(labels), len(labels[0]))
 
-
+        if len(vectors) != len(labels) and len(labels) > len(labels[0]):
+            vectors = vectors.transpose()
 
         print("vectors", len(vectors), len(vectors[0]))
         cluster_names = dt.import2dArray(cluster_names_fn, "s")
         clusters = dt.import2dArray(clusters_fn, "f")
         original_vectors = vectors
-        if limit_entities is False:
+        if limit_entities is False and data_type != "newsgroups":
             vector_names = dt.import1dArray(vector_names_fn)
             limited_labels = dt.import1dArray(limited_label_fn)
             vectors = np.asarray(dt.match_entities(vectors, limited_labels, vector_names))
@@ -85,7 +86,6 @@ class DecisionTree:
         f1_array = []
         accuracy_array = []
         params  = []
-
 
         labels = labels.transpose()
         print("labels transposed")
@@ -458,19 +458,19 @@ class DecisionTree:
 def main():
     cluster_to_classify = -1
     max_depth = None
-    classify = "genres"
-    data_type = "movies"
+    classify = "newsgroups"
+    data_type = "newsgroups"
     cv_split = 1
     jo = True
-    save_details = True
+    save_details = False
     label_names_fn = "../data/"+data_type+"/classify/"+classify+"/names.txt"
     cluster_labels_fn = "../data/"+data_type+"/classify/"+classify+"/class-All"
     threshold = 0.9
     split = 0.1
-    file_name = "places100"+classify
+    file_name = "places1ssss00"+classify
     criterion = "entropy"
     balance = "balanced"
-    cluster_names_fn = "../data/"+data_type+"/cluster/hierarchy_names/"+file_name+".txt"
+    cluster_names_fn = "../data/"+data_type+"/nnet/spaces/entitynames.txt"
     #cluster_names_fn = "../data/movies/bow/names/200.txt"
     #cluster_names_fn = "../data/movies/cluster/names/" + file_name + ".txt"
     #cluster_vectors_fn = "../data/movies/rank/numeric/" + file_name + "400.txt"
@@ -489,7 +489,8 @@ def main():
     #file_name = file_name + "finetune_pavppmi"
     #cluster_vectors_fn = "../data/"+data_type+"/nnet/spaces/"+vector_fn+".txt"
     #file_name = file_name + "vector"
-    cluster_vectors_fn = "../data/"+data_type+"/rank/numeric/"+vector_fn+".txt"
+    cluster_vectors_fn = "../data/"+data_type+"/bow/ppmi/class-all-50-0.95-all"
+    clusters_fn = cluster_vectors_fn
     file_name = file_name + "ranks"
     #cluster_vectors_fn = "../data/"+data_type+"/nnet/spaces/"+vector_fn+".txt"
     #file_name = file_name + "spaces"
@@ -497,7 +498,8 @@ def main():
 
     clf = DecisionTree(cluster_vectors_fn, cluster_labels_fn, label_names_fn , cluster_names_fn , file_name, 10000,
                        max_depth, balance=balance, criterion=criterion, save_details=save_details, data_type=data_type,
-                       csv_fn=csv_fn, cv_splits = cv_split)
+                       csv_fn=csv_fn, cv_splits = cv_split, clusters_fn=cluster_vectors_fn, limit_entities=True,
+                       rewrite_files=True)
 
     """
     fn = "films100"

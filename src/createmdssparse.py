@@ -21,19 +21,10 @@ from math import pi
 
 def createMDS(dm, depth):
     dm = np.asarray(np.nan_to_num(dm), dtype="float64")
-    mds = manifold.MDS(n_components=depth, max_iter=1000, eps=1e-9,
-                   dissimilarity="precomputed", n_jobs=1)
-    pos = mds.fit(dm).embedding_
-
-    nmds = manifold.MDS(n_components=depth, metric=False, max_iter=1000, eps=1e-12,
-                        dissimilarity="precomputed", n_jobs=1,
-                        n_init=1)
-    npos = nmds.fit_transform(dm.astype(np.float64), init=pos)
-
-    return npos
-
-
-
+    mds = manifold.MDS(n_components=depth, verbose=2,
+                   dissimilarity="euclidean", n_jobs=1)
+    pos = mds.fit_transform(dm.astype(np.float64))
+    return pos
 
 def max_zero(mat):
     mat[mat < 0] = 0
@@ -114,8 +105,10 @@ def getDissimilarityMatrixSparse(tf):
 
     dot_product = np.zeros([tflen, tflen], dtype="float64")
 
-    if dt.fileExists("dotproduct.temp"):
-        dt.import2dArray("dotproduct.temp")
+    use_old_dp = True
+    if use_old_dp:
+       dot_product = dt.import2dArray("dotproduct.temp")
+    else:
         #Calculate dot products
         for ei in range(tflen):
             for ej in range(tflen):
@@ -124,8 +117,7 @@ def getDissimilarityMatrixSparse(tf):
                     continue
                 dot_product[ei][ej] = tf[ei].dot(tf[ej].T)[0,0]
             print("dp", ei)
-
-    dt.write2dArray(dot_product, "dotproduct.temp")
+        dt.write2dArray(dot_product, "dotproduct.temp")
 
     norm_multiplied = np.empty([tflen, tflen], dtype="float64")
 
@@ -205,23 +197,28 @@ def main(data_type, clf, highest_amt, lowest_amt, depth, rewrite_files):
     if dt.allFnsAlreadyExist([dm_fn, mds_fn, svd_fn, shorten_fn]):
         print("all files exist")
         exit()
-    newsgroups_train = fetch_20newsgroups(subset='train', shuffle=False)
-    newsgroups_test = fetch_20newsgroups(subset='test', shuffle=False)
+    if dt.fileExists(dm_fn) is False:
+        newsgroups_train = fetch_20newsgroups(subset='train', shuffle=False)
+        newsgroups_test = fetch_20newsgroups(subset='test', shuffle=False)
 
 
-    vectors = np.concatenate((newsgroups_train.data, newsgroups_test.data), axis=0)
-    newsgroups_test = None
-    newsgroups_train = None
-    # Get sparse tf rep
-    tf_vectorizer = CountVectorizer(max_df=highest_amt, min_df=lowest_amt, stop_words='english')
-    print("completed vectorizer")
-    tf = tf_vectorizer.fit_transform(vectors)
-    vectors = None
-    # Get sparse PPMI rep from sparse tf rep
-    print("done ppmisaprse")
-    sparse_ppmi = convertPPMISparse(tf)
-    # Get sparse Dsim matrix from sparse PPMI rep
-    dm = getDissimilarityMatrixSparse(sparse_ppmi)
+        vectors = np.concatenate((newsgroups_train.data, newsgroups_test.data), axis=0)
+        newsgroups_test = None
+        newsgroups_train = None
+        # Get sparse tf rep
+        tf_vectorizer = CountVectorizer(max_df=highest_amt, min_df=lowest_amt, stop_words='english')
+        print("completed vectorizer")
+        tf = tf_vectorizer.fit_transform(vectors)
+        vectors = None
+        # Get sparse PPMI rep from sparse tf rep
+        print("done ppmisaprse")
+        sparse_ppmi = convertPPMISparse(tf)
+        # Get sparse Dsim matrix from sparse PPMI rep
+        dm = getDissimilarityMatrixSparse(sparse_ppmi)
+        dt.write2dArray(dm, dm_fn)
+    else:
+        dm = dt.import2dArray(dm_fn)
+    print("starting mds")
     # Use as input to mds
     mds = createMDS(dm, depth)
     # save MDS
@@ -237,7 +234,7 @@ def main(data_type, clf, highest_amt, lowest_amt, depth, rewrite_files):
 data_type = "newsgroups"
 clf = "all"
 
-highest_amt = 1
+highest_amt = 1.0
 lowest_amt = 1
 depth = 100
 

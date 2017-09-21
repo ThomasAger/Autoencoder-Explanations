@@ -272,10 +272,6 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                 data_type = data_type
                 threads = threads
                 classification_task = classification_task
-                if data_type == "wines" or data_type == "placetypes":
-                    lowest_amt = 50
-                else:
-                    lowest_amt = 100
                 print(file_name)
                 print("SPLIT", str(splits), rewrite_files, arcca)
 
@@ -866,7 +862,7 @@ init_vector_path = loc+data_type+"/pca/class-all-50-10-alld100"
 vector_path_replacement = loc+data_type+"/pca/class-all-50-10-alld100"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 """
-
+"""
 data_type = "movies"
 classification_task = ["keywords"]
 #arrange_name = arrange_name + classification_task[0]
@@ -886,6 +882,25 @@ if classification_task[0] == "us-ratings":
     deep_size = [200]
 else:
     deep_size = [200]
+"""
+
+data_type = "newsgroups"
+classification_task = ["newsgroups"]
+#arrange_name = arrange_name + classification_task[0]
+skip_nn = True
+if skip_nn is False:
+    file_name = "n100mdsnnet"
+else:
+    file_name = "n100mds"
+lowest_amt = 6
+highest_amt = 18836
+init_vector_path = loc+data_type+"/nnet/spaces/mds100.txt"
+get_nnet_vectors_path = loc+data_type+"/nnet/spaces/mds100.txt"
+vector_path_replacement =  loc+data_type+"/nnet/spaces/mds100.txt"
+#init_vector_path = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
+#get_nnet_vectors_path = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
+#vector_path_replacement = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
+deep_size = [100]
 
 """"""
 """
@@ -905,7 +920,7 @@ vector_path_replacement = loc+data_type+"/nnet/spaces/places100.txt"
 get_nnet_vectors_path = loc + data_type + "/nnet/spaces/places100.txt"
 deep_size = [100]
 """
-if classification_task[0] == "geonames" or classification_task[0] == "foursquare":
+if classification_task[0] == "geonames" or classification_task[0] == "foursquare" or classification_task[0] == "newsgroups" :
     hidden_activation = "tanh"
     dropout_noise = 0.5
     output_activation = "softmax"
@@ -914,7 +929,7 @@ if classification_task[0] == "geonames" or classification_task[0] == "foursquare
     class_weight = None
     lr = 0.01
     nnet_dev = False
-    ep=2000
+    ep=400
 else:
     hidden_activation = "tanh"
     dropout_noise = 0.5
@@ -1019,7 +1034,7 @@ one_for_all = False
 
 arrange_name = "cluster ratings BCS" + str(max_depth)
 
-threads=1
+threads=4
 chunk_amt = 0
 chunk_id = 0
 for c in range(chunk_amt):

@@ -207,21 +207,21 @@ def main(vectors_fn, classes_fn, property_names, training_size, file_name, lowes
     SVM(vectors_fn, classes_fn, property_names, lowest_count=lowest_count,
         training_size=training_size, file_name=file_name, largest_count=largest_count)
 
-
-data_type = "movies"
-classify = "ratings"
-file_name = "films100-ratings"
+"""
+data_type = "newsgroups"
+classify = "newsgroups"
+file_name = "/class-all-1-1"
 vector_path = "../data/"+data_type+"/nnet/spaces/" + file_name + ".txt"
 classification_path = "../data/"+data_type+"/classify/" + classify + "/class-All"
 class_names_fn = "../data/"+data_type+"/classify/" + classify + "/names.txt"
-lowest_amt = 100
+lowest_amt = 50
 highest_count = 10
 svm_type = "svm"
 rewrite_files = True
 classification = classify
 chunk_amt = 0
 chunk_id = 0
-"""
+
 createSVM(vector_path, classification_path, class_names_fn, file_name, lowest_count=lowest_amt,
                                   highest_count=highest_count, data_type=data_type, get_kappa=False,
                                   get_f1=True, single_class=True,svm_type=svm_type, getting_directions=False, threads=1,
