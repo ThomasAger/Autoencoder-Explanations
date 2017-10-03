@@ -22,11 +22,12 @@ def save_model(model, feature_names, n_top_words):
     print("test")
 
 def LDA(tf, names, components, file_name,   doc_topic_prior, topic_word_prior,  data_type, rewrite_files):
+    # Removed model name as it was unused and I manually renamed a bunch of files and was too lazy to do model too
     rep_name = "../data/"+data_type+"/LDA/rep/"+file_name+".txt"
     model_name = "../data/"+data_type+"/LDA/model/"+file_name+".txt"
     names_name = "../data/"+data_type+"/LDA/names/"+file_name+".txt"
 
-    all_names = [rep_name, model_name, names_name]
+    all_names = [rep_name,  names_name]
 
     if dt.allFnsAlreadyExist(all_names) and not rewrite_files:
         print("Already completed")
@@ -48,7 +49,7 @@ def LDA(tf, names, components, file_name,   doc_topic_prior, topic_word_prior,  
 
 def main(data_type, class_labels_fn, class_names_fn, ft_names_fn, max_depth, limit_entities,
          limited_label_fn, vector_names_fn, dt_dev, doc_topic_prior, topic_word_prior, n_topics, file_name, final_csv_name,
-         high_amt, low_amt, cross_val, rewrite_files):
+         high_amt, low_amt, cross_val, rewrite_files, classify):
 
     print("importing class all")
     tf = np.asarray(dt.import2dArray("../data/"+data_type+"/bow/frequency/phrases/class-all-"+str(high_amt)+"-"+str(low_amt)+"-all"))
@@ -80,7 +81,7 @@ def main(data_type, class_labels_fn, class_names_fn, ft_names_fn, max_depth, lim
         cv_fns = []
         og_fn = file_name
         for c in range(cross_val):
-            file_name = og_fn + " " + str(cross_val) + "CV " + str(c)
+            file_name = og_fn + " " + str(cross_val) + "CV " + str(c) + classify + "Dev" + str(dt_dev)
             csv_name = "../data/" + data_type + "/rules/tree_csv/" + file_name + ".csv"
             cv_fns.append(csv_name)
 
@@ -99,32 +100,32 @@ def main(data_type, class_labels_fn, class_names_fn, ft_names_fn, max_depth, lim
                               cluster_duplicates=True, save_results_so_far=False)
 
         dt.averageCSVs(cv_fns)
-        file_name = og_fn + " " + str(cross_val) + "CV " + str(0)
+        file_name = og_fn + " " + str(cross_val) + "CV " + str(0) + classify + "Dev" + str(dt_dev)
         csvs.append("../data/" + data_type + "/rules/tree_csv/" + file_name + "AVG.csv")
     dt.arrangeByScore(np.unique(np.asarray(csvs)), final_csv_fn)
-data_type = "movies"
-high_amt = 100
+data_type = "placetypes"
+high_amt = 50
 low_amt = 10
 
-classify = ["genres"]
+classify = ["opencyc", "geonames", "foursquare"]
 
 max_depth = 3
 limit_entities = False
-dt_dev = True
+dt_dev = False
 vector_names_fn = "../data/" + data_type + "/nnet/spaces/entitynames.txt"
 feature_names_fn = "../data/" + data_type + "/bow/names/"+str(high_amt)+"-"+str(low_amt)+"-all.txt"
-rewrite_files = True
+rewrite_files = False
 cross_val = 1
 
 doc_topic_prior = [0.1, 0.01, 0.001]
-topic_word_prior = [0.1, 0.01, 0.001]
+topic_word_prior = [0.01, 0.1, 0.001]
 n_topics = [10,30,50]
 for c in classify:
-    file_name = "all-" + str(high_amt) + "-" + str(low_amt) + c
-    final_csv_name = "recommended params"
+    file_name = "all-" + str(high_amt) + "-" + str(low_amt)
+    final_csv_name = "recommended params" + c + str(dt_dev)
     class_labels_fn = "../data/" + data_type + "/classify/"+c+"/class-all"
     class_names_fn = "../data/" + data_type + "/classify/"+c+"/names.txt"
     limited_label_fn = "../data/" + data_type + "/classify/" + c + "/available_entities.txt"
     if  __name__ =='__main__':main(data_type, class_labels_fn, class_names_fn, feature_names_fn, max_depth, limit_entities,
              limited_label_fn, vector_names_fn, dt_dev, doc_topic_prior, topic_word_prior, n_topics, file_name, final_csv_name,
-                                   high_amt, low_amt, cross_val, rewrite_files)
+                                   high_amt, low_amt, cross_val, rewrite_files, c)

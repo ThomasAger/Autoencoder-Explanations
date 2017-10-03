@@ -106,7 +106,7 @@ class SVM:
                 kappa_scores[y+t] = kappa[t][0]
                 f1_scores[y+t] = kappa[t][1]
                 directions[y+t] = kappa[t][2]
-                print(y, "Score", kappa[t][0],  kappa[t][1], property_names_a[t])
+                print(y, "/", len(property_names), "Score", kappa[t][0],  kappa[t][1], property_names_a[t])
 
 
 

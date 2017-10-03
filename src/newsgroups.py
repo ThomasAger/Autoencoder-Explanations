@@ -6,7 +6,7 @@ import numpy as np
 import MovieTasks as mt
 import scipy.sparse as sp
 # Import the newsgroups
-"""
+
 newsgroups_train = fetch_20newsgroups(subset='train', shuffle=False, remove=("headers", "footers", "quotes"))
 newsgroups_test = fetch_20newsgroups(subset='test', shuffle=False, remove=("headers", "footers", "quotes"))
 
@@ -32,15 +32,11 @@ print(classes[train_len+1])
 print(classes[train_len+2])
 
 
-"""
 classification = "all"
 highest_amt = 18836
-lowest_amt = 6
-"""
+lowest_amt = 30
+
 all_fn = "../data/newsgroups/bow/frequency/phrases/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-" + classification
-#if dt.fileExists(all_fn):
-#    tf = dt.import2dArray(all_fn)
-#else:
 tf_vectorizer = CountVectorizer(max_df=highest_amt, min_df=lowest_amt, stop_words='english')
 print("completed vectorizer")
 tf = tf_vectorizer.fit(vectors)
@@ -53,14 +49,23 @@ tf = dense.fit_transform(tf)
 tf = np.squeeze(np.asarray(tf))
 tf = np.asarray(tf, dtype=np.int32)
 tf = tf.transpose()
+freqs = []
+for t in tf:
+    freq = 0
+    for i in range(len(t)):
+        if t[i] != 0:
+            freq += t[i]
+    freqs.append(freq)
+print("Amount of terms:", len(tf))
+dt.write1dArray(freqs, "../data/newsgroups/bow/freq_count/"+str(lowest_amt)+"-"+str(highest_amt))
 dt.write2dArray(tf, all_fn)
-mt.printIndividualFromAll("newsgroups",  "frequency/phrases", lowest_amt, 0.95, classification, all_fn=all_fn, names_array=feature_names)
+mt.printIndividualFromAll("newsgroups",  "frequency/phrases", lowest_amt, highest_amt, classification, all_fn=all_fn, names_array=feature_names)
 ppmi_fn = "../data/newsgroups/bow/ppmi/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-" + classification
 #if dt.fileExists(ppmi_fn) is False:
 tf = sp.csr_matrix(tf)
 ppmi = mt.convertPPMI( tf)
 dt.write2dArray(ppmi, ppmi_fn)
-mt.printIndividualFromAll("newsgroups",  "ppmi", lowest_amt, 0.95, classification, all_fn=all_fn, names_array=feature_names)
+mt.printIndividualFromAll("newsgroups",  "ppmi", lowest_amt, highest_amt, classification, all_fn=all_fn, names_array=feature_names)
 
 print("1")
 classes = np.asarray(classes, dtype=np.int32)
@@ -78,7 +83,7 @@ for c in range(len(classes_dense)):
 classes_dense = classes_dense.transpose()
 
 dt.write2dArray(classes_dense,"../data/newsgroups/classify/newsgroups/class-all")
-"""
+
 
 feature_names = dt.import1dArray("../data/newsgroups/bow/names/"+str(lowest_amt)+"-"+str(highest_amt)+"-all.txt")
 all_fn = "../data/newsgroups/bow/frequency/phrases/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-" + classification

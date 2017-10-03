@@ -450,6 +450,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                             file_name = file_name + " MC" + str(min_size) + " MS" + str(min_score)
                             names_fn = property_names_fn
                             file_name = file_name + " ATS" + str(amount_to_start) + " DS" + str(dissim_amt)
+
+
                             if dont_cluster:
                                 file_name = file_name + " DC" +str(dont_cluster)
                             if breakoff:
@@ -470,6 +472,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                 cluster_dict_fn = loc + data_type + "/cluster/dict/" + file_name + ".txt"
 
                             if breakoff:
+
                                 hierarchy.initClustering(vector_path, directions_fn, scores_fn, names_fn, amount_to_start, False,
                                       cluster_amt, score_limit, file_name, score_type, similarity_threshold,
                                              add_all_terms=add_all_terms, data_type=data_type, rewrite_files=rewrite_files,
@@ -478,10 +481,15 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                          dissim_amt=dissim_amt, find_most_similar=find_most_similar, get_all=get_all,
                                                          half_ndcg_half_kappa=half_ndcg_half_kappa, only_most_similar=only_most_similar,
                                                          dont_cluster=dont_cluster)
+
                             else:
+
                                 cluster.getClusters(directions_fn, scores_fn, names_fn, False, dissim_amt, amount_to_start, file_name, cluster_amt,
                                                     dissim, min_score, data_type, rewrite_files=rewrite_files,
                                                          half_kappa_half_ndcg=half_ndcg_half_kappa, dont_cluster=dont_cluster)
+
+
+
 
                             ranking_fn = loc + data_type + "/rank/numeric/" + file_name + ".txt"
 
@@ -731,14 +739,14 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                         print("got to trees, who dis?")
                                         tree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_dict_fn, file_name, 10000,
                                                               max_depth=max_depth, balance="balanced", criterion="entropy", save_details=True,
-                                                          data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
+                                                          data_type=data_type, csv_fn=csv_name, rewrite_files=True,
                                                           cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
                                                           limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn=clusters_fn,
                                               cluster_duplicates=cluster_duplicates)
 
                                         tree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_dict_fn, file_name + "None", 10000,
                                                               max_depth=None, balance="balanced", criterion="entropy", save_details=True,
-                                                          data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
+                                                          data_type=data_type, csv_fn=csv_name, rewrite_files=True,
                                                           cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
                                                           limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn=clusters_fn,
                                               cluster_duplicates=cluster_duplicates)
@@ -862,9 +870,9 @@ init_vector_path = loc+data_type+"/pca/class-all-50-10-alld100"
 vector_path_replacement = loc+data_type+"/pca/class-all-50-10-alld100"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 """
-"""
+
 data_type = "movies"
-classification_task = ["keywords"]
+classification_task = ["genres"]
 #arrange_name = arrange_name + classification_task[0]
 skip_nn = True
 if skip_nn is False:
@@ -882,8 +890,8 @@ if classification_task[0] == "us-ratings":
     deep_size = [200]
 else:
     deep_size = [200]
-"""
 
+"""
 data_type = "newsgroups"
 classification_task = ["newsgroups"]
 #arrange_name = arrange_name + classification_task[0]
@@ -892,7 +900,7 @@ if skip_nn is False:
     file_name = "n100mdsnnet"
 else:
     file_name = "n100mds"
-lowest_amt = 6
+lowest_amt = 30
 highest_amt = 18836
 init_vector_path = loc+data_type+"/nnet/spaces/mds100.txt"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/mds100.txt"
@@ -901,7 +909,7 @@ vector_path_replacement =  loc+data_type+"/nnet/spaces/mds100.txt"
 #get_nnet_vectors_path = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
 #vector_path_replacement = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
 deep_size = [100]
-
+"""
 """"""
 """
 data_type = "placetypes"
@@ -911,7 +919,7 @@ highest_amt = 10
 #init_vector_path = "../data/"+data_type+"/bow/ppmi/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+classification_task
 #file_name = "placetypes bow"
 init_vector_path = "../data/"+data_type+"/nnet/spaces/places100.txt"
-skip_nn = True
+skip_nn = False
 if skip_nn is False:
     file_name = "places mds 100"
 else:
@@ -985,7 +993,7 @@ breakoff = [False]
 score_limit = [0.9]
 amount_to_start = [2000]
 cluster_multiplier = [2]#50
-score_type = ["ndcg", "kappa"]
+score_type = ["ndcg"]
 use_breakoff_dissim = [False]
 get_all = [False]
 half_ndcg_half_kappa = [False]
@@ -1034,7 +1042,7 @@ one_for_all = False
 
 arrange_name = "cluster ratings BCS" + str(max_depth)
 
-threads=4
+threads=3
 chunk_amt = 0
 chunk_id = 0
 for c in range(chunk_amt):

@@ -163,7 +163,7 @@ class DecisionTree:
 
             for splits in range(len(ac_y_test)):
                 model_name_fn = "../data/" + data_type + "/rules/tree_model/" + label_names[l] + " " + filename + ".model"
-                if dt.fileExists(model_name_fn):
+                if dt.fileExists(model_name_fn) and not rewrite_files:
                     clf = joblib.load(model_name_fn)
                 else:
                     clf = tree.DecisionTreeClassifier(max_depth=max_depth, criterion=criterion, class_weight=balance)
@@ -181,7 +181,7 @@ class DecisionTree:
                 cv_acc.append(accuracy)
                 scores = [[label_names[l], "f1", f1, "accuracy", accuracy]]
                 print(scores)
-                class_names = [label_names[l], "NOT " + label_names[l]]
+                class_names = ["NOT " + label_names[l], label_names[l]]
 
                 # Export a tree for each label predicted by the clf
                 if save_details:
@@ -189,6 +189,8 @@ class DecisionTree:
                     new_dot_file_fn = '../data/' + data_type + '/rules/tree_data/' + label_names[l] + " " + filename  + '.txt'
                     orig_graph_png_fn = '../data/' + data_type + '/rules/tree_images/' + label_names[l] + " " + filename + 'orig.png'
                     new_graph_png_fn = '../data/' + data_type + '/rules/tree_images/' + label_names[l] + " " + filename + '.png'
+                    orig_temp_graph_png_fn = '../data/' + data_type + '/rules/tree_temp/' + label_names[l] + " " + filename + 'orig.png'
+                    new_temp_graph_png_fn = '../data/' + data_type + '/rules/tree_temp/' + label_names[l] + " " + filename + '.png'
                     output_names = []
                     for c in cluster_names:
                         line = ""
@@ -196,18 +198,18 @@ class DecisionTree:
                         for i in range(len(c)):
                             line = line + c[i] + " "
                             counter += 1
-                            if counter == 4:
+                            if counter == 8:
                                 break
                         output_names.append(line)
                     failed = False
                     try:
-                        tree.export_graphviz(clf, feature_names=output_names, class_names=class_names, out_file=orig_dot_file_fn,
-                                         max_depth=max_depth)
+                        tree.export_graphviz(clf, feature_names=output_names, class_names=True, out_file=orig_dot_file_fn,
+                                         max_depth=max_depth, label='all', filled=True, impurity=True, node_ids=True, proportion=True, rounded=True,)
                     except FileNotFoundError:
                         try:
                             orig_dot_file_fn = "//?/" + orig_dot_file_fn
-                            tree.export_graphviz(clf, feature_names=output_names, class_names=class_names, out_file=orig_dot_file_fn,
-                                         max_depth=max_depth)
+                            tree.export_graphviz(clf, feature_names=output_names, class_names=True, out_file=orig_dot_file_fn,
+                                         max_depth=max_depth, label='all', filled=True, impurity=True, node_ids=True, proportion=True, rounded=True)
                         except FileNotFoundError:
                             failed = True
                             print("doesnt work fam")
@@ -281,6 +283,8 @@ class DecisionTree:
                             new_graph = pydot.graph_from_dot_file(new_dot_file_fn)
                             orig_graph.write_png(orig_graph_png_fn)
                             new_graph.write_png(new_graph_png_fn)
+                            orig_graph.write_png(orig_temp_graph_png_fn)
+                            new_graph.write_png(new_temp_graph_png_fn)
                         except FileNotFoundError:
                             orig_graph_png_fn = "//?/" + orig_graph_png_fn
                             try:
@@ -448,6 +452,9 @@ class DecisionTree:
         cleaned = jsbeautifier.beautify_file("../data/" + data_type + "/rules/text_rules/"+filename+".txt")
         try:
             file = open("../data/" + data_type + "/rules/text_rules/"+filename+".txt", "w")
+            file.write(cleaned)
+            file.close()
+            file = open("../data/" + data_type + "/rules/tree_temp/"+filename+".txt", "w")
             file.write(cleaned)
             file.close()
         except OSError:

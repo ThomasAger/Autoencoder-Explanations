@@ -235,7 +235,7 @@ init_vector_path = loc+data_type+"/nnet/spaces/films100.txt"
 data_type = "newsgroups"
 classification_task = "newsgroups"
 #arrange_name = arrange_name + classification_task[0]
-skip_nn = False
+skip_nn = True
 if skip_nn is False:
     file_name = "n100mdsnnet"
 else:
