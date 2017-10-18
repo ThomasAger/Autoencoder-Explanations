@@ -502,7 +502,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                 file_name = file_name + " tdev"
 
 
-                            csv_name = loc + data_type + "/rules/tree_csv/" + file_name +  str(max_depth) +".csv"
+                            csv_name = loc + data_type + "/rules/tree_csv/" + file_name +  ".csv"
 
                             csv_fns_dt[counter] = csv_name
                             if cv_splits == 0:
@@ -664,7 +664,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                         file_name = file_name + " NT" + str(amount_of_finetune)
 
                                     epochs = epochs
-                                    file_name = file_name + str(epochs) + "AllSamp"
+                                    file_name = file_name + str(epochs) + "linear"
 
                                     fine_tune_weights_fn = [clusters_fn]
 
@@ -708,7 +708,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                         clusters_fn = class_path
                                         cluster_dict_fn = name_fn
 
-                                    csv_name = loc + data_type + "/rules/tree_csv/" + file_name +  str(max_depth) +".csv"
+                                    csv_name = loc + data_type + "/rules/tree_csv/" + file_name + str(max_depth) +  ".csv"
                                     if cv_splits == 0:
                                         all_csv_fns.append(csv_name)
                                     else:
@@ -910,7 +910,6 @@ vector_path_replacement =  loc+data_type+"/nnet/spaces/mds100.txt"
 #vector_path_replacement = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
 deep_size = [100]
 
-""""""
 """
 data_type = "placetypes"
 classification_task = ["geonames", "foursquare", "opencyc"]
@@ -1032,7 +1031,7 @@ score_limit = [0.0]
 """
 hp_opt = True
 
-dt_dev = True
+dt_dev = False
 svm_classify = False
 rewrite_files = False
 max_depth = [3]

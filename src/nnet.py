@@ -477,8 +477,8 @@ class NeuralNetwork:
         if self.is_identity:
             for a in range(self.amount_of_finetune):
                 print("Identity layer", self.hidden_layer_size, self.hidden_layer_size, self.hidden_activation)
-                model.add(Dense(output_dim=self.hidden_layer_size, input_dim=self.hidden_layer_size, activation=self.identity_activation,
-                      init="identity"))
+                model.add(Dense(output_dim=self.hidden_layer_size, input_dim=self.hidden_layer_size, activation="linear",
+                      init=self.layer_init))
 
         if self.randomize_finetune_weights:
             print("Randomize finetune weights", self.hidden_layer_size, finetune_size, "linear")
