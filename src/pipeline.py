@@ -664,7 +664,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                         file_name = file_name + " NT" + str(amount_of_finetune)
 
                                     epochs = epochs
-                                    file_name = file_name + str(epochs)
+                                    file_name = file_name + str(epochs) + "AllSamp"
 
                                     fine_tune_weights_fn = [clusters_fn]
 
@@ -739,14 +739,14 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                         print("got to trees, who dis?")
                                         tree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_dict_fn, file_name, 10000,
                                                               max_depth=max_depth, balance="balanced", criterion="entropy", save_details=True,
-                                                          data_type=data_type, csv_fn=csv_name, rewrite_files=True,
+                                                          data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
                                                           cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
                                                           limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn=clusters_fn,
                                               cluster_duplicates=cluster_duplicates)
 
                                         tree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_dict_fn, file_name + "None", 10000,
                                                               max_depth=None, balance="balanced", criterion="entropy", save_details=True,
-                                                          data_type=data_type, csv_fn=csv_name, rewrite_files=True,
+                                                          data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
                                                           cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
                                                           limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn=clusters_fn,
                                               cluster_duplicates=cluster_duplicates)
@@ -870,9 +870,9 @@ init_vector_path = loc+data_type+"/pca/class-all-50-10-alld100"
 vector_path_replacement = loc+data_type+"/pca/class-all-50-10-alld100"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 """
-
+"""
 data_type = "movies"
-classification_task = ["genres"]
+classification_task = ["genres", "keywords", "ratings"]
 #arrange_name = arrange_name + classification_task[0]
 skip_nn = True
 if skip_nn is False:
@@ -890,8 +890,8 @@ if classification_task[0] == "us-ratings":
     deep_size = [200]
 else:
     deep_size = [200]
-
 """
+
 data_type = "newsgroups"
 classification_task = ["newsgroups"]
 #arrange_name = arrange_name + classification_task[0]
@@ -909,7 +909,7 @@ vector_path_replacement =  loc+data_type+"/nnet/spaces/mds100.txt"
 #get_nnet_vectors_path = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
 #vector_path_replacement = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
 deep_size = [100]
-"""
+
 """"""
 """
 data_type = "placetypes"
@@ -919,7 +919,7 @@ highest_amt = 10
 #init_vector_path = "../data/"+data_type+"/bow/ppmi/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+classification_task
 #file_name = "placetypes bow"
 init_vector_path = "../data/"+data_type+"/nnet/spaces/places100.txt"
-skip_nn = False
+skip_nn = True
 if skip_nn is False:
     file_name = "places mds 100"
 else:
@@ -993,7 +993,7 @@ breakoff = [False]
 score_limit = [0.9]
 amount_to_start = [2000]
 cluster_multiplier = [2]#50
-score_type = ["ndcg"]
+score_type = ["ndcg", "kappa"]
 use_breakoff_dissim = [False]
 get_all = [False]
 half_ndcg_half_kappa = [False]
@@ -1032,7 +1032,7 @@ score_limit = [0.0]
 """
 hp_opt = True
 
-dt_dev = False
+dt_dev = True
 svm_classify = False
 rewrite_files = False
 max_depth = [3]

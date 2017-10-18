@@ -203,12 +203,12 @@ class DecisionTree:
                         output_names.append(line)
                     failed = False
                     try:
-                        tree.export_graphviz(clf, feature_names=output_names, class_names=True, out_file=orig_dot_file_fn,
+                        tree.export_graphviz(clf, feature_names=output_names, class_names=class_names, out_file=orig_dot_file_fn,
                                          max_depth=max_depth, label='all', filled=True, impurity=True, node_ids=True, proportion=True, rounded=True,)
                     except FileNotFoundError:
                         try:
                             orig_dot_file_fn = "//?/" + orig_dot_file_fn
-                            tree.export_graphviz(clf, feature_names=output_names, class_names=True, out_file=orig_dot_file_fn,
+                            tree.export_graphviz(clf, feature_names=output_names, class_names=class_names, out_file=orig_dot_file_fn,
                                          max_depth=max_depth, label='all', filled=True, impurity=True, node_ids=True, proportion=True, rounded=True)
                         except FileNotFoundError:
                             failed = True

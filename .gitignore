@@ -5,3 +5,11 @@ __pycache__/
 experiments/
 library/
 .idea/
+results to prep.txt
+src/all-100-10DTP0.01TWP0.1NT10DTP0.01TWP0.1NT30DTP0.01TWP0.1NT50recommended params.csv
+src/all-100-10DTP0.01TWP0.1NT30recommended params.csv
+src/all-100-10genresDTP0.01TWP0.1NT30recommended params.csv
+src/all-100-10oldcodeDTP0.01TWP0.1NT30recommended params.csv
+src/dasdas.py
+src/dotproduct.temp
+src/topicmodel.py.rej
