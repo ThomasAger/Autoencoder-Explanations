@@ -344,6 +344,64 @@ def findDifference(string1, string2):
     if len(string2[index:]) < 5:
         print(string2[index:])
 
+def reverseArrays(md_array):
+    md_array = np.asarray(md_array)
+    reversed_array = []
+    for a in md_array:
+        reversed_array.append(a[::-1])
+    return reversed_array
+"""
+file_path = "../data/movies/LDA/Names/"
+file_names = getFns(file_path)
+for fn in file_names:
+    md_array = import2dArray(file_path + fn, "s")
+    reversed_array = reverseArrays(md_array)
+    write2dArray(reversed_array, file_path + fn)
+"""
+
+def removeIndexes(file_name, indexes, type="f"):
+    removed_indexes = []
+    orig_array = import2dArray(file_name, type)
+    removed_indexes = np.delete(orig_array, indexes, axis=0)
+    write2dArray(removed_indexes, file_name[:-4]+"removedind.txt")
+"""
+indexes = [121,
+144,
+64,
+60,
+58,
+45,
+42,
+41,
+40,
+38,
+37,
+35,
+33,
+32,
+15,
+14,
+12,
+10,
+7,
+5,
+2]
+
+for i in range(len(indexes)):
+    indexes[i] = indexes[i] -1
+
+removeIndexes("../data/newsgroups/cluster/dict/n100mdsnnetE400DS[100]DN0.5CTnewsgroupsHAtanhCV1 S0OA softmax SFT0 allL030ndcg KMeans CA200 MC1 MS0.4 ATS2000 DS400.txt",
+              indexes, "s")
+
+removeIndexes("../data/newsgroups/cluster/clusters/n100mdsnnetE400DS[100]DN0.5CTnewsgroupsHAtanhCV1 S0OA softmax SFT0 allL030ndcg KMeans CA200 MC1 MS0.4 ATS2000 DS400.txt",
+              indexes)
+
+removeIndexes("../data/newsgroups/cluster/first_term_clusters/n100mdsnnetE400DS[100]DN0.5CTnewsgroupsHAtanhCV1 S0OA softmax SFT0 allL030ndcg KMeans CA200 MC1 MS0.4 ATS2000 DS400.txt",
+              indexes)
+
+removeIndexes("../data/newsgroups/cluster/first_terms/n100mdsnnetE400DS[100]DN0.5CTnewsgroupsHAtanhCV1 S0OA softmax SFT0 allL030ndcg KMeans CA200 MC1 MS0.4 ATS2000 DS400.txt",
+              indexes, "s")
+"""
 
 
 

@@ -450,6 +450,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                             file_name = file_name + " MC" + str(min_size) + " MS" + str(min_score)
                             names_fn = property_names_fn
                             file_name = file_name + " ATS" + str(amount_to_start) + " DS" + str(dissim_amt)
+
+
                             if dont_cluster:
                                 file_name = file_name + " DC" +str(dont_cluster)
                             if breakoff:
@@ -470,6 +472,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                 cluster_dict_fn = loc + data_type + "/cluster/dict/" + file_name + ".txt"
 
                             if breakoff:
+
                                 hierarchy.initClustering(vector_path, directions_fn, scores_fn, names_fn, amount_to_start, False,
                                       cluster_amt, score_limit, file_name, score_type, similarity_threshold,
                                              add_all_terms=add_all_terms, data_type=data_type, rewrite_files=rewrite_files,
@@ -478,10 +481,15 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                          dissim_amt=dissim_amt, find_most_similar=find_most_similar, get_all=get_all,
                                                          half_ndcg_half_kappa=half_ndcg_half_kappa, only_most_similar=only_most_similar,
                                                          dont_cluster=dont_cluster)
+
                             else:
+
                                 cluster.getClusters(directions_fn, scores_fn, names_fn, False, dissim_amt, amount_to_start, file_name, cluster_amt,
                                                     dissim, min_score, data_type, rewrite_files=rewrite_files,
                                                          half_kappa_half_ndcg=half_ndcg_half_kappa, dont_cluster=dont_cluster)
+
+
+
 
                             ranking_fn = loc + data_type + "/rank/numeric/" + file_name + ".txt"
 
@@ -655,10 +663,12 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                     if is_identity:
                                         file_name = file_name + " NT" + str(amount_of_finetune)
 
-                                    file_name = file_name + str(epochs)
+                                    epochs = epochs
+                                    file_name = file_name + str(epochs) + "AllSamp"
 
                                     fine_tune_weights_fn = [clusters_fn]
 
+                                    batch_size = 200
                                     learn_rate = learn_rate
                                     identity_swap = False
                                     randomize_finetune_weights = False
@@ -687,7 +697,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                         clusters_fn = ppmi_fn
                                         print("ppmi only")
                                     elif boc_only:
-                                        file_name = file_name + "boconly"
+                                        file_name = file_name + "boconlya"
                                         cluster_dict_fn = name_fn
                                         clusters_fn = boc_fn
                                         nnet_ranking_fn = boc_fn
@@ -862,7 +872,7 @@ get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 """
 """
 data_type = "movies"
-classification_task = ["keywords"]
+classification_task = ["genres", "keywords", "ratings"]
 #arrange_name = arrange_name + classification_task[0]
 skip_nn = True
 if skip_nn is False:
@@ -890,7 +900,7 @@ if skip_nn is False:
     file_name = "n100mdsnnet"
 else:
     file_name = "n100mds"
-lowest_amt = 6
+lowest_amt = 30
 highest_amt = 18836
 init_vector_path = loc+data_type+"/nnet/spaces/mds100.txt"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/mds100.txt"
@@ -1022,7 +1032,7 @@ score_limit = [0.0]
 """
 hp_opt = True
 
-dt_dev = False
+dt_dev = True
 svm_classify = False
 rewrite_files = False
 max_depth = [3]
@@ -1032,7 +1042,7 @@ one_for_all = False
 
 arrange_name = "cluster ratings BCS" + str(max_depth)
 
-threads=4
+threads=3
 chunk_amt = 0
 chunk_id = 0
 for c in range(chunk_amt):

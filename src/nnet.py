@@ -243,6 +243,9 @@ class NeuralNetwork:
 
             train_x_c, train_y_c = entity_vectors[train[int(len(train) * 0.2):]], entity_classes[train[int(len(train) * 0.2):]]
 
+            if fine_tune_weights_fn is not None:
+                train_x_c = entity_vectors
+                train_y_c = entity_classes
             hist = models[0].fit(train_x_c, train_y_c, nb_epoch=self.epochs,
                           batch_size=self.batch_size, verbose=1, class_weight=class_weight)
             print(hist.history)
