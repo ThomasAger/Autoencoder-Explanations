@@ -655,12 +655,10 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                     if is_identity:
                                         file_name = file_name + " NT" + str(amount_of_finetune)
 
-                                    epochs = epochs
                                     file_name = file_name + str(epochs)
 
                                     fine_tune_weights_fn = [clusters_fn]
 
-                                    batch_size = 200
                                     learn_rate = learn_rate
                                     identity_swap = False
                                     randomize_finetune_weights = False
@@ -689,7 +687,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                         clusters_fn = ppmi_fn
                                         print("ppmi only")
                                     elif boc_only:
-                                        file_name = file_name + "boconlya"
+                                        file_name = file_name + "boconly"
                                         cluster_dict_fn = name_fn
                                         clusters_fn = boc_fn
                                         nnet_ranking_fn = boc_fn
