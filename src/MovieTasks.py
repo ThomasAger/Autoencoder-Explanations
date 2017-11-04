@@ -629,6 +629,7 @@ def importCertificates(cert_fn, entity_name_fn):
 
 
     # Initialize ratings dict
+
     ratings = {
         "USA:G": [],
         "USA:PG": [],
@@ -636,11 +637,13 @@ def importCertificates(cert_fn, entity_name_fn):
         "USA:R": []
     }
     """
-    "UK:PG": [],
-    "UK:12": [],
-    "UK:12A": [],
-    "UK:15": [],
-    "UK:18": [],
+    ratings = {
+        "UK:PG": [],
+        "UK:12": [],
+        "UK:12A": [],
+        "UK:15": [],
+        "UK:18": [],
+    }
     """
     all_ratings = defaultdict(list)
     recently_found_name = ""
@@ -740,23 +743,26 @@ def importCertificates(cert_fn, entity_name_fn):
         with open(real_name_dict_fn, 'rb') as handle:
             new_ratings = pickle.load(handle)
                 # Get the final dict setup
+
     final_dict = {
         "USA-G": [],
         "USA-PG-PG13": [],
         "USA-R": [],
     }
     """
-    "UK-PG": [],
-    "UK-12-12A": [],
-    "UK-18": [],
+    final_dict = {
+        "UK-PG": [],
+        "UK-12-12A": [],
+        "UK-15": [],
+        "UK-18": []
+    }
     """
-
     # Append the final dict ratings
     """
     final_dict["UK-PG"].extend(all_ratings["UK:PG"])
     final_dict["UK-12-12A"].extend(all_ratings["UK:12"])
     final_dict["UK-12-12A"].extend(all_ratings["UK:12A"])
-    final_dict["UK-12-12A"].extend(all_ratings["UK:15"])
+    final_dict["UK-15"].extend(all_ratings["UK:15"])
     final_dict["UK-18"].extend(all_ratings["UK:18"])
     """
     final_dict["USA-G"].extend(all_ratings["USA:G"])
@@ -764,25 +770,27 @@ def importCertificates(cert_fn, entity_name_fn):
     final_dict["USA-PG-PG13"].extend(all_ratings["USA:PG13"])
     final_dict["USA-R"].extend(all_ratings["USA:R"])
 
+
     final_name_dict = {
         "USA-G": [],
         "USA-PG-PG13": [],
         "USA-R": [],
 
     }
-
     """
-    "UK-PG": [],
-    "UK-12-12A": [],
-    "UK-18": [],
-    """
-
+    final_name_dict = {
+        "UK-PG": [],
+        "UK-12-12A": [],
+        "UK-15": [],
+        "UK-18": [],
+    }
+"""
     # Append the final dict good names
     """
     final_name_dict["UK-PG"].extend(new_ratings["UK:PG"])
     final_name_dict["UK-12-12A"].extend(new_ratings["UK:12"])
     final_name_dict["UK-12-12A"].extend(new_ratings["UK:12A"])
-    final_name_dict["UK-12-12A"].extend(new_ratings["UK:15"])
+    final_name_dict["UK-15"].extend(new_ratings["UK:15"])
     final_name_dict["UK-18"].extend(new_ratings["UK:18"])
     """
     final_name_dict["USA-G"].extend(new_ratings["USA:G"])
@@ -815,7 +823,6 @@ def importCertificates(cert_fn, entity_name_fn):
                 if i == jacked_up_entities_found[e]:
                     classes[counter][e] = 1
         class_names.append(key)
-        dt.write1dArray(classes[counter], "../data/movies/classify/us-ratings/class-" +key)
         counter += 1
 
     classes = np.asarray(classes).transpose()
@@ -833,6 +840,13 @@ def importCertificates(cert_fn, entity_name_fn):
 
     classes = np.delete(classes, indexes_to_delete, axis=0)
     entities_found = np.delete(entities_found, indexes_to_delete)
+
+    classes = classes.transpose()
+
+    for c in range(len(classes)):
+        dt.write1dArray(classes[c], "../data/movies/classify/us-ratings/class-" + class_names[c])
+
+    classes = classes.transpose()
 
     dt.write2dArray(classes, "../data/movies/classify/us-ratings/class-all")
     dt.write1dArray(entities_found, "../data/movies/classify/us-ratings/available_entities.txt")
@@ -982,6 +996,112 @@ def main(min, max, data_type, raw_fn, extension, cut_first_line, additional_name
     printIndividualFromAll(data_type, "tfidf", min, max,  classification)
 
 
+""" ratings conversion to class-all"""
+"""
+start_line = "../data/movies/classify/"
+uk = "uk-ratings/"
+us = "us-ratings/"
+uk_pg = dt.import1dArray(start_line + uk + "class-uk-pg", "i")
+uk_12 = dt.import1dArray(start_line + uk + "class-uk-12-12a", "i")
+uk_15 = dt.import1dArray(start_line + uk + "class-uk-15", "i")
+uk_18 = dt.import1dArray(start_line + uk + "class-uk-18", "i")
+us_pg = dt.import1dArray(start_line + us + "class-usa-pg-pg13", "i")
+us_12 = dt.import1dArray(start_line + us + "class-usa-g", "i")
+us_15 = dt.import1dArray(start_line + us + "class-usa-r", "i")
+
+class_all_uk = []
+class_all_us = []
+
+class_all_uk.append(uk_pg)
+class_all_uk.append(uk_12)
+class_all_uk.append(uk_15)
+class_all_uk.append(uk_18)
+class_all_us.append(us_pg)
+class_all_us.append(us_12)
+class_all_us.append(us_15)
+
+uk_entities = dt.import1dArray(start_line + uk + "available_entities.txt")
+us_entities = dt.import1dArray(start_line + us + "available_entities.txt")
+
+all_entities = dt.import1dArray("../data/movies/nnet/spaces/entitynames.txt")
+
+uk_us_ents = []
+
+for e in uk_entities:
+    uk_us_ents.append(e)
+
+for e in us_entities:
+    uk_us_ents.append(e)
+
+entities_unique = np.unique(uk_us_ents)
+
+correct_format = []
+
+removed_punct = []
+
+for j in all_entities:
+    removed_punct.append(dt.removeEverythingFromString(j))
+
+for i in entities_unique:
+    i = dt.removeEverythingFromString(i)
+    for j in range(len(all_entities)):
+        if i == removed_punct[j]:
+            correct_format.append(all_entities[j])
+            break
+
+new_class_all = [[0]*len(entities_unique), [0]*len(entities_unique), [0]*len(entities_unique), [0]*len(entities_unique),
+                 [0] * len(entities_unique), [0]*len(entities_unique), [0]*len(entities_unique)]
+
+clean_ent_unique = []
+clean_uk_ent = []
+clean_us_ent = []
+
+for i in entities_unique:
+    clean_ent_unique.append(dt.removeEverythingFromString(i))
+
+for i in uk_entities:
+    clean_uk_ent.append(dt.removeEverythingFromString(i))
+
+for i in us_entities:
+    clean_us_ent.append(dt.removeEverythingFromString(i))
+
+for a in range(len(class_all_uk)):
+    for i in range(len(class_all_uk[a])):
+        print(class_all_uk[a][i], type(class_all_uk[a][i]))
+        if class_all_uk[a][i] == 1:
+            print("1", i)
+            for n in range(len(entities_unique)):
+                if clean_ent_unique[n] == clean_uk_ent[i]:
+                    new_class_all[a][n] = 1
+                    break
+
+for a in range(len(class_all_us)):
+    for i in range(len(class_all_us[a])):
+        if class_all_us[a][i] == 1:
+
+            print(1, i)
+            for n in range(len(entities_unique)):
+                if clean_ent_unique[n] == clean_us_ent[i]:
+                    new_class_all[a+4][n] = 1
+                    break
+
+names = ["UK-PG",
+"UK-12-12A",
+"UK-15",
+"UK-18",
+"USA-G",
+"USA-PG-PG13",
+"USA-R"
+]
+
+for i in range(len(new_class_all)):
+    dt.write1dArray(new_class_all[i], "../data/movies/classify/ratings/class-" + names[i])
+
+new_class_all = np.asarray(new_class_all).transpose()
+
+dt.write2dArray(new_class_all, "../data/movies/classify/ratings/class-all")
+dt.write1dArray(entities_unique, "../data/movies/classify/ratings/available_entities.txt")
+"""
 min=50
 max=10
 """
@@ -1019,10 +1139,10 @@ additional_name = ""
 make_individual = True
 sparse_matrix = False
 print("??")
-
+"""
 if  __name__ =='__main__':main(min, max, class_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn, use_all_files,
                                sparse_matrix, word_count_amt, classification)
-
+"""
 
 """
 dt.write2dArray(convertPPMI( sp.csr_matrix(dt.import2dArray("../data/wines/bow/frequency/phrases/class-all-50"))), "../data/wines/bow/ppmi/class-all-50")

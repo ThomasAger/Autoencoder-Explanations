@@ -634,7 +634,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                         class_path = loc + data_type + "/finetune/boc/" + file_name + ".txt"
                                     if boc_only:
                                         print("boc only")
-                                        boc_fn = "../data/" + data_type + "/bow/ppmi/" + file_name + ".txt"
+                                        class_path = "../data/" + data_type + "/bow/ppmi/" + file_name + ".txt"
 
 
                                     if average_ppmi:
@@ -665,6 +665,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
 
                                     epochs = epochs
                                     file_name = file_name + str(epochs) + "linear"
+                                    if data_type == "newsgroups":
+                                        file_name = file_name + "S6040"
 
                                     fine_tune_weights_fn = [clusters_fn]
 
@@ -834,7 +836,10 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
             avg_fn = fn[:-4] +"AVG.csv"
             if dt.fileExists(avg_fn) is False:
                 fn = fn.split("/")[len(fn.split("/"))-1]
-                fns_to_add = dt.getCSVsToAverage("../data/"+data_type+"/rules/tree_csv/",fn)
+                try:
+                    fns_to_add = dt.getCSVsToAverage("../data/"+data_type+"/rules/tree_csv/",fn)
+                except IndexError:
+                    fns_to_add = dt.getCSVsToAverage("../data/" + data_type + "/rules/tree_csv/", fn[:-4] + str(max_depth) + ".csv")
                 all_csv_fns.append(fns_to_add)
             else:
                 all_csv_fns.append(avg_fn)
@@ -842,7 +847,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
     dt.arrangeByScore(np.unique(np.asarray(all_csv_fns)),loc + " " + arrange_name + file_name[:50] + str(len(all_csv_fns)) + ".csv")
     jvm.stop()
 
-
+print("Begin top of parameters")
 
 just_output = True
 arcca = False
@@ -870,9 +875,9 @@ init_vector_path = loc+data_type+"/pca/class-all-50-10-alld100"
 vector_path_replacement = loc+data_type+"/pca/class-all-50-10-alld100"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 """
-"""
+
 data_type = "movies"
-classification_task = ["genres", "keywords", "ratings"]
+classification_task = ["genres"]
 #arrange_name = arrange_name + classification_task[0]
 skip_nn = True
 if skip_nn is False:
@@ -890,8 +895,8 @@ if classification_task[0] == "us-ratings":
     deep_size = [200]
 else:
     deep_size = [200]
-"""
 
+"""
 data_type = "newsgroups"
 classification_task = ["newsgroups"]
 #arrange_name = arrange_name + classification_task[0]
@@ -909,7 +914,7 @@ vector_path_replacement =  loc+data_type+"/nnet/spaces/mds100.txt"
 #get_nnet_vectors_path = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
 #vector_path_replacement = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
 deep_size = [100]
-
+"""
 """
 data_type = "placetypes"
 classification_task = ["geonames", "foursquare", "opencyc"]
@@ -1163,6 +1168,7 @@ if len(args) > 0:
     boc_only = args[67]
     pav_only = args[68]
 
+print("begin main")
 
 if  __name__ =='__main__':main(data_type, classification_task, file_name, init_vector_path, hidden_activation,
                                is_identity, amount_of_finetune, breakoff, score_type, score_limit, rewrite_files,
