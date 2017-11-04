@@ -111,13 +111,31 @@ data_type = "newsgroups"
 high_amt = 10
 low_amt = 18836
 classify = ["newsgroups"]
+doc_topic_prior = [ 0.1]
+topic_word_prior = [0.1]
+n_topics = [50]
 """
 """
 data_type = "movies"
 high_amt = 100
 low_amt = 10
+
 classify = ["genres"]
+doc_topic_prior = [ 0.01]
+topic_word_prior = [0.001]
+n_topics = [30]
+
+classify = ["keywords"]
+doc_topic_prior = [ 0.01]
+topic_word_prior = [0.001]
+n_topics = [50]
+
+classify = ["ratings"]
+doc_topic_prior = [ 0.1]
+topic_word_prior = [0.01]
+n_topics = [10]
 """
+
 data_type = "placetypes"
 high_amt = 50
 low_amt = 10
