@@ -1130,7 +1130,7 @@ def getMostFrequent(folder_name):
     for id in ids:
         print(fns[id])
 
-getMostFrequent("../data/movies/classify/genres/")
+#getMostFrequent("../data/movies/classify/genres/")
 
 """
 fns = getFns("../data/movies/classify/keywords/")

@@ -43,8 +43,10 @@ def LDA(tf, names, components, file_name,   doc_topic_prior, topic_word_prior,  
 
     print("\nTopics in LDA model:")
     topics = print_top_words(lda, names)
-    topics = np.flipud(np.asarray(topics))
-    dt.write1dArray(topics, "../data/" + data_type + "/LDA/names/" + file_name + ".txt")
+    flipped_topics = []
+    for t in topics:
+        flipped_topics.append(np.flipud(np.asarray(t.split())))
+    dt.write2dArray(flipped_topics, "../data/" + data_type + "/LDA/names/" + file_name + ".txt")
     dt.write2dArray(new_rep.transpose(), rep_name)
     joblib.dump(lda, model_name)
 
@@ -110,10 +112,31 @@ high_amt = 10
 low_amt = 18836
 classify = ["newsgroups"]
 """
+"""
 data_type = "movies"
 high_amt = 100
 low_amt = 10
 classify = ["genres"]
+"""
+data_type = "placetypes"
+high_amt = 50
+low_amt = 10
+"""
+classify = ["geonames"]
+doc_topic_prior = [ 0.1]
+topic_word_prior = [0.001]
+n_topics = [30]
+"""
+"""
+classify = ["foursquare"]
+doc_topic_prior = [ 0.1]
+topic_word_prior = [0.01]
+n_topics = [30]
+"""
+classify = ["opencyc"]
+doc_topic_prior = [ 0.01]
+topic_word_prior = [0.001]
+n_topics = [10]
 
 max_depth = 3
 limit_entities = False
@@ -123,9 +146,6 @@ feature_names_fn = "../data/" + data_type + "/bow/names/"+str(high_amt)+"-"+str(
 rewrite_files = True
 cross_val = 1
 
-doc_topic_prior = [ 0.01]
-topic_word_prior = [0.001]
-n_topics = [30]
 for c in classify:
     file_name = "all-" + str(high_amt) + "-" + str(low_amt)
     final_csv_name = "final" + c + str(dt_dev)
