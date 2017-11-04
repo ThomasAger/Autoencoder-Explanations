@@ -1110,6 +1110,28 @@ def arrangeByScore(csv_fns, arra_name):
 
     print("x")
 
+def getMostFrequent(folder_name):
+    fns = getFns(folder_name)
+    counts = []
+    for fn in fns:
+        try:
+            blob = import1dArray(folder_name  + fn, "i")#
+        except ValueError:
+            counts.append(0)
+            continue
+        count = 0
+        for i in blob:
+            if i == 1:
+                count+=1
+        counts.append(count)
+
+    ids = np.argsort(counts)
+    ids = reversed(ids)
+    for id in ids:
+        print(fns[id])
+
+getMostFrequent("../data/movies/classify/genres/")
+
 """
 fns = getFns("../data/movies/classify/keywords/")
 counts = []
