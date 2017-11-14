@@ -161,8 +161,8 @@ class DecisionTree:
                 ac_x_test = [vectors[11314:]]
                 ac_y_train =  [labels[l][:11314]]
                 ac_y_test = [labels[l][11314:]]
-                ac_x_dev =  [ac_x_train[:int(len(ac_x_train[0]) * 0.2)]]
-                ac_y_dev =  [ac_y_train[:int(len(ac_y_train[0]) *0.2)]]
+                ac_x_dev =  [ac_x_train[0][:int(len(ac_x_train[0]) * 0.2)]]
+                ac_y_dev =  [ac_y_train[0][:int(len(ac_y_train[0]) *0.2)]]
             predictions = []
 
             if development:
