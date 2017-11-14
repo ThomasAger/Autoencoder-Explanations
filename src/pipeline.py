@@ -996,7 +996,7 @@ dissim_amt = [2]
 breakoff = [False]
 score_limit = [0.9]
 amount_to_start = [2000]
-cluster_multiplier = [2]#50
+cluster_multiplier = [0.25,0.5,1,2]#50
 score_type = ["ndcg", "kappa"]
 use_breakoff_dissim = [False]
 get_all = [False]
@@ -1036,7 +1036,7 @@ score_limit = [0.0]
 """
 hp_opt = True
 
-dt_dev = False
+dt_dev = True
 svm_classify = False
 rewrite_files = False
 max_depth = [3]

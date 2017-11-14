@@ -29,7 +29,7 @@ def LDA(tf, names, components, file_name,   doc_topic_prior, topic_word_prior,  
 
     all_names = [rep_name,  names_name]
 
-    if dt.allFnsAlreadyExist(all_names) and not rewrite_files:
+    if dt.allFnsAlreadyExist(all_names):
         print("Already completed")
         return
     print(len(tf), print(len(tf[0])))
@@ -106,35 +106,24 @@ def main(data_type, class_labels_fn, class_names_fn, ft_names_fn, max_depth, lim
         file_name = og_fn + " " + str(cross_val) + "CV " + str(0) + classify + "Dev" + str(dt_dev)
         csvs.append("../data/" + data_type + "/rules/tree_csv/" + file_name + "AVG.csv")
     dt.arrangeByScore(np.unique(np.asarray(csvs)), final_csv_fn)
-"""
+
 data_type = "newsgroups"
 high_amt = 30
 low_amt = 18836
 classify = ["newsgroups"]
-doc_topic_prior = [ 0.1]
-topic_word_prior = [0.1]
-n_topics = [50]
+doc_topic_prior = [0.1, 0.01, 0.001]
+topic_word_prior = [0.1, 0.01, 0.001]
+n_topics = [10,30,50,100,200,400]
 """
+
 data_type = "movies"
 high_amt = 100
 low_amt = 10
 
-classify = ["genres"]
-doc_topic_prior = [ 0.01, 0.1, 0.001]
-topic_word_prior = [0.001, 0.1, 0.01]
-n_topics = [50, 30, 10]
-
-"""
-classify = ["keywords"]
-doc_topic_prior = [ 0.01]
-topic_word_prior = [0.001]
-n_topics = [50]
-"""
-"""
-classify = ["ratings"]
-doc_topic_prior = [ 0.1]
-topic_word_prior = [0.01]
-n_topics = [10]
+classify = ["genres", "keywords", "ratings"]
+doc_topic_prior = [ 0.1, 0.01, 0.001]
+topic_word_prior = [0.1, 0.01, 0.001]
+n_topics = [10,30,50,100,200,400]
 """
 """
 data_type = "placetypes"
