@@ -1,6 +1,7 @@
 import numpy as np
 import data as dt
 import pydotplus as pydot
+import math
 from sklearn import tree
 from sklearn.metrics import f1_score, accuracy_score
 from inspect import getmembers
@@ -198,13 +199,15 @@ class DecisionTree:
                                                                                  average="macro")
                 else:
                     prec, recall, fbeta, score = precision_recall_fscore_support(ac_y_test[i], predictions[i],
-                                                                                 average="macro")
+                                                                                 average="binary")
                 cv_prec.append(prec)
                 cv_recall.append(recall)
                 f1 = 2 * ((prec * recall) / (prec + recall))
                 accuracy = accuracy_score(ac_y_test[i], predictions[i])
                 cv_acc.append(accuracy)
                 scores = [[label_names[l], "f1", f1, "accuracy", accuracy]]
+                if math.isnan(f1):
+                    print("NAN", prec, recall)
                 print(scores)
                 class_names = ["NOT " + label_names[l], label_names[l]]
 

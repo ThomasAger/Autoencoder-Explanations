@@ -121,7 +121,7 @@ cross_val = 1
 
 doc_topic_prior = [ 0.1]
 topic_word_prior = [0.1]
-n_topics = [50]
+n_topics = [10,30,50,100,200,400]
 for c in classify:
     file_name = "all-" + str(high_amt) + "-" + str(low_amt)
     final_csv_name = "final" + c + str(dt_dev)

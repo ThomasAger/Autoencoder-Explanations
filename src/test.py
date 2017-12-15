@@ -2,6 +2,19 @@ from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics import f1_score
 import numpy as np
 
+
+predicted_classes = [[0,1,1,0,1,1,1,0,1,0,1,1,1,0,0,0,0,0,0,0,1,1,1,1],
+                     [0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1],
+                     [0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1]]
+
+real_classes = [[0,0,1,0,0,1,1,1,1,1,1,0,1,1,0,0,0,0,1,0,1,0,1,0],
+                     [1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0],
+                     [0, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1]]
+
+clf = tree.DecisionTreeClassifier(max_depth=3, criterion="entropy", class_weight="balanced")
+clf.fit(predicted_classes, real_classes)
+
+""" test f1 score
 #Multi-label fake data
 predicted_classes = [[0,1,1,0,1,1,1,0,1,0,1,1,1,0,0,0,0,0,0,0,1,1,1,1],
                      [0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1],
@@ -71,3 +84,4 @@ f1 = 2 * ((prec * recall) / (prec + recall))
 print("f1 from formula, multi-label, micro average prec recall fscore support", f1)
 print("f1 from fbeta, multi-label, micro average prec recall fscore support", fbeta)
 
+"""

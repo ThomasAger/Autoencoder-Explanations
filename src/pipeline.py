@@ -35,7 +35,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
          skip_nn, dissim, dissim_amt_a, hp_opt, find_most_similar, use_breakoff_dissim_a, get_all_a, half_ndcg_half_kappa_a,
          sim_t, one_for_all, ft_loss_a, ft_optimizer_a, bag_of_clusters_a, just_output, arrange_name, only_most_similar_a,
          dont_cluster_a, top_dt_clusters_a, by_class_finetune_a, cluster_duplicates_a, repeat_finetune_a, save_results_so_far,
-         finetune_ppmi_a, average_nopav_ppmi_a, boc_average_a, identity_activation_a, ppmi_only_a, boc_only_a, pav_only_a):
+         finetune_ppmi_a, average_nopav_ppmi_a, boc_average_a, identity_activation_a, ppmi_only_a, boc_only_a, pav_only_a,
+         multi_label_a):
 
 
     prune_val = 2
@@ -113,6 +114,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
             boc_only_a = dt.stringToArray(boc_only_a)
             pav_only_a = dt.stringToArray(pav_only_a)
             max_depth_a = dt.stringToArray(max_depth_a)
+            multi_label_a = dt.stringToArray(multi_label_a)
 
         ep = int(ep)
         dropout_noise = float(dropout_noise)
@@ -181,11 +183,13 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
         boc_only_a = [boc_only_a[0]]
         pav_only_a = [pav_only_a[0]]
         max_depth_a = [max_depth_a[0]]
+        multi_label_a = [multi_label_a[0]]
 
     variables_to_execute = list(product(dissim_amt_a,breakoff_a,score_limit_a, amount_to_start_a,cluster_multiplier_a,
                                    kappa_a,classification_task_a,use_breakoff_dissim_a,get_all_a,half_ndcg_half_kappa_a,
                                    limit_entities_a,add_all_terms_a,only_most_similar_a,dont_cluster_a,
-                                   top_dt_clusters_a,by_class_finetune_a, cluster_duplicates_a, repeat_finetune_a, max_depth_a))
+                                   top_dt_clusters_a,by_class_finetune_a, cluster_duplicates_a, repeat_finetune_a, max_depth_a,
+                                        multi_label_a))
     all_csv_fns = []
     original_fn = []
     for vt in variables_to_execute:
@@ -209,6 +213,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
         cluster_duplicates = vt[16]
         repeat_finetune = vt[17]
         max_depth = vt[18]
+        multi_label = vt[19]
         class_task_index = 0
 
         for c in range(len(classification_task_a)):
@@ -514,21 +519,27 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
 
                             if cluster_duplicates:
                                 file_name = file_name + " UNIQUE"
+
+                            if multi_label:
+                                file_name = file_name + "ML"
+
                             #file_name = "NMF 200"
                             #ranking_fn = "../data/movies/NMF/all-100-10frob.txt"
                             tree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_dict_fn, file_name, 10000,
                                       max_depth=max_depth, balance="balanced", criterion="entropy", save_details=True, cv_splits=cv_splits, split_to_use=splits,
-                                      data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files, development=dt_dev, limit_entities=limit_entities,
+                                      data_type=data_type, csv_fn=csv_name, rewrite_files=True, development=dt_dev, limit_entities=limit_entities,
                                               limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn = clusters_fn,
-                                              cluster_duplicates = cluster_duplicates, save_results_so_far=save_results_so_far)
+                                              cluster_duplicates = cluster_duplicates, save_results_so_far=save_results_so_far,
+                                              multi_label=multi_label)
 
 
                             tree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_dict_fn, file_name + "None", 10000,
                                                   max_depth=None, balance="balanced", criterion="entropy", save_details=True,
-                                              data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
+                                              data_type=data_type, csv_fn=csv_name, rewrite_files=True,
                                               cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
                                               limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn = clusters_fn,
-                                              cluster_duplicates=cluster_duplicates, save_results_so_far=save_results_so_far)
+                                              cluster_duplicates=cluster_duplicates, save_results_so_far=save_results_so_far,
+                                              multi_label=multi_label)
                             """
                             wekatree.DecisionTree(ranking_fn, classification_path, label_names_fn , cluster_dict_fn , file_name,
                                save_details=False, data_type=data_type,split_to_use=splits, pruning=2,
@@ -741,17 +752,17 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                         print("got to trees, who dis?")
                                         tree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_dict_fn, file_name, 10000,
                                                               max_depth=max_depth, balance="balanced", criterion="entropy", save_details=True,
-                                                          data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
+                                                          data_type=data_type, csv_fn=csv_name, rewrite_files=True,
                                                           cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
                                                           limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn=clusters_fn,
                                               cluster_duplicates=cluster_duplicates)
 
                                         tree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_dict_fn, file_name + "None", 10000,
                                                               max_depth=None, balance="balanced", criterion="entropy", save_details=True,
-                                                          data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
+                                                          data_type=data_type, csv_fn=csv_name, rewrite_files=True,
                                                           cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
                                                           limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn=clusters_fn,
-                                              cluster_duplicates=cluster_duplicates)
+                                              cluster_duplicates=cluster_duplicates, multi_label=multi_label)
                                         """
                                         wekatree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn,
                                                               cluster_dict_fn, file_name,
@@ -997,7 +1008,7 @@ breakoff = [False]
 score_limit = [0.9]
 amount_to_start = [2000]
 cluster_multiplier = [2]#50
-score_type = ["ndcg", "kappa"]
+score_type = ["ndcg"]
 use_breakoff_dissim = [False]
 get_all = [False]
 half_ndcg_half_kappa = [False]
@@ -1026,6 +1037,8 @@ cluster_duplicates = [False]
 repeat_finetune = [0]
 
 
+multi_label = [False] #Currently broken
+
 epochs=[300]
 
 """
@@ -1041,7 +1054,7 @@ svm_classify = False
 rewrite_files = False
 max_depth = [3]
 
-cross_val = 3
+cross_val = 1
 one_for_all = False
 
 arrange_name = "cluster ratings BCS" + str(max_depth)
@@ -1061,7 +1074,7 @@ for c in range(chunk_amt):
                  skip_nn, dissim, dissim_amt, hp_opt, find_most_similar, use_breakoff_dissim, get_all, half_ndcg_half_kappa, sim_t,
                  one_for_all, bag_of_clusters, arrange_name, only_most_similar, dont_cluster, top_dt_clusters, by_class_finetune,
                  cluster_duplicates, repeat_finetune, save_results_so_far, finetune_ppmi, average_nopav_ppmi_a, boc_average,
-                 identity_activation, ppmi_only, boc_only, pav_only]
+                 identity_activation, ppmi_only, boc_only, pav_only, multi_label]
 
     sys.stdout.write("python pipeline.py ")
     variable_string = "python $SRCPATH/pipeline.py "
@@ -1167,6 +1180,7 @@ if len(args) > 0:
     ppmi_only = args[66]
     boc_only = args[67]
     pav_only = args[68]
+    multi_label = args[69]
 
 print("begin main")
 
@@ -1181,4 +1195,4 @@ if  __name__ =='__main__':main(data_type, classification_task, file_name, init_v
                                half_ndcg_half_kappa, sim_t, one_for_all, ft_loss, ft_optimizer, bag_of_clusters, just_output,
                                arrange_name, only_most_similar, dont_cluster, top_dt_clusters, by_class_finetune, cluster_duplicates,
                                repeat_finetune, save_results_so_far, finetune_ppmi, average_nopav_ppmi_a, boc_average, identity_activation,
-                               ppmi_only, boc_only, pav_only)
+                               ppmi_only, boc_only, pav_only, multi_label)
