@@ -6,7 +6,7 @@ from sklearn.metrics import f1_score, accuracy_score
 from inspect import getmembers
 from sklearn.pipeline import Pipeline
 from sklearn.grid_search import GridSearchCV
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 import jsbeautifier
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import cross_val_predict
@@ -136,25 +136,33 @@ class DecisionTree:
             cv_f1 = []
             cv_acc = []
             if cv_splits == 1:
-                kf = KFold(n_splits=3, shuffle=False, random_state=None)
+                if data_type != "newsgroups":
+                    kf = KFold(n_splits=3, shuffle=False, random_state=None)
             else:
                 kf = KFold(n_splits=cv_splits, shuffle=False, random_state=None)
             c = 0
-            for train, test in kf.split(vectors):
-                if split_to_use > -1:
-                    if c != split_to_use:
-                        c += 1
-                        continue
-                ac_y_test.append(labels[l][test])
-                ac_y_train.append(labels[l][train[int(len(train) * 0.2):]])
-                ac_x_train.append(vectors[train[int(len(train) * 0.2):]])
-                ac_x_test.append(vectors[test])
-                ac_x_dev.append(vectors[train[:int(len(train) * 0.2)]])
-                ac_y_dev.append(labels[l][train[:int(len(train) * 0.2)]])
-                c += 1
-                if cv_splits == 1:
-                    break
-
+            if data_type != "newsgroups":
+                for train, test in kf.split(vectors):
+                    if split_to_use > -1:
+                        if c != split_to_use:
+                            c += 1
+                            continue
+                    ac_y_test.append(labels[l][test])
+                    ac_y_train.append(labels[l][train[int(len(train) * 0.2):]])
+                    ac_x_train.append(vectors[train[int(len(train) * 0.2):]])
+                    ac_x_test.append(vectors[test])
+                    ac_x_dev.append(vectors[train[:int(len(train) * 0.2)]])
+                    ac_y_dev.append(labels[l][train[:int(len(train) * 0.2)]])
+                    c += 1
+                    if cv_splits == 1:
+                        break
+            else:
+                ac_x_train =  [vectors[:11314]]
+                ac_x_test = [vectors[11314:]]
+                ac_y_train =  [labels[l][:11314]]
+                ac_y_test = [labels[l][11314:]]
+                ac_x_dev =  [ac_x_train[:int(len(ac_x_train) * 0.2)]]
+                ac_y_dev =  [ac_y_train[:int(len(ac_y_train) *0.2)]]
             predictions = []
 
             if development:

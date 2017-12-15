@@ -1,6 +1,7 @@
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.preprocessing import FunctionTransformer
+from sklearn.model_selection import train_test_split
 import data as dt
 import numpy as np
 import MovieTasks as mt
@@ -23,6 +24,11 @@ print(newsgroups_test.target[2])
 
 vectors = np.concatenate((newsgroups_train.data, newsgroups_test.data), axis=0)
 classes = np.concatenate((newsgroups_train.target, newsgroups_test.target), axis=0)
+
+ac_x_train = vectors[:11314]
+ac_x_test = vectors[11314:]
+ac_y_train = classes[:11314]
+ac_y_test = classes[11314:]
 
 print(classes[train_len-1])
 print(classes[train_len-2])

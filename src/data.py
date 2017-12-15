@@ -1110,6 +1110,22 @@ def arrangeByScore(csv_fns, arra_name):
 
     print("x")
 
+
+fns = getFns("../data/movies/classify/keywords/")
+counts = []
+for fn in fns:
+    blob = import1dArray("../data/movies/classify/keywords/"  + fn)
+    count = 0
+    for i in blob:
+        if i == 1:
+            count+=1
+    counts.append(count)
+
+ids = np.argsort(counts)
+ids = reversed(ids)
+for id in ids:
+    print(fns[id])
+
 """
 write2dArray(deleteAllButIndexes(import2dArray("../data/movies/cluster/hierarchy_directions/films200-genres100ndcg0.9200.txt", "s"),
                                                import1dArray("../data/movies/cluster/hierarchy_names/human_ids films200genres.txt")),
