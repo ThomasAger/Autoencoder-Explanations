@@ -29,7 +29,7 @@ def LDA(tf, names, components, file_name,   doc_topic_prior, topic_word_prior,  
 
     all_names = [rep_name,  names_name]
 
-    if dt.allFnsAlreadyExist(all_names):
+    if dt.allFnsAlreadyExist(all_names) and not rewrite_files:
         print("Already completed")
         return
     print(len(tf), print(len(tf[0])))
@@ -43,10 +43,8 @@ def LDA(tf, names, components, file_name,   doc_topic_prior, topic_word_prior,  
 
     print("\nTopics in LDA model:")
     topics = print_top_words(lda, names)
-    flipped_topics = []
-    for t in topics:
-        flipped_topics.append(np.flipud(np.asarray(t.split())))
-    dt.write2dArray(flipped_topics, "../data/" + data_type + "/LDA/names/" + file_name + ".txt")
+    topics.reverse()
+    dt.write1dArray(topics, "../data/" + data_type + "/LDA/names/" + file_name + ".txt")
     dt.write2dArray(new_rep.transpose(), rep_name)
     joblib.dump(lda, model_name)
 
@@ -55,7 +53,7 @@ def main(data_type, class_labels_fn, class_names_fn, ft_names_fn, max_depth, lim
          high_amt, low_amt, cross_val, rewrite_files, classify):
 
     print("importing class all")
-    tf = np.asarray(dt.import2dArray("../data/"+data_type+"/bow/ppmi/class-all-"+str(high_amt)+"-"+str(low_amt)+"-all"))
+    tf = np.asarray(dt.import2dArray("../data/"+data_type+"/bow/frequency/phrases/class-all-"+str(high_amt)+"-"+str(low_amt)+"-all"))
     names = dt.import1dArray(ft_names_fn)
     variables_to_execute = list(product(doc_topic_prior, topic_word_prior, n_topics))
     print("executing", len(variables_to_execute), "variations")
@@ -106,47 +104,26 @@ def main(data_type, class_labels_fn, class_names_fn, ft_names_fn, max_depth, lim
         file_name = og_fn + " " + str(cross_val) + "CV " + str(0) + classify + "Dev" + str(dt_dev)
         csvs.append("../data/" + data_type + "/rules/tree_csv/" + file_name + "AVG.csv")
     dt.arrangeByScore(np.unique(np.asarray(csvs)), final_csv_fn)
-"""
 data_type = "newsgroups"
-high_amt = 30
+high_amt = 10
 low_amt = 18836
+
 classify = ["newsgroups"]
-doc_topic_prior = [0.1, 0.01, 0.001]
-topic_word_prior = [0.1, 0.01, 0.001]
-n_topics = [10,30,50,100,200,400]
-"""
-"""
-
-data_type = "movies"
-high_amt = 100
-low_amt = 10
-
-classify = ["genres", "keywords", "ratings"]
-doc_topic_prior = [ 0.1, 0.01, 0.001]
-topic_word_prior = [0.1, 0.01, 0.001]
-n_topics = [10,30,50,100,200,400]
-"""
-
-data_type = "placetypes"
-high_amt = 50
-low_amt = 10
-
-classify = ["opencyc", "foursquare", "geonames"]
-doc_topic_prior = [ 0.01, 0.001, 0.1]
-topic_word_prior = [ 0.01, 0.001, 0.1]
-n_topics = [10,30,50,100,200,400]
 
 
 max_depth = 3
 limit_entities = False
-dt_dev = True
+dt_dev = False
 vector_names_fn = "../data/" + data_type + "/nnet/spaces/entitynames.txt"
 feature_names_fn = "../data/" + data_type + "/bow/names/"+str(high_amt)+"-"+str(low_amt)+"-all.txt"
 rewrite_files = False
-cross_val = 5
+cross_val = 1
 
+doc_topic_prior = [ 0.1]
+topic_word_prior = [0.1]
+n_topics = [50]
 for c in classify:
-    file_name = "all-ppmi-" + str(high_amt) + "-" + str(low_amt)
+    file_name = "all-" + str(high_amt) + "-" + str(low_amt)
     final_csv_name = "final" + c + str(dt_dev)
     class_labels_fn = "../data/" + data_type + "/classify/"+c+"/class-all"
     class_names_fn = "../data/" + data_type + "/classify/"+c+"/names.txt"
