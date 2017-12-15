@@ -875,7 +875,7 @@ init_vector_path = loc+data_type+"/pca/class-all-50-10-alld100"
 vector_path_replacement = loc+data_type+"/pca/class-all-50-10-alld100"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 """
-
+"""
 data_type = "movies"
 classification_task = ["genres"]
 #arrange_name = arrange_name + classification_task[0]
@@ -895,7 +895,7 @@ if classification_task[0] == "us-ratings":
     deep_size = [200]
 else:
     deep_size = [200]
-
+"""
 """
 data_type = "newsgroups"
 classification_task = ["newsgroups"]
@@ -915,9 +915,9 @@ vector_path_replacement =  loc+data_type+"/nnet/spaces/mds100.txt"
 #vector_path_replacement = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
 deep_size = [100]
 """
-"""
+
 data_type = "placetypes"
-classification_task = ["geonames", "foursquare", "opencyc"]
+classification_task = ["opencyc"]
 lowest_amt = 50
 highest_amt = 10
 #init_vector_path = "../data/"+data_type+"/bow/ppmi/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+classification_task
@@ -931,7 +931,7 @@ else:
 vector_path_replacement = loc+data_type+"/nnet/spaces/places100.txt"
 get_nnet_vectors_path = loc + data_type + "/nnet/spaces/places100.txt"
 deep_size = [100]
-"""
+
 if classification_task[0] == "geonames" or classification_task[0] == "foursquare" or classification_task[0] == "newsgroups" :
     hidden_activation = "tanh"
     dropout_noise = 0.5
@@ -996,7 +996,7 @@ dissim_amt = [2]
 breakoff = [False]
 score_limit = [0.9]
 amount_to_start = [2000]
-cluster_multiplier = [0.25,0.5,1,2]#50
+cluster_multiplier = [2]#50
 score_type = ["ndcg", "kappa"]
 use_breakoff_dissim = [False]
 get_all = [False]
