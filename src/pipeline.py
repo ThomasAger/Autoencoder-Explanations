@@ -1041,7 +1041,7 @@ svm_classify = False
 rewrite_files = False
 max_depth = [3]
 
-cross_val = 1
+cross_val = 3
 one_for_all = False
 
 arrange_name = "cluster ratings BCS" + str(max_depth)

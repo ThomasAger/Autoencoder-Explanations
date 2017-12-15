@@ -13,13 +13,15 @@ from sklearn.model_selection import cross_val_predict
 from sklearn.model_selection import KFold
 import random
 from sklearn.externals import joblib
+from sklearn.metrics import precision_recall_fscore_support
+
 class DecisionTree:
     clf = None
     def __init__(self, features_fn, classes_fn,  class_names_fn, cluster_names_fn, filename,
                  training_data,  max_depth=None, balance=None, criterion="entropy", save_details=False, data_type="movies",cv_splits=5,
                  csv_fn="../data/temp/no_csv_provided.csv", rewrite_files=False, split_to_use=-1, development=False,
                  limit_entities=False, limited_label_fn=None, vector_names_fn=None, clusters_fn="", cluster_duplicates=False,
-                 save_results_so_far=False):
+                 save_results_so_far=False, multi_label=False):
 
         label_names = dt.import1dArray(class_names_fn)
 
@@ -85,11 +87,17 @@ class DecisionTree:
         scores_array = []
         f1_array = []
         accuracy_array = []
+        prec_array = []
+        recall_array = []
         params  = []
 
-        labels = labels.transpose()
-        print("labels transposed")
-        print("labels", len(labels), len(labels[0]))
+
+        if not multi_label:
+            labels = labels.transpose()
+            print("labels transposed")
+            print("labels", len(labels), len(labels[0]))
+        else:
+            labels = [labels]
 
 
         all_top_clusters = []
@@ -135,6 +143,8 @@ class DecisionTree:
             ac_x_dev = []
             cv_f1 = []
             cv_acc = []
+            cv_prec = []
+            cv_recall = []
             if cv_splits == 1:
                 if data_type != "newsgroups":
                     kf = KFold(n_splits=3, shuffle=False, random_state=None)
@@ -183,9 +193,16 @@ class DecisionTree:
                 if len(predictions) == 1:
                     all_y_test.append(ac_y_test[i])
                     all_predictions.append(predictions[i])
-                f1 = f1_score(ac_y_test[i], predictions[i], average="binary")
+                if multi_label:
+                    prec, recall, fbeta, score = precision_recall_fscore_support(ac_y_test[i], predictions[i],
+                                                                                 average="macro")
+                else:
+                    prec, recall, fbeta, score = precision_recall_fscore_support(ac_y_test[i], predictions[i],
+                                                                                 average="macro")
+                cv_prec.append(prec)
+                cv_recall.append(recall)
+                f1 = 2 * ((prec * recall) / (prec + recall))
                 accuracy = accuracy_score(ac_y_test[i], predictions[i])
-                cv_f1.append(f1)
                 cv_acc.append(accuracy)
                 scores = [[label_names[l], "f1", f1, "accuracy", accuracy]]
                 print(scores)
@@ -315,7 +332,12 @@ class DecisionTree:
                     all_top_clusters.extend(dt_clusters)
                     all_top_names.extend(fns)
                     all_top_inds.extend(inds)
-            f1_array.append(np.average(np.asarray(cv_f1)))
+            average_prec = np.average(cv_prec)
+            average_recall = np.average(cv_recall)
+            f1 = 2 * ((average_prec * average_recall) / (average_prec + average_recall))
+            f1_array.append(f1)
+            prec_array.append(average_prec)
+            recall_array.append(average_recall)
             accuracy_array.append(np.average(np.asarray(cv_acc)))
 
         print("len clusters", len(all_top_clusters))
@@ -328,8 +350,13 @@ class DecisionTree:
         accuracy_array = np.asarray(accuracy_array)
         accuracy_average = np.average(accuracy_array)
 
-        f1_array = np.asarray(f1_array)
-        f1_average = np.average(f1_array)
+        prec_array = np.asarray(prec_array)
+        average_prec = np.average(prec_array)
+
+        recall_array = np.asarray(recall_array)
+        average_recall = np.average(recall_array)
+
+        f1_average = 2 * ((average_prec * average_recall) / (average_prec + average_recall))
 
         all_y_test = np.asarray(all_y_test)
         all_predictions = np.asarray(all_predictions)
@@ -337,7 +364,6 @@ class DecisionTree:
         micro_average = f1_score(all_y_test, all_predictions, average="micro")
 
         accuracy_array = accuracy_array.tolist()
-        f1_array =f1_array.tolist()
 
         accuracy_array.append(accuracy_average)
         accuracy_array.append(0.0)
