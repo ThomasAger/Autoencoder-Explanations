@@ -1,6 +1,7 @@
 import numpy as np
 import data as dt
 import pydotplus as pydot
+import math
 from sklearn import tree
 from sklearn.metrics import f1_score, accuracy_score
 from inspect import getmembers
@@ -13,13 +14,15 @@ from sklearn.model_selection import cross_val_predict
 from sklearn.model_selection import KFold
 import random
 from sklearn.externals import joblib
+from sklearn.metrics import precision_recall_fscore_support
+
 class DecisionTree:
     clf = None
     def __init__(self, features_fn, classes_fn,  class_names_fn, cluster_names_fn, filename,
                  training_data,  max_depth=None, balance=None, criterion="entropy", save_details=False, data_type="movies",cv_splits=5,
                  csv_fn="../data/temp/no_csv_provided.csv", rewrite_files=False, split_to_use=-1, development=False,
                  limit_entities=False, limited_label_fn=None, vector_names_fn=None, clusters_fn="", cluster_duplicates=False,
-                 save_results_so_far=False, loc="../data/"):
+                 save_results_so_far=False, multi_label=False):
 
         label_names = dt.import1dArray(class_names_fn)
 
@@ -27,16 +30,16 @@ class DecisionTree:
 
         all_fns = []
         file_names = ['ACC ' + filename, 'F1 ' + filename]
-        acc_fn = loc + data_type + '/rules/tree_scores/' + file_names[0] + '.scores'
-        prediction_fn = loc + data_type + '/rules/tree_output/' + filename + '.scores'
-        f1_fn = loc + data_type + '/rules/tree_scores/' + file_names[1] + '.scores'
-        all_top_names_fn = loc+data_type+"/rules/names/" + filename + ".txt"
-        all_top_rankings_fn = loc+data_type+"/rules/rankings/" + filename + ".txt"
-        all_top_clusters_fn = loc+data_type+"/rules/clusters/" + filename + ".txt"
+        acc_fn = '../data/' + data_type + '/rules/tree_scores/' + file_names[0] + '.scores'
+        prediction_fn = '../data/' + data_type + '/rules/tree_output/' + filename + '.scores'
+        f1_fn = '../data/' + data_type + '/rules/tree_scores/' + file_names[1] + '.scores'
+        all_top_names_fn = "../data/"+data_type+"/rules/names/" + filename + ".txt"
+        all_top_rankings_fn = "../data/"+data_type+"/rules/rankings/" + filename + ".txt"
+        all_top_clusters_fn = "../data/"+data_type+"/rules/clusters/" + filename + ".txt"
 
-        fns_name = loc + data_type + "/rules/names/" + filename + label_names[0] + ".txt"
-        features_name = loc + data_type + "/rules/rankings/" + filename + label_names[0] + ".txt"
-        dt_clusters_name = loc + data_type + "/rules/clusters/" + filename + label_names[0] + ".txt"
+        fns_name = "../data/" + data_type + "/rules/names/" + filename + label_names[0] + ".txt"
+        features_name = "../data/" + data_type + "/rules/rankings/" + filename + label_names[0] + ".txt"
+        dt_clusters_name = "../data/" + data_type + "/rules/clusters/" + filename + label_names[0] + ".txt"
         all_fns = [acc_fn, f1_fn, prediction_fn]
 
         if max_depth is not None:
@@ -45,9 +48,9 @@ class DecisionTree:
             all_fns.append(all_top_clusters_fn)
 
         if save_details:
-            orig_dot_file_fn = loc + data_type + '/rules/tree_data/' + label_names[0] + " " + filename  + 'orig.txt'
+            orig_dot_file_fn = '../data/' + data_type + '/rules/tree_data/' + label_names[0] + " " + filename  + 'orig.txt'
            # all_fns.append(orig_dot_file_fn)
-            model_name_fn = loc + data_type + "/rules/tree_model/" + label_names[0] + " " + filename + ".model"
+            model_name_fn = "../data/" + data_type + "/rules/tree_model/" + label_names[0] + " " + filename + ".model"
             #all_fns.append(model_name_fn)
 
         if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
@@ -85,11 +88,17 @@ class DecisionTree:
         scores_array = []
         f1_array = []
         accuracy_array = []
+        prec_array = []
+        recall_array = []
         params  = []
 
-        labels = labels.transpose()
-        print("labels transposed")
-        print("labels", len(labels), len(labels[0]))
+
+        if not multi_label:
+            labels = labels.transpose()
+            print("labels transposed")
+            print("labels", len(labels), len(labels[0]))
+        else:
+            labels = [labels]
 
 
         all_top_clusters = []
@@ -135,6 +144,8 @@ class DecisionTree:
             ac_x_dev = []
             cv_f1 = []
             cv_acc = []
+            cv_prec = []
+            cv_recall = []
             if cv_splits == 1:
                 if data_type != "newsgroups":
                     kf = KFold(n_splits=3, shuffle=False, random_state=None)
@@ -170,7 +181,7 @@ class DecisionTree:
                 ac_y_test = ac_y_dev
 
             for splits in range(len(ac_y_test)):
-                model_name_fn = loc + data_type + "/rules/tree_model/" + label_names[l] + " " + filename + ".model"
+                model_name_fn = "../data/" + data_type + "/rules/tree_model/" + label_names[l] + " " + filename + ".model"
                 if dt.fileExists(model_name_fn) and not rewrite_files:
                     clf = joblib.load(model_name_fn)
                 else:
@@ -183,22 +194,31 @@ class DecisionTree:
                 if len(predictions) == 1:
                     all_y_test.append(ac_y_test[i])
                     all_predictions.append(predictions[i])
-                f1 = f1_score(ac_y_test[i], predictions[i], average="binary")
+                if multi_label:
+                    prec, recall, fbeta, score = precision_recall_fscore_support(ac_y_test[i], predictions[i],
+                                                                                 average="macro")
+                else:
+                    prec, recall, fbeta, score = precision_recall_fscore_support(ac_y_test[i], predictions[i],
+                                                                                 average="binary")
+                cv_prec.append(prec)
+                cv_recall.append(recall)
+                f1 = 2 * ((prec * recall) / (prec + recall))
                 accuracy = accuracy_score(ac_y_test[i], predictions[i])
-                cv_f1.append(f1)
                 cv_acc.append(accuracy)
                 scores = [[label_names[l], "f1", f1, "accuracy", accuracy]]
+                if math.isnan(f1):
+                    print("NAN", prec, recall)
                 print(scores)
                 class_names = ["NOT " + label_names[l], label_names[l]]
 
                 # Export a tree for each label predicted by the clf
                 if save_details:
-                    orig_dot_file_fn = loc + data_type + '/rules/tree_data/' + label_names[l] + " " + filename  + 'orig.txt'
-                    new_dot_file_fn = loc + data_type + '/rules/tree_data/' + label_names[l] + " " + filename  + '.txt'
-                    orig_graph_png_fn = loc + data_type + '/rules/tree_images/' + label_names[l] + " " + filename + 'orig.png'
-                    new_graph_png_fn = loc + data_type + '/rules/tree_images/' + label_names[l] + " " + filename + '.png'
-                    orig_temp_graph_png_fn = loc + data_type + '/rules/tree_temp/' + label_names[l] + " " + filename + 'orig.png'
-                    new_temp_graph_png_fn = loc + data_type + '/rules/tree_temp/' + label_names[l] + " " + filename + '.png'
+                    orig_dot_file_fn = '../data/' + data_type + '/rules/tree_data/' + label_names[l] + " " + filename  + 'orig.txt'
+                    new_dot_file_fn = '../data/' + data_type + '/rules/tree_data/' + label_names[l] + " " + filename  + '.txt'
+                    orig_graph_png_fn = '../data/' + data_type + '/rules/tree_images/' + label_names[l] + " " + filename + 'orig.png'
+                    new_graph_png_fn = '../data/' + data_type + '/rules/tree_images/' + label_names[l] + " " + filename + '.png'
+                    orig_temp_graph_png_fn = '../data/' + data_type + '/rules/tree_temp/' + label_names[l] + " " + filename + 'orig.png'
+                    new_temp_graph_png_fn = '../data/' + data_type + '/rules/tree_temp/' + label_names[l] + " " + filename + '.png'
                     output_names = []
                     for c in cluster_names:
                         line = ""
@@ -305,9 +325,9 @@ class DecisionTree:
                     self.get_code(clf, output_names, class_names, label_names[l] + " " + filename, data_type)
                     dt_clusters, features, fns, inds = self.getNodesToDepth(clf, original_vectors, cluster_names, clusters)
                     print(filename+label_names[l])
-                    fns_name = loc+data_type+"/rules/names/"+filename+label_names[l]+".txt"
-                    features_name = loc+data_type+"/rules/rankings/"+filename+label_names[l]+".txt"
-                    dt_clusters_name = loc+data_type+"/rules/clusters/"+filename+label_names[l]+".txt"
+                    fns_name = "../data/"+data_type+"/rules/names/"+filename+label_names[l]+".txt"
+                    features_name = "../data/"+data_type+"/rules/rankings/"+filename+label_names[l]+".txt"
+                    dt_clusters_name = "../data/"+data_type+"/rules/clusters/"+filename+label_names[l]+".txt"
                     dt.write2dArray(fns, fns_name)
                     dt.write2dArray(features, features_name)
                     dt.write2dArray(dt_clusters, dt_clusters_name)
@@ -315,7 +335,12 @@ class DecisionTree:
                     all_top_clusters.extend(dt_clusters)
                     all_top_names.extend(fns)
                     all_top_inds.extend(inds)
-            f1_array.append(np.average(np.asarray(cv_f1)))
+            average_prec = np.average(cv_prec)
+            average_recall = np.average(cv_recall)
+            f1 = 2 * ((average_prec * average_recall) / (average_prec + average_recall))
+            f1_array.append(f1)
+            prec_array.append(average_prec)
+            recall_array.append(average_recall)
             accuracy_array.append(np.average(np.asarray(cv_acc)))
 
         print("len clusters", len(all_top_clusters))
@@ -328,8 +353,13 @@ class DecisionTree:
         accuracy_array = np.asarray(accuracy_array)
         accuracy_average = np.average(accuracy_array)
 
-        f1_array = np.asarray(f1_array)
-        f1_average = np.average(f1_array)
+        prec_array = np.asarray(prec_array)
+        average_prec = np.average(prec_array)
+
+        recall_array = np.asarray(recall_array)
+        average_recall = np.average(recall_array)
+
+        f1_average = 2 * ((average_prec * average_recall) / (average_prec + average_recall))
 
         all_y_test = np.asarray(all_y_test)
         all_predictions = np.asarray(all_predictions)
@@ -337,7 +367,6 @@ class DecisionTree:
         micro_average = f1_score(all_y_test, all_predictions, average="micro")
 
         accuracy_array = accuracy_array.tolist()
-        f1_array =f1_array.tolist()
 
         accuracy_array.append(accuracy_average)
         accuracy_array.append(0.0)
@@ -456,13 +485,13 @@ class DecisionTree:
                             line = "return", class_names[1]
                             rules_array.append(line)
         recurse(left, right, threshold, features, 0)
-        dt.write1dArray(rules_array, loc + data_type + "/rules/text_rules/"+filename+".txt")
-        cleaned = jsbeautifier.beautify_file(loc + data_type + "/rules/text_rules/"+filename+".txt")
+        dt.write1dArray(rules_array, "../data/" + data_type + "/rules/text_rules/"+filename+".txt")
+        cleaned = jsbeautifier.beautify_file("../data/" + data_type + "/rules/text_rules/"+filename+".txt")
         try:
-            file = open(loc + data_type + "/rules/text_rules/"+filename+".txt", "w")
+            file = open("../data/" + data_type + "/rules/text_rules/"+filename+".txt", "w")
             file.write(cleaned)
             file.close()
-            file = open(loc + data_type + "/rules/tree_temp/"+filename+".txt", "w")
+            file = open("../data/" + data_type + "/rules/tree_temp/"+filename+".txt", "w")
             file.write(cleaned)
             file.close()
         except OSError:
@@ -478,14 +507,14 @@ def main():
     cv_split = 1
     jo = True
     save_details = False
-    label_names_fn = loc+data_type+"/classify/"+classify+"/names.txt"
-    cluster_labels_fn = loc+data_type+"/classify/"+classify+"/class-All"
+    label_names_fn = "../data/"+data_type+"/classify/"+classify+"/names.txt"
+    cluster_labels_fn = "../data/"+data_type+"/classify/"+classify+"/class-All"
     threshold = 0.9
     split = 0.1
     file_name = "places1ssss00"+classify
     criterion = "entropy"
     balance = "balanced"
-    cluster_names_fn = loc+data_type+"/nnet/spaces/entitynames.txt"
+    cluster_names_fn = "../data/"+data_type+"/nnet/spaces/entitynames.txt"
     #cluster_names_fn = "../data/movies/bow/names/200.txt"
     #cluster_names_fn = "../data/movies/cluster/names/" + file_name + ".txt"
     #cluster_vectors_fn = "../data/movies/rank/numeric/" + file_name + "400.txt"
@@ -494,20 +523,20 @@ def main():
     #vector_fn = "films100svmndcg0.9240pavPPMIN0.5FTRsgdmse1000"
     vector_fn = "films200-genres100ndcg0.9200"
     csv_name = vector_fn#"wines100trimmedsvmkappa0.9200"
-    csv_fn = loc+data_type+"/rules/tree_csv/"+csv_name+".csv"
+    csv_fn = "../data/"+data_type+"/rules/tree_csv/"+csv_name+".csv"
     #vector_fn = "films100"
-    #cluster_vectors_fn = loc+data_type+"/cluster/all_directions/" +file_name + ".txt"
+    #cluster_vectors_fn = "../data/"+data_type+"/cluster/all_directions/" +file_name + ".txt"
     #file_name = file_name + "all_dir"
-    #cluster_vectors_fn = loc+data_type+"/nnet/clusters/"+vector_fn+".txt"
+    #cluster_vectors_fn = "../data/"+data_type+"/nnet/clusters/"+vector_fn+".txt"
     #file_name = file_name + "nnet_rank"
-    #cluster_vectors_fn = loc+data_type+"/finetune/"+vector_fn+".txt"
+    #cluster_vectors_fn = "../data/"+data_type+"/finetune/"+vector_fn+".txt"
     #file_name = file_name + "finetune_pavppmi"
-    #cluster_vectors_fn = loc+data_type+"/nnet/spaces/"+vector_fn+".txt"
+    #cluster_vectors_fn = "../data/"+data_type+"/nnet/spaces/"+vector_fn+".txt"
     #file_name = file_name + "vector"
-    cluster_vectors_fn = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
+    cluster_vectors_fn = "../data/"+data_type+"/bow/ppmi/class-all-50-0.95-all"
     clusters_fn = cluster_vectors_fn
     file_name = file_name + "ranks"
-    #cluster_vectors_fn = loc+data_type+"/nnet/spaces/"+vector_fn+".txt"
+    #cluster_vectors_fn = "../data/"+data_type+"/nnet/spaces/"+vector_fn+".txt"
     #file_name = file_name + "spaces"
     file_name = vector_fn + classify + str(max_depth)
 
