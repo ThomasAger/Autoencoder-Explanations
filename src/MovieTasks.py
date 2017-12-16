@@ -895,18 +895,7 @@ def convertEntityNamesToIDS(ID_fn, all_names_fn, individual_names_fn, output_fn)
     dt.write1dArray(np.asarray(ID_fn)[indexes], output_fn)
 
 
-cert_fn = "../data/raw/imdb/certs/certificates.list"
-entity_name_fn = "../data/movies/nnet/spaces/entitynames.txt"
-#importCertificates(cert_fn, entity_name_fn)
-"""
-convertEntityNamesToIDS("../data/raw/previous work/filmIds.txt", entity_name_fn, "../data/movies/classify/ratings/available_entities.txt",
-                        "../data/movies/classify/ratings/entity_ids.txt")
 
-"""
-"""
-parseTree("../data/raw/previous work/placeclasses/CYCClasses.txt", "../data/placetypes/classify/OpenCYC/",
-          "../data/placetypes/classify/OpenCYC/names.txt")
-"""
 """
 
 fns = "../data/movies/classify/genres/class-all"
@@ -922,26 +911,9 @@ data_type = "wines"
 match_entities("../data/"+data_type+"/nnet/spaces/entitynames.txt",
     "../data/"+data_type+"/classify/"+classification+"/available_entities.txt",
                "../data/"+data_type+"/nnet/spaces/wines100.txt", classification)
+"""
 
-classification = "geonames"
-data_type = "placetypes"
 
-match_entities("../data/"+data_type+"/nnet/spaces/entitynames.txt",
-    "../data/"+data_type+"/classify/"+classification+"/available_entities.txt",
-               "../data/"+data_type+"/rank/numeric/places100projected.txt", classification)
-"""
-"""
-writeFromMultiClass("../data/raw/previous work/placeclasses/GeonamesClasses.txt", "../data/placetypes/classify/Geonames/",
-                    "../data/raw/previous work/placeNames.txt", data_type="placetypes", classify_name="Geonames")
-
-writeFromMultiClass("../data/raw/previous work/placeclasses/Foursquareclasses.txt", "../data/placetypes/classify/Foursquare/",
-                    "../data/raw/previous work/placeNames.txt", data_type="placetypes", classify_name="Foursquare")
-"""
-"""
-match_entities("../data/"+data_type+"/nnet/spaces/entitynames.txt",
-    "../data/"+data_type+"/classify/"+classification+"/available_entities.txt",
-               "../data/"+data_type+"/nnet/spaces/films100.txt", classification)
-"""
 """
 """
 """
@@ -1102,9 +1074,13 @@ new_class_all = np.asarray(new_class_all).transpose()
 dt.write2dArray(new_class_all, "../data/movies/classify/ratings/class-all")
 dt.write1dArray(entities_unique, "../data/movies/classify/ratings/available_entities.txt")
 """
-min=50
-max=10
-"""
+get_all = False
+additional_name = ""
+#make_individual = True
+make_individual = True
+sparse_matrix = False
+print("??")
+
 class_type = "movies"
 classification = "all"
 raw_fn = "../data/raw/previous work/movievectors/tokens/"
@@ -1113,7 +1089,13 @@ cut_first_line = True
 entity_name_fn = "../data/raw/previous work/filmIds.txt"
 use_all_files = None#""
 word_count_amt = 0
-"""
+min=100
+max=10
+
+
+if  __name__ =='__main__':main(min, max, class_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn, use_all_files,
+                               sparse_matrix, word_count_amt, classification)
+
 
 class_type = "wines"
 classification = "types"
@@ -1123,7 +1105,14 @@ cut_first_line = True
 use_all_files =  "../data/raw/previous work/winevectors/"
 entity_name_fn = "../data/"+class_type+"/nnet/spaces/entitynames.txt"
 word_count_amt = 1000
-"""
+min=50
+max=10
+
+
+if  __name__ =='__main__':main(min, max, class_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn, use_all_files,
+                               sparse_matrix, word_count_amt, classification)
+
+
 class_type = "placetypes"
 classification = "all"
 raw_fn = "../data/raw/previous work/placevectors/"
@@ -1132,16 +1121,45 @@ cut_first_line = False
 entity_name_fn = "../data/"+class_type+"/nnet/spaces/entitynames.txt"
 use_all_files = None#""
 word_count_amt = 0
-"""
-get_all = False
-additional_name = ""
-#make_individual = True
-make_individual = True
-sparse_matrix = False
-print("??")
-"""
+min=50
+max=10
+
+
 if  __name__ =='__main__':main(min, max, class_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn, use_all_files,
                                sparse_matrix, word_count_amt, classification)
+
+"""
+
+cert_fn = "../data/raw/imdb/certs/certificates.list"
+entity_name_fn = "../data/movies/nnet/spaces/entitynames.txt"
+importCertificates(cert_fn, entity_name_fn)
+
+convertEntityNamesToIDS("../data/raw/previous work/filmIds.txt", entity_name_fn, "../data/movies/classify/ratings/available_entities.txt",
+                        "../data/movies/classify/ratings/entity_ids.txt")
+
+
+
+parseTree("../data/raw/previous work/placeclasses/CYCClasses.txt", "../data/placetypes/classify/OpenCYC/",
+          "../data/placetypes/classify/OpenCYC/names.txt")
+
+
+writeFromMultiClass("../data/raw/previous work/placeclasses/GeonamesClasses.txt", "../data/placetypes/classify/Geonames/",
+                    "../data/raw/previous work/placeNames.txt", data_type="placetypes", classify_name="Geonames")
+
+writeFromMultiClass("../data/raw/previous work/placeclasses/Foursquareclasses.txt", "../data/placetypes/classify/Foursquare/",
+                    "../data/raw/previous work/placeNames.txt", data_type="placetypes", classify_name="Foursquare")
+classification = "geonames"
+data_type = "placetypes"
+
+match_entities("../data/"+data_type+"/nnet/spaces/entitynames.txt",
+    "../data/"+data_type+"/classify/"+classification+"/available_entities.txt",
+               "../data/"+data_type+"/rank/numeric/places100projected.txt", classification)
+
+
+
+match_entities("../data/"+data_type+"/nnet/spaces/entitynames.txt",
+    "../data/"+data_type+"/classify/"+classification+"/available_entities.txt",
+               "../data/"+data_type+"/nnet/spaces/films100.txt", classification)
 """
 
 """

@@ -19,7 +19,7 @@ class DecisionTree:
                  training_data,  max_depth=None, balance=None, criterion="entropy", save_details=False, data_type="movies",cv_splits=5,
                  csv_fn="../data/temp/no_csv_provided.csv", rewrite_files=False, split_to_use=-1, development=False,
                  limit_entities=False, limited_label_fn=None, vector_names_fn=None, clusters_fn="", cluster_duplicates=False,
-                 save_results_so_far=False):
+                 save_results_so_far=False, loc="../data/"):
 
         label_names = dt.import1dArray(class_names_fn)
 
@@ -27,16 +27,16 @@ class DecisionTree:
 
         all_fns = []
         file_names = ['ACC ' + filename, 'F1 ' + filename]
-        acc_fn = '../data/' + data_type + '/rules/tree_scores/' + file_names[0] + '.scores'
-        prediction_fn = '../data/' + data_type + '/rules/tree_output/' + filename + '.scores'
-        f1_fn = '../data/' + data_type + '/rules/tree_scores/' + file_names[1] + '.scores'
-        all_top_names_fn = "../data/"+data_type+"/rules/names/" + filename + ".txt"
-        all_top_rankings_fn = "../data/"+data_type+"/rules/rankings/" + filename + ".txt"
-        all_top_clusters_fn = "../data/"+data_type+"/rules/clusters/" + filename + ".txt"
+        acc_fn = loc + data_type + '/rules/tree_scores/' + file_names[0] + '.scores'
+        prediction_fn = loc + data_type + '/rules/tree_output/' + filename + '.scores'
+        f1_fn = loc + data_type + '/rules/tree_scores/' + file_names[1] + '.scores'
+        all_top_names_fn = loc+data_type+"/rules/names/" + filename + ".txt"
+        all_top_rankings_fn = loc+data_type+"/rules/rankings/" + filename + ".txt"
+        all_top_clusters_fn = loc+data_type+"/rules/clusters/" + filename + ".txt"
 
-        fns_name = "../data/" + data_type + "/rules/names/" + filename + label_names[0] + ".txt"
-        features_name = "../data/" + data_type + "/rules/rankings/" + filename + label_names[0] + ".txt"
-        dt_clusters_name = "../data/" + data_type + "/rules/clusters/" + filename + label_names[0] + ".txt"
+        fns_name = loc + data_type + "/rules/names/" + filename + label_names[0] + ".txt"
+        features_name = loc + data_type + "/rules/rankings/" + filename + label_names[0] + ".txt"
+        dt_clusters_name = loc + data_type + "/rules/clusters/" + filename + label_names[0] + ".txt"
         all_fns = [acc_fn, f1_fn, prediction_fn]
 
         if max_depth is not None:
@@ -45,9 +45,9 @@ class DecisionTree:
             all_fns.append(all_top_clusters_fn)
 
         if save_details:
-            orig_dot_file_fn = '../data/' + data_type + '/rules/tree_data/' + label_names[0] + " " + filename  + 'orig.txt'
+            orig_dot_file_fn = loc + data_type + '/rules/tree_data/' + label_names[0] + " " + filename  + 'orig.txt'
            # all_fns.append(orig_dot_file_fn)
-            model_name_fn = "../data/" + data_type + "/rules/tree_model/" + label_names[0] + " " + filename + ".model"
+            model_name_fn = loc + data_type + "/rules/tree_model/" + label_names[0] + " " + filename + ".model"
             #all_fns.append(model_name_fn)
 
         if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
@@ -170,7 +170,7 @@ class DecisionTree:
                 ac_y_test = ac_y_dev
 
             for splits in range(len(ac_y_test)):
-                model_name_fn = "../data/" + data_type + "/rules/tree_model/" + label_names[l] + " " + filename + ".model"
+                model_name_fn = loc + data_type + "/rules/tree_model/" + label_names[l] + " " + filename + ".model"
                 if dt.fileExists(model_name_fn) and not rewrite_files:
                     clf = joblib.load(model_name_fn)
                 else:
@@ -193,12 +193,12 @@ class DecisionTree:
 
                 # Export a tree for each label predicted by the clf
                 if save_details:
-                    orig_dot_file_fn = '../data/' + data_type + '/rules/tree_data/' + label_names[l] + " " + filename  + 'orig.txt'
-                    new_dot_file_fn = '../data/' + data_type + '/rules/tree_data/' + label_names[l] + " " + filename  + '.txt'
-                    orig_graph_png_fn = '../data/' + data_type + '/rules/tree_images/' + label_names[l] + " " + filename + 'orig.png'
-                    new_graph_png_fn = '../data/' + data_type + '/rules/tree_images/' + label_names[l] + " " + filename + '.png'
-                    orig_temp_graph_png_fn = '../data/' + data_type + '/rules/tree_temp/' + label_names[l] + " " + filename + 'orig.png'
-                    new_temp_graph_png_fn = '../data/' + data_type + '/rules/tree_temp/' + label_names[l] + " " + filename + '.png'
+                    orig_dot_file_fn = loc + data_type + '/rules/tree_data/' + label_names[l] + " " + filename  + 'orig.txt'
+                    new_dot_file_fn = loc + data_type + '/rules/tree_data/' + label_names[l] + " " + filename  + '.txt'
+                    orig_graph_png_fn = loc + data_type + '/rules/tree_images/' + label_names[l] + " " + filename + 'orig.png'
+                    new_graph_png_fn = loc + data_type + '/rules/tree_images/' + label_names[l] + " " + filename + '.png'
+                    orig_temp_graph_png_fn = loc + data_type + '/rules/tree_temp/' + label_names[l] + " " + filename + 'orig.png'
+                    new_temp_graph_png_fn = loc + data_type + '/rules/tree_temp/' + label_names[l] + " " + filename + '.png'
                     output_names = []
                     for c in cluster_names:
                         line = ""
@@ -305,9 +305,9 @@ class DecisionTree:
                     self.get_code(clf, output_names, class_names, label_names[l] + " " + filename, data_type)
                     dt_clusters, features, fns, inds = self.getNodesToDepth(clf, original_vectors, cluster_names, clusters)
                     print(filename+label_names[l])
-                    fns_name = "../data/"+data_type+"/rules/names/"+filename+label_names[l]+".txt"
-                    features_name = "../data/"+data_type+"/rules/rankings/"+filename+label_names[l]+".txt"
-                    dt_clusters_name = "../data/"+data_type+"/rules/clusters/"+filename+label_names[l]+".txt"
+                    fns_name = loc+data_type+"/rules/names/"+filename+label_names[l]+".txt"
+                    features_name = loc+data_type+"/rules/rankings/"+filename+label_names[l]+".txt"
+                    dt_clusters_name = loc+data_type+"/rules/clusters/"+filename+label_names[l]+".txt"
                     dt.write2dArray(fns, fns_name)
                     dt.write2dArray(features, features_name)
                     dt.write2dArray(dt_clusters, dt_clusters_name)
@@ -456,13 +456,13 @@ class DecisionTree:
                             line = "return", class_names[1]
                             rules_array.append(line)
         recurse(left, right, threshold, features, 0)
-        dt.write1dArray(rules_array, "../data/" + data_type + "/rules/text_rules/"+filename+".txt")
-        cleaned = jsbeautifier.beautify_file("../data/" + data_type + "/rules/text_rules/"+filename+".txt")
+        dt.write1dArray(rules_array, loc + data_type + "/rules/text_rules/"+filename+".txt")
+        cleaned = jsbeautifier.beautify_file(loc + data_type + "/rules/text_rules/"+filename+".txt")
         try:
-            file = open("../data/" + data_type + "/rules/text_rules/"+filename+".txt", "w")
+            file = open(loc + data_type + "/rules/text_rules/"+filename+".txt", "w")
             file.write(cleaned)
             file.close()
-            file = open("../data/" + data_type + "/rules/tree_temp/"+filename+".txt", "w")
+            file = open(loc + data_type + "/rules/tree_temp/"+filename+".txt", "w")
             file.write(cleaned)
             file.close()
         except OSError:
@@ -478,14 +478,14 @@ def main():
     cv_split = 1
     jo = True
     save_details = False
-    label_names_fn = "../data/"+data_type+"/classify/"+classify+"/names.txt"
-    cluster_labels_fn = "../data/"+data_type+"/classify/"+classify+"/class-All"
+    label_names_fn = loc+data_type+"/classify/"+classify+"/names.txt"
+    cluster_labels_fn = loc+data_type+"/classify/"+classify+"/class-All"
     threshold = 0.9
     split = 0.1
     file_name = "places1ssss00"+classify
     criterion = "entropy"
     balance = "balanced"
-    cluster_names_fn = "../data/"+data_type+"/nnet/spaces/entitynames.txt"
+    cluster_names_fn = loc+data_type+"/nnet/spaces/entitynames.txt"
     #cluster_names_fn = "../data/movies/bow/names/200.txt"
     #cluster_names_fn = "../data/movies/cluster/names/" + file_name + ".txt"
     #cluster_vectors_fn = "../data/movies/rank/numeric/" + file_name + "400.txt"
@@ -494,20 +494,20 @@ def main():
     #vector_fn = "films100svmndcg0.9240pavPPMIN0.5FTRsgdmse1000"
     vector_fn = "films200-genres100ndcg0.9200"
     csv_name = vector_fn#"wines100trimmedsvmkappa0.9200"
-    csv_fn = "../data/"+data_type+"/rules/tree_csv/"+csv_name+".csv"
+    csv_fn = loc+data_type+"/rules/tree_csv/"+csv_name+".csv"
     #vector_fn = "films100"
-    #cluster_vectors_fn = "../data/"+data_type+"/cluster/all_directions/" +file_name + ".txt"
+    #cluster_vectors_fn = loc+data_type+"/cluster/all_directions/" +file_name + ".txt"
     #file_name = file_name + "all_dir"
-    #cluster_vectors_fn = "../data/"+data_type+"/nnet/clusters/"+vector_fn+".txt"
+    #cluster_vectors_fn = loc+data_type+"/nnet/clusters/"+vector_fn+".txt"
     #file_name = file_name + "nnet_rank"
-    #cluster_vectors_fn = "../data/"+data_type+"/finetune/"+vector_fn+".txt"
+    #cluster_vectors_fn = loc+data_type+"/finetune/"+vector_fn+".txt"
     #file_name = file_name + "finetune_pavppmi"
-    #cluster_vectors_fn = "../data/"+data_type+"/nnet/spaces/"+vector_fn+".txt"
+    #cluster_vectors_fn = loc+data_type+"/nnet/spaces/"+vector_fn+".txt"
     #file_name = file_name + "vector"
-    cluster_vectors_fn = "../data/"+data_type+"/bow/ppmi/class-all-50-0.95-all"
+    cluster_vectors_fn = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
     clusters_fn = cluster_vectors_fn
     file_name = file_name + "ranks"
-    #cluster_vectors_fn = "../data/"+data_type+"/nnet/spaces/"+vector_fn+".txt"
+    #cluster_vectors_fn = loc+data_type+"/nnet/spaces/"+vector_fn+".txt"
     #file_name = file_name + "spaces"
     file_name = vector_fn + classify + str(max_depth)
 

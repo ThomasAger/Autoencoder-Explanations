@@ -152,8 +152,8 @@ def main(data_type, clf, min, max, depth, rewrite_files):
 data_type = "newsgroups"
 clf = "all"
 
-min=10
-max=0.95
+min=30
+max=18836
 depth = 100
 
 rewrite_files = True

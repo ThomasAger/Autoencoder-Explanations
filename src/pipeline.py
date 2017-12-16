@@ -16,16 +16,16 @@ import tree
 import hierarchy
 import ndcg
 import nnet
-import wekatree
+#import wekatree
 from sklearn.model_selection import KFold
 from sklearn.preprocessing import MultiLabelBinarizer
-import weka.core.jvm as jvm
+#import weka.core.jvm as jvm
 import random
 import sys
 from itertools import product
 import time
 
-jvm.start(max_heap_size="512m")
+#jvm.start(max_heap_size="512m")
 
 def main(data_type, classification_task_a, file_name, init_vector_path, hidden_activation, is_identity_a, amount_of_finetune_a,
          breakoff_a, kappa_a, score_limit_a, rewrite_files, cluster_multiplier_a, threads, dropout_noise, learn_rate_a, epochs_a, cross_val, ep,
@@ -321,7 +321,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                             file_name=file_name, from_ae=from_ae, data_type=data_type, rewrite_files=rewrite_files, development=development,
                                                  class_weight=class_weight, get_nnet_vectors_path=get_nnet_vectors_path,
                                                  limit_entities=limit_entities, limited_label_fn=limited_label_fn,
-                                                 vector_names_fn=vector_names_fn, classification_name=classification_name)
+                                                 vector_names_fn=vector_names_fn, classification_name=classification_name, loc=loc)
 
                     new_file_names = []
 
@@ -520,7 +520,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                       max_depth=max_depth, balance="balanced", criterion="entropy", save_details=True, cv_splits=cv_splits, split_to_use=splits,
                                       data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files, development=dt_dev, limit_entities=limit_entities,
                                               limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn = clusters_fn,
-                                              cluster_duplicates = cluster_duplicates, save_results_so_far=save_results_so_far)
+                                              cluster_duplicates = cluster_duplicates, save_results_so_far=save_results_so_far, loc=loc)
 
 
                             tree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_dict_fn, file_name + "None", 10000,
@@ -528,7 +528,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                               data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
                                               cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
                                               limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn = clusters_fn,
-                                              cluster_duplicates=cluster_duplicates, save_results_so_far=save_results_so_far)
+                                              cluster_duplicates=cluster_duplicates, save_results_so_far=save_results_so_far, loc=loc)
                             """
                             wekatree.DecisionTree(ranking_fn, classification_path, label_names_fn , cluster_dict_fn , file_name,
                                save_details=False, data_type=data_type,split_to_use=splits, pruning=2,
@@ -634,7 +634,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                         class_path = loc + data_type + "/finetune/boc/" + file_name + ".txt"
                                     if boc_only:
                                         print("boc only")
-                                        class_path = "../data/" + data_type + "/bow/ppmi/" + file_name + ".txt"
+                                        class_path = loc + data_type + "/bow/ppmi/" + file_name + ".txt"
 
 
                                     if average_ppmi:
@@ -691,8 +691,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                     if ppmi_only > 0:
                                         file_name = file_name + "ppmionly"
                                         if skip_nn is True:
-                                            ppmi_fn = "../data/" + data_type + "/bow/ppmi/top" + str(ppmi_only) + ".txt"
-                                            name_fn = "../data/" + data_type + "/bow/names/top" + str(ppmi_only) + ".txt"
+                                            ppmi_fn = loc + data_type + "/bow/ppmi/top" + str(ppmi_only) + ".txt"
+                                            name_fn = loc + data_type + "/bow/names/top" + str(ppmi_only) + ".txt"
                                         cluster.makePPMI(names_fn, scores_fn, ppmi_only, data_type, ppmi_fn, name_fn)
                                         nnet_ranking_fn = ppmi_fn
                                         cluster_dict_fn = name_fn
@@ -734,7 +734,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                     file_name=file_name, from_ae=from_ae, finetune_size=finetune_size, data_type=data_type,
                                                                get_nnet_vectors_path= get_nnet_vectors_path, limit_entities=True,
                                                  vector_names_fn=vector_names_fn, classification_name=classification_name,
-                                                                 identity_activation=identity_activation)
+                                                                 identity_activation=identity_activation, loc=loc)
 
                                         #new_file_names[x] = file_name
 
@@ -744,14 +744,14 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                           data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
                                                           cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
                                                           limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn=clusters_fn,
-                                              cluster_duplicates=cluster_duplicates)
+                                              cluster_duplicates=cluster_duplicates, loc=loc)
 
                                         tree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_dict_fn, file_name + "None", 10000,
                                                               max_depth=None, balance="balanced", criterion="entropy", save_details=True,
                                                           data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
                                                           cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
                                                           limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn=clusters_fn,
-                                              cluster_duplicates=cluster_duplicates)
+                                              cluster_duplicates=cluster_duplicates, loc=loc)
                                         """
                                         wekatree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn,
                                                               cluster_dict_fn, file_name,
@@ -830,29 +830,32 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
             #if not skip_nn:
             #    for a in range(len(csv_fns_nn_a)):
             #        dt.averageCSVs(csv_fns_nn_a[a])
-    loc ="../data/"+data_type+"/rules/tree_csv/"
+
     if cross_val > 0:
         for fn in original_fn:
             avg_fn = fn[:-4] +"AVG.csv"
             if dt.fileExists(avg_fn) is False:
                 fn = fn.split("/")[len(fn.split("/"))-1]
                 try:
-                    fns_to_add = dt.getCSVsToAverage("../data/"+data_type+"/rules/tree_csv/",fn)
+                    fns_to_add = dt.getCSVsToAverage(loc+data_type+"/rules/tree_csv/",fn)
                 except IndexError:
-                    fns_to_add = dt.getCSVsToAverage("../data/" + data_type + "/rules/tree_csv/", fn[:-4] + str(max_depth) + ".csv")
+                    fns_to_add = dt.getCSVsToAverage(loc + data_type + "/rules/tree_csv/", fn[:-4] + str(max_depth) + ".csv")
                 all_csv_fns.append(fns_to_add)
             else:
                 all_csv_fns.append(avg_fn)
 
-    dt.arrangeByScore(np.unique(np.asarray(all_csv_fns)),loc + " " + arrange_name + file_name[:50] + str(len(all_csv_fns)) + ".csv")
-    jvm.stop()
+    dt.arrangeByScore(np.unique(np.asarray(all_csv_fns)),loc +data_type+"/rules/tree_csv/" + " " + arrange_name + file_name[:50] + str(len(all_csv_fns)) + ".csv")
+    #jvm.stop()
 
 print("Begin top of parameters")
 
 just_output = True
 arcca = False
+home = False
 if arcca:
     loc = "/scratch/c1214824/data/"
+elif home:
+    loc = "../Dropbox/data/"
 else:
     loc = "../data/"
 
@@ -875,7 +878,7 @@ init_vector_path = loc+data_type+"/pca/class-all-50-10-alld100"
 vector_path_replacement = loc+data_type+"/pca/class-all-50-10-alld100"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 """
-
+"""
 data_type = "movies"
 classification_task = ["genres"]
 #arrange_name = arrange_name + classification_task[0]
@@ -895,8 +898,8 @@ if classification_task[0] == "us-ratings":
     deep_size = [200]
 else:
     deep_size = [200]
-
 """
+
 data_type = "newsgroups"
 classification_task = ["newsgroups"]
 #arrange_name = arrange_name + classification_task[0]
@@ -914,7 +917,7 @@ vector_path_replacement =  loc+data_type+"/nnet/spaces/mds100.txt"
 #get_nnet_vectors_path = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
 #vector_path_replacement = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
 deep_size = [100]
-"""
+
 """
 data_type = "placetypes"
 classification_task = ["geonames", "foursquare", "opencyc"]
@@ -1093,7 +1096,7 @@ for c in range(chunk_amt):
                          "mkdir -p $WDPATH",
                          "cd $WDPATH",
                          "export PYTHONPATH=$SRCPATH",
-                         variable_string], "../data/" + data_type + "/cmds/" + "pipelinesvm" +str(c) + ".sh")
+                         variable_string], loc + data_type + "/cmds/" + "pipelinesvm" +str(c) + ".sh")
 
 print("")
 args = sys.argv[1:]
