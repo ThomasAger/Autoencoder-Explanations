@@ -15,7 +15,96 @@ def kdTree(entity_names, space):
         ind = ind[0][:]
         for j in ind:
             print(entity_names[j])
-        print("-------------------------")
+
+# Top_x is the amount of top entities to show. If 0, shows all
+# Cluster_ids are the clusters you want to show the top entities for. If none, then it shows all
+def getTopEntitiesOnRanking(ranking, entity_names, cluster_names, cluster_length=3, top_x=-1, cluster_ids=None, output=True):
+    if cluster_ids is not None:
+        ranking = ranking[cluster_ids]
+        cluster_names = cluster_names[cluster_ids]
+    for i in range(len(cluster_names)):
+        cluster_names[i] = cluster_names[i][:cluster_length]
+    top_entities = []
+    for c in range(len(ranking)):
+        top_cluster_entities = []
+        sorted_cluster = np.asarray(list(reversed(entity_names[np.argsort(ranking[c])])))
+        for e in range(len(sorted_cluster)):
+            top_cluster_entities.append(sorted_cluster[e])
+            if e == top_x:
+                break
+        top_entities.append(top_cluster_entities)
+        if output:
+            print("Cluster:", cluster_names[c],  "Entites", top_cluster_entities)
+    return top_entities
+
+
+data_type = "placetypes"
+file_name = "places NONNETCV5S0 SFT0 allL050kappa KMeans CA200 MC1 MS0.4 ATS2000 DS400"
+cluster_names = dt.import2dArray("../data/" + data_type + "/cluster/dict/" + file_name + ".txt","s")
+ranking = dt.import2dArray("../data/" + data_type + "/rank/numeric/" + file_name + ".txt")
+entity_names = dt.import1dArray("../data/" + data_type + "/nnet/spaces/entitynames.txt")
+top_x = 5
+cluster_length = 3
+cluster_ids = None
+#normal_top_entities = getTopEntitiesOnRanking(ranking, entity_names, cluster_names, cluster_length, top_x, cluster_ids)
+
+file_name = "places NONNETCV5S0 SFT0 allL050kappa KMeans CA200 MC1 MS0.4 ATS2000 DS400 foursquareFT BOCFi NTtanh1 NT1300linear"
+ranking = dt.import2dArray("../data/" + data_type + "/nnet/clusters/" + file_name + ".txt")
+#finetuned_top_entities = getTopEntitiesOnRanking(ranking, entity_names, cluster_names, cluster_length, top_x, cluster_ids)
+
+
+def id_from_array(array, name):
+    for n in range(len(array)):
+        if array[n] == name:
+            return n
+
+# Must be the full top entities, with numerical values
+def compareTopEntitiesOnRanking(ranking_1, ranking_2, cluster_names, cluster_length, top_x, output=True):
+    all_diffs = np.zeros(shape = (len(ranking_1), len(ranking_1[0])))
+
+    for c in range(len(ranking_1)):
+        for v in range(len(ranking_1[c])):
+            all_diffs[c][v] = ranking_1[c][v] - ranking_2[c][v]
+
+    sorted_diffs = np.zeros(shape = (len(all_diffs), len(all_diffs[0])))
+    sorted_names = np.empty(dtype="object", shape = (len(all_diffs), len(all_diffs[0])))
+    for d in range(len(all_diffs)):
+        sorted_diffs[d] = list(reversed(all_diffs[d][np.argsort(all_diffs[d])]))
+        sorted_names[d] = list(reversed(entity_names[np.argsort(all_diffs[d])]))
+
+    sorted_ranking = np.empty(dtype="object", shape = (len(all_diffs), len(all_diffs[0])))
+    for c in range(len(ranking_1)):
+        sorted_ranking[c] = list(reversed(entity_names[np.argsort(ranking_1[c])]))
+
+    sorted_pos = []
+
+    for s in range(len(sorted_names)):
+        pos = []
+        for n in sorted_names[s]:
+            pos.append(id_from_array(sorted_ranking[s], n))
+        sorted_pos.append(pos)
+
+    if output:
+        for s in range(len(sorted_diffs)):
+            print("Cluster:", cluster_names[s], "Top diff entities", sorted_names[s][:top_x])
+            print("Cluster:", cluster_names[s], "Top diff scores", sorted_diffs[s][:top_x])
+            print("Cluster:", cluster_names[s], "Top diff scores", sorted_pos[s][:top_x])
+
+    return all_diffs, sorted_diffs
+
+data_type = "placetypes"
+file_name = "places NONNETCV5S0 SFT0 allL050kappa KMeans CA200 MC1 MS0.4 ATS2000 DS400"
+cluster_names = dt.import2dArray("../data/" + data_type + "/cluster/dict/" + file_name + ".txt","s")
+ranking1 = dt.import2dArray("../data/" + data_type + "/rank/numeric/" + file_name + ".txt")
+entity_names = dt.import1dArray("../data/" + data_type + "/nnet/spaces/entitynames.txt")
+top_x = 5
+cluster_length = 3
+cluster_ids = None
+
+file_name = "places NONNETCV5S0 SFT0 allL050kappa KMeans CA200 MC1 MS0.4 ATS2000 DS400 foursquareFT BOCFi NTtanh1 NT1300linear"
+ranking2 = dt.import2dArray("../data/" + data_type + "/nnet/clusters/" + file_name + ".txt")
+
+compareTopEntitiesOnRanking(ranking1, ranking2, cluster_names, cluster_length, top_x)
 """
 data_type = "movies"
 classify = "genres"
@@ -57,10 +146,15 @@ def topEntities(ranking, ens,  id=-1):
         for s in sorted_entities:
             print(s)
 
-data_type = "movies"
-file_name = "films200-genresCV1S0 SFT0 allL0100ndcg KMeans CA100.0 MC1 MS0.4 ATS2000 DS200.0.txt"
-ranking_fn = "../data/" + data_type+"/rank/numeric/" + file_name
+data_type = "placetypes"
+file_name = "places NONNETCV1S0 SFT0 allL050ndcg KMeans CA200 MC1 MS0.4 ATS2000 DS400 opencycFT BOCFi NTtanh1 NT1300linear3.txt"
+ranking_fn = "../data/" + data_type+"/rules/rankings/" + file_name
 ranking = dt.import2dArray(ranking_fn)
 entities = dt.import1dArray("../data/" + data_type + "/nnet/spaces/entitynames.txt")
 
-topEntities(ranking, entities, 85)
+#topEntities(ranking, entities)
+#print("------------------------------------------------")
+compare_fn = "places NONNETCV1S0 SFT0 allL050ndcg KMeans CA200 MC1 MS0.4 ATS2000 DS400.txt"
+ranking_fn = "../data/" + data_type+"/rank/numeric/" + compare_fn
+ranking = dt.import2dArray(ranking_fn)
+#topEntities(ranking, entities)

@@ -104,11 +104,11 @@ def main(data_type, class_labels_fn, class_names_fn, ft_names_fn, max_depth, lim
         file_name = og_fn + " " + str(cross_val) + "CV " + str(0) + classify + "Dev" + str(dt_dev)
         csvs.append("../data/" + data_type + "/rules/tree_csv/" + file_name + "AVG.csv")
     dt.arrangeByScore(np.unique(np.asarray(csvs)), final_csv_fn)
-data_type = "newsgroups"
-high_amt = 10
-low_amt = 18836
+data_type = "placetypes"
+high_amt = 50
+low_amt = 10
 
-classify = ["newsgroups"]
+classify = ["foursquare"]
 
 
 max_depth = 3
@@ -116,12 +116,12 @@ limit_entities = False
 dt_dev = False
 vector_names_fn = "../data/" + data_type + "/nnet/spaces/entitynames.txt"
 feature_names_fn = "../data/" + data_type + "/bow/names/"+str(high_amt)+"-"+str(low_amt)+"-all.txt"
-rewrite_files = False
-cross_val = 1
+rewrite_files = True
+cross_val = 5
 
-doc_topic_prior = [ 0.1]
+doc_topic_prior = [ 0.01]
 topic_word_prior = [0.1]
-n_topics = [10,30,50,100,200,400]
+n_topics = [50]
 for c in classify:
     file_name = "all-" + str(high_amt) + "-" + str(low_amt)
     final_csv_name = "final" + c + str(dt_dev)
