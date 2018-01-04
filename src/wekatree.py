@@ -12,8 +12,8 @@ from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import cross_val_predict
 from sklearn.model_selection import KFold
 import random
-from weka.core.converters import Loader
-from weka.classifiers import Classifier
+#from weka.core.converters import Loader
+#from weka.classifiers import Classifier
 import weka.plot.graph as graph  # NB: pygraphviz and PIL are required
 
 

@@ -65,12 +65,12 @@ class NeuralNetwork:
                  from_ae=True, save_outputs=False, label_names_fn="",
                  rewrite_files=False, cv_splits=1,cutoff_start=0.2, development=False,
                  class_weight=None, csv_fn=None, tune_vals=False, get_nnet_vectors_path=None, classification_name="all",
-                 limit_entities=False, limited_label_fn="", vector_names_fn="", identity_activation="linear"):
+                 limit_entities=False, limited_label_fn="", vector_names_fn="", identity_activation="linear", loc="../data/"):
 
-        total_file_name = "../data/" + data_type + "/nnet/spaces/" + file_name
-        weights_fn = "../data/" + data_type + "/nnet/weights/" + file_name + "L0.txt"
-        bias_fn = "../data/" + data_type + "/nnet/bias/" + file_name +"L0.txt"
-        rank_fn = "../data/" + data_type + "/nnet/clusters/" + file_name + ".txt"
+        total_file_name = loc + data_type + "/nnet/spaces/" + file_name
+        weights_fn =loc + data_type + "/nnet/weights/" + file_name + "L0.txt"
+        bias_fn = loc + data_type + "/nnet/bias/" + file_name +"L0.txt"
+        rank_fn =loc+ data_type + "/nnet/clusters/" + file_name + ".txt"
 
 
 
@@ -295,8 +295,8 @@ class NeuralNetwork:
                 y_pred = y_pred.transpose()
                 y_test[m] = np.asarray(y_test[m]).transpose()
                 micro_average = f1_score(y_test[m], y_pred, average="micro")
-                cv_f1_fn = "../data/" + data_type + "/nnet/scores/F1 " + file_name + ".txt"
-                cv_acc_fn = "../data/" + data_type + "/nnet/scores/ACC " + file_name + ".txt"
+                cv_f1_fn = loc + data_type + "/nnet/scores/F1 " + file_name + ".txt"
+                cv_acc_fn = loc + data_type + "/nnet/scores/ACC " + file_name + ".txt"
                 dt.write1dArray(f1_array, cv_f1_fn)
                 dt.write1dArray(accuracy_array, cv_acc_fn)
                 f1_scores.append(f1_array)
@@ -315,7 +315,7 @@ class NeuralNetwork:
 
                 scores = [accuracy_array, f1_array]
 
-                csv_fn = "../data/"+data_type+"/nnet/csv/"+csv_fn+".csv"
+                csv_fn = loc+data_type+"/nnet/csv/"+csv_fn+".csv"
 
                 file_names = [file_name + "ACC", file_name + "F1"]
                 label_names = dt.import1dArray(label_names_fn)
@@ -358,15 +358,15 @@ class NeuralNetwork:
                     self.end_space = truncated_model.predict(nnet_vectors)
                 else:
                     self.end_space = truncated_model.predict(entity_vectors)
-                total_file_name = "../data/" + data_type + "/nnet/spaces/" + file_name
+                total_file_name = loc + data_type + "/nnet/spaces/" + file_name
                 dt.write2dArray(self.end_space, total_file_name + "L" + str(l) + ".txt")
 
             for l in range(len(models[m].layers)):
                 try:
                     dt.write2dArray(models[m].layers[l].get_weights()[0],
-                                    "../data/" + data_type + "/nnet/weights/" + file_name + "L" + str(l) + ".txt")
+                                    loc + data_type + "/nnet/weights/" + file_name + "L" + str(l) + ".txt")
                     dt.write1dArray(models[m].layers[l].get_weights()[1],
-                                    "../data/" + data_type + "/nnet/bias/" + file_name + "L" +  str(l) + ".txt")
+                                    loc + data_type + "/nnet/bias/" + file_name + "L" +  str(l) + ".txt")
                 except IndexError:
                     print("Layer ", str(l), "Failed")
 
@@ -380,8 +380,8 @@ class NeuralNetwork:
                 class_f1_averages.append(np.average(f1_scores[c]))
                 class_accuracy_averages.append(np.average(accuracy_scores[c]))
 
-            f1_fn = "../data/" + data_type + "/nnet/scores/F1 " + file_name + ".txt"
-            acc_fn = "../data/" + data_type + "/nnet/scores/ACC " + file_name + ".txt"
+            f1_fn = loc + data_type + "/nnet/scores/F1 " + file_name + ".txt"
+            acc_fn = loc + data_type + "/nnet/scores/ACC " + file_name + ".txt"
             dt.write1dArray(class_f1_averages, f1_fn)
             dt.write1dArray(class_accuracy_averages, acc_fn)
             overall_f1_average = np.average(f1_averages)
@@ -543,8 +543,8 @@ def main(loss, output_activation, optimizer_name, hidden_activation, ep, dropout
         output_activation = output_activation
         optimizer_name = optimizer_name
         hidden_activation = hidden_activation
-        classification_path = "../data/" + data_type + "/classify/" + classification_task + "/class-All"
-        label_names_fn = "../data/" + data_type + "/classify/" + classification_task + "/names.txt"
+        classification_path = loc + data_type + "/classify/" + classification_task + "/class-All"
+        label_names_fn = loc + data_type + "/classify/" + classification_task + "/names.txt"
         lr = 0.01
         fine_tune_weights_fn = None
         ep = ep
@@ -582,20 +582,20 @@ def main(loss, output_activation, optimizer_name, hidden_activation, ep, dropout
                 file_name=file_name, from_ae=from_ae, data_type=data_type, rewrite_files=rewrite_files, development=development,
                                 class_weight=class_weight)
 
-            csv_fns.append("../data/"+data_type+"/nnet/csv/"+file_name+".csv")
+            csv_fns.append(loc+data_type+"/nnet/csv/"+file_name+".csv")
             new_file_names = []
 
 
     dt.averageCSVs(csv_fns)
 
-
+loc = "../data/"
 """
 data_type = "wines"
 classification_task = "types"
 file_name = "wines mds"
 lowest_amt = 50
 highest_amt = 10
-init_vector_path = "../data/"+data_type+"/nnet/spaces/wines100trimmed.txt"
+init_vector_path = loc+data_type+"/nnet/spaces/wines100trimmed.txt"
 """
 """
 data_type = "movies"
@@ -603,16 +603,16 @@ classification_task = "genres"
 file_name = "movies mds"
 lowest_amt = 100
 highest_amt = 10
-init_vector_path = "../data/"+data_type+"/nnet/spaces/films200-"+classification_task+".txt"#
-init_vector_path = "../data/"+data_type+"/nnet/spaces/films200-genres100ndcg0.81200AllTerms3000FTL0.txt"
+init_vector_path = loc+data_type+"/nnet/spaces/films200-"+classification_task+".txt"#
+init_vector_path = loc+data_type+"/nnet/spaces/films200-genres100ndcg0.81200AllTerms3000FTL0.txt"
 """
 data_type = "placetypes"
 classification_task = "geonames"
 lowest_amt = 50
 highest_amt = 10
-#init_vector_path = "../data/"+data_type+"/bow/ppmi/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+classification_task
+#init_vector_path = loc+data_type+"/bow/ppmi/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+classification_task
 #file_name = "placetypes bow"
-init_vector_path = "../data/"+data_type+"/nnet/spaces/places100-"+classification_task+".txt"
+init_vector_path = loc+data_type+"/nnet/spaces/places100-"+classification_task+".txt"
 file_name = "placetypes mds"
 """
 hidden_activation = "relu"
@@ -626,7 +626,7 @@ dropout_noise = 0.6
 output_activation = "softmax"
 cutoff_start = 0.2
 deep_size = [100]
-#init_vector_path = "../data/"+data_type+"/bow/ppmi/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+classification_task
+#init_vector_path = loc+data_type+"/bow/ppmi/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+classification_task
 #file_name = "movies ppmi"
 ep =8000
 tune_vals = True
