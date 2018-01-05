@@ -50,7 +50,7 @@ def import1dArray(file_name, file_type="s"):
             array = [int(line.strip()) for line in infile]
         else:
             array = [line.strip() for line in infile]
-    return array
+    return np.asarray(array)
 def balanceClasses(movie_vectors, class_array):
     count = 0
     count2 = 0
@@ -85,7 +85,7 @@ def import2dArray(file_name, file_type="f"):
                     dv[v] = int(dv[v][:-1])
         else:
             array = [list(line.strip().split()) for line in infile]
-    return array
+    return np.asarray(array)
 
 def importFirst2dArray(file_name, file_type="f", amount=100):
     array = []
