@@ -909,7 +909,7 @@ get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 """
 
 data_type = "movies"
-classification_task = ["ratings"] #Run keywords as separate process
+classification_task = ["keywords","ratings"] #Run keywords as separate process
 #arrange_name = arrange_name + classification_task[0]
 skip_nn = True
 if skip_nn is False:
@@ -1029,7 +1029,7 @@ breakoff = [False]
 score_limit = [0.9]
 amount_to_start = [2000]
 cluster_multiplier = [2]#50
-score_type = ["kappa"]
+score_type = ["kappa", "ndcg"]
 use_breakoff_dissim = [False]
 get_all = [False]
 half_ndcg_half_kappa = [False]
@@ -1072,7 +1072,7 @@ hp_opt = True
 
 dt_dev = False
 svm_classify = False
-rewrite_files = True
+rewrite_files = False
 max_depth = [3]
 
 cross_val = 1
