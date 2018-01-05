@@ -746,8 +746,29 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                                get_nnet_vectors_path= get_nnet_vectors_path, limit_entities=True,
                                                  vector_names_fn=vector_names_fn, classification_name=classification_name,
                                                                  identity_activation=identity_activation)
-
+                                        ft_vector_path = loc + data_type + "/nnet/spaces/" + file_name + "L0.txt"
+                                        ft_directions = loc + data_type + "/svm/directions/" + file_name + ".txt"
                                         #new_file_names[x] = file_name
+                                        svm.createSVM(ft_vector_path, bow_path, property_names_fn, file_name,
+                                                      lowest_count=lowest_amt,
+                                                      highest_count=highest_count, data_type=data_type,
+                                                      get_kappa=score_type,
+                                                      get_f1=False, svm_type=svm_type, getting_directions=True,
+                                                      threads=threads, rewrite_files=rewrite_files,
+                                                      classification=new_classification_task, lowest_amt=lowest_amt,
+                                                      chunk_amt=chunk_amt, chunk_id=chunk_id)
+
+                                        rank.getAllPhraseRankings(ft_directions, ft_vector_path, class_names_fn,
+                                                                  vector_names_fn, file_name,
+                                                                  data_type=data_type,
+                                                                  rewrite_files=rewrite_files)
+
+                                        ndcg.getNDCG(loc + data_type + "/rank/numeric/" + file_name + "ALL.txt",
+                                                     file_name,
+                                                     data_type=data_type, lowest_count=lowest_amt,
+                                                     rewrite_files=rewrite_files,
+                                                     highest_count=highest_count,
+                                                     classification=new_classification_task)
 
                                         print("got to trees, who dis?")
                                         tree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_dict_fn, file_name + " " + classification_task, 10000,
@@ -886,9 +907,9 @@ init_vector_path = loc+data_type+"/pca/class-all-50-10-alld100"
 vector_path_replacement = loc+data_type+"/pca/class-all-50-10-alld100"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 """
-"""
+
 data_type = "movies"
-classification_task = ["genres"]
+classification_task = ["ratings"] #Run keywords as separate process
 #arrange_name = arrange_name + classification_task[0]
 skip_nn = True
 if skip_nn is False:
@@ -906,7 +927,7 @@ if classification_task[0] == "us-ratings":
     deep_size = [200]
 else:
     deep_size = [200]
-"""
+
 """
 data_type = "newsgroups"
 classification_task = ["newsgroups"]
@@ -925,10 +946,10 @@ vector_path_replacement =  loc+data_type+"/nnet/spaces/mds100.txt"
 #get_nnet_vectors_path = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
 #vector_path_replacement = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
 deep_size = [100]
-
+"""
 """
 data_type = "placetypes"
-classification_task = ["opencyc", "geonames", "foursquare"]
+classification_task = ["opencyc"]
 lowest_amt = 50
 highest_amt = 10
 #init_vector_path = "../data/"+data_type+"/bow/ppmi/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+classification_task
@@ -942,7 +963,7 @@ else:
 vector_path_replacement = loc+data_type+"/nnet/spaces/places100.txt"
 get_nnet_vectors_path = loc + data_type + "/nnet/spaces/places100.txt"
 deep_size = [100]
-
+"""
 if classification_task[0] == "geonames" or classification_task[0] == "foursquare" or classification_task[0] == "newsgroups" :
     hidden_activation = "tanh"
     dropout_noise = 0.5
@@ -984,6 +1005,8 @@ loss="categorical_crossentropy"
 class_weight = "balanced"
 rewrite_files = True
 """
+"""
+"""
 learn_rate= [ 0.001]
 cutoff_start = 0.2
 
@@ -1006,7 +1029,7 @@ breakoff = [False]
 score_limit = [0.9]
 amount_to_start = [2000]
 cluster_multiplier = [2]#50
-score_type = ["ndcg", "kappa"]
+score_type = ["kappa"]
 use_breakoff_dissim = [False]
 get_all = [False]
 half_ndcg_half_kappa = [False]
@@ -1049,15 +1072,15 @@ hp_opt = True
 
 dt_dev = False
 svm_classify = False
-rewrite_files = False
+rewrite_files = True
 max_depth = [3]
 
-cross_val = 5
+cross_val = 1
 one_for_all = False
 
 arrange_name = "cluster ratings BCS" + str(max_depth)
 
-threads=3
+threads=1
 chunk_amt = 0
 chunk_id = 0
 for c in range(chunk_amt):
