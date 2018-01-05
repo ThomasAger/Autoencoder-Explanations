@@ -88,14 +88,14 @@ def main(data_type, class_labels_fn, class_names_fn, ft_names_fn, max_depth, lim
 
             tree.DecisionTree(topic_model_fn, class_labels_fn, class_names_fn, dimension_names_fn, file_name, 10000,
                               max_depth=max_depth, balance="balanced", criterion="entropy", save_details=True, cv_splits=cross_val,
-                              split_to_use=c,  data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files, development=dt_dev,
+                              split_to_use=c,  data_type=data_type, csv_fn=csv_name, rewrite_files=True, development=dt_dev,
                               limit_entities=limit_entities,
                               limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn=topic_model_fn,
                               cluster_duplicates=True, save_results_so_far=False)
 
             tree.DecisionTree(topic_model_fn, class_labels_fn, class_names_fn, dimension_names_fn, file_name + "None", 10000,
                               max_depth=None, balance="balanced", criterion="entropy", save_details=False,
-                              data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,cv_splits=cross_val,
+                              data_type=data_type, csv_fn=csv_name, rewrite_files=True,cv_splits=cross_val,
                               split_to_use=c,  development=dt_dev, limit_entities=limit_entities,
                               limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn=topic_model_fn,
                               cluster_duplicates=True, save_results_so_far=False)
@@ -104,11 +104,11 @@ def main(data_type, class_labels_fn, class_names_fn, ft_names_fn, max_depth, lim
         file_name = og_fn + " " + str(cross_val) + "CV " + str(0) + classify + "Dev" + str(dt_dev)
         csvs.append("../data/" + data_type + "/rules/tree_csv/" + file_name + "AVG.csv")
     dt.arrangeByScore(np.unique(np.asarray(csvs)), final_csv_fn)
-data_type = "newsgroups"
-high_amt = 10
-low_amt = 18836
+data_type = "movies"
+high_amt = 100
+low_amt = 10
 
-classify = ["newsgroups"]
+classify = ["genres"]
 
 
 max_depth = 3
@@ -119,9 +119,9 @@ feature_names_fn = "../data/" + data_type + "/bow/names/"+str(high_amt)+"-"+str(
 rewrite_files = False
 cross_val = 1
 
-doc_topic_prior = [ 0.1]
-topic_word_prior = [0.1]
-n_topics = [10,30,50,100,200,400]
+doc_topic_prior = [ 0.001]
+topic_word_prior = [0.001]
+n_topics = [400]
 for c in classify:
     file_name = "all-" + str(high_amt) + "-" + str(low_amt)
     final_csv_name = "final" + c + str(dt_dev)

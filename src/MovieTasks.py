@@ -629,7 +629,7 @@ def importCertificates(cert_fn, entity_name_fn):
 
 
     # Initialize ratings dict
-
+    """
     ratings = {
         "USA:G": [],
         "USA:PG": [],
@@ -644,14 +644,14 @@ def importCertificates(cert_fn, entity_name_fn):
         "UK:15": [],
         "UK:18": [],
     }
-    """
+
     all_ratings = defaultdict(list)
     recently_found_name = ""
     recently_found_year = ""
     recently_found_found = False
     counter = 0
 
-    temp_fn = "../data/temp/us_cert_dict.pickle"
+    temp_fn = "../data/temp/uk_cert_dict.pickle"
 
     if dt.fileExists(temp_fn) is False:
         for line in all_lines:
@@ -703,14 +703,14 @@ def importCertificates(cert_fn, entity_name_fn):
         # Store data (serialize)
         with open(temp_fn, 'wb') as handle:
             pickle.dump(ratings, handle, protocol=pickle.HIGHEST_PROTOCOL)        # Store data (serialize)
-        with open("../data/temp/us_cert_dict_all.pickle", 'wb') as handle:
+        with open("../data/temp/uk_cert_dict_all.pickle", 'wb') as handle:
             pickle.dump(all_ratings, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     # Load data (deserialize)
     with open(temp_fn, 'rb') as handle:
         ratings = pickle.load(handle)
-    if dt.fileExists("../data/temp/us_cert_dict_all.pickle"):
-        with open("../data/temp/us_cert_dict_all.pickle", 'rb') as handle:
+    if dt.fileExists("../data/temp/uk_cert_dict_all.pickle"):
+        with open("../data/temp/uk_cert_dict_all.pickle", 'rb') as handle:
             all_ratings = pickle.load(handle)
 
     top_size = 0
@@ -720,7 +720,7 @@ def importCertificates(cert_fn, entity_name_fn):
     top_size = 0
 
     new_ratings = defaultdict(list)
-    real_name_dict_fn = "../data/temp/us_real_name_dict.dict"
+    real_name_dict_fn = "../data/temp/uk_real_name_dict.dict"
     if dt.fileExists(real_name_dict_fn) is False:
         # Match the names back to the original names
         for key, value in all_ratings.items():
@@ -743,7 +743,7 @@ def importCertificates(cert_fn, entity_name_fn):
         with open(real_name_dict_fn, 'rb') as handle:
             new_ratings = pickle.load(handle)
                 # Get the final dict setup
-
+    """
     final_dict = {
         "USA-G": [],
         "USA-PG-PG13": [],
@@ -756,9 +756,9 @@ def importCertificates(cert_fn, entity_name_fn):
         "UK-15": [],
         "UK-18": []
     }
-    """
+
     # Append the final dict ratings
-    """
+
     final_dict["UK-PG"].extend(all_ratings["UK:PG"])
     final_dict["UK-12-12A"].extend(all_ratings["UK:12"])
     final_dict["UK-12-12A"].extend(all_ratings["UK:12A"])
@@ -769,8 +769,8 @@ def importCertificates(cert_fn, entity_name_fn):
     final_dict["USA-PG-PG13"].extend(all_ratings["USA:PG"])
     final_dict["USA-PG-PG13"].extend(all_ratings["USA:PG13"])
     final_dict["USA-R"].extend(all_ratings["USA:R"])
-
-
+    """
+    """
     final_name_dict = {
         "USA-G": [],
         "USA-PG-PG13": [],
@@ -784,9 +784,9 @@ def importCertificates(cert_fn, entity_name_fn):
         "UK-15": [],
         "UK-18": [],
     }
-"""
+
     # Append the final dict good names
-    """
+
     final_name_dict["UK-PG"].extend(new_ratings["UK:PG"])
     final_name_dict["UK-12-12A"].extend(new_ratings["UK:12"])
     final_name_dict["UK-12-12A"].extend(new_ratings["UK:12A"])
@@ -797,7 +797,7 @@ def importCertificates(cert_fn, entity_name_fn):
     final_name_dict["USA-PG-PG13"].extend(new_ratings["USA:PG"])
     final_name_dict["USA-PG-PG13"].extend(new_ratings["USA:PG13"])
     final_name_dict["USA-R"].extend(new_ratings["USA:R"])
-
+    """
 
     # Create a unique list of the entities found
     entities_found = []
@@ -814,7 +814,7 @@ def importCertificates(cert_fn, entity_name_fn):
         new_n = n.split()[:-1]
         jacked_up_entities_found.append(dt.removeEverythingFromString(" ".join(new_n)))
 
-    classes = [[0]*len(entities_found),[0]*len(entities_found),[0]*len(entities_found)]
+    classes = [[0]*len(entities_found),[0]*len(entities_found),[0]*len(entities_found),[0]*len(entities_found)]
     counter = 0
     class_names = []
     for key, items in final_dict.items():
@@ -844,13 +844,13 @@ def importCertificates(cert_fn, entity_name_fn):
     classes = classes.transpose()
 
     for c in range(len(classes)):
-        dt.write1dArray(classes[c], "../data/movies/classify/us-ratings/class-" + class_names[c])
+        dt.write1dArray(classes[c], "../data/movies/classify/uk-ratings/class-" + class_names[c])
 
     classes = classes.transpose()
 
-    dt.write2dArray(classes, "../data/movies/classify/us-ratings/class-all")
-    dt.write1dArray(entities_found, "../data/movies/classify/us-ratings/available_entities.txt")
-    dt.write1dArray(class_names, "../data/movies/classify/us-ratings/names.txt")
+    dt.write2dArray(classes, "../data/movies/classify/uk-ratings/class-all")
+    dt.write1dArray(entities_found, "../data/movies/classify/uk-ratings/available_entities.txt")
+    dt.write1dArray(class_names, "../data/movies/classify/uk-ratings/names.txt")
     print("k")
 
     #Merge 12/12A
