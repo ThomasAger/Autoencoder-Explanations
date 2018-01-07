@@ -25,21 +25,27 @@ def getTopEntitiesOnRanking(ranking, entity_names, cluster_names, cluster_length
     for i in range(len(cluster_names)):
         cluster_names[i] = cluster_names[i][:cluster_length]
     top_entities = []
+    top_rankings = []
     for c in range(len(ranking)):
         top_cluster_entities = []
+        top_cluster_rankings = []
         sorted_cluster = np.asarray(list(reversed(entity_names[np.argsort(ranking[c])])))
+        sorted_rankings = np.asarray(list(reversed(ranking[c][np.argsort(ranking[c])])))
         for e in range(len(sorted_cluster)):
             top_cluster_entities.append(sorted_cluster[e])
+            top_cluster_rankings.append(sorted_rankings[e])
             if e == top_x:
                 break
         top_entities.append(top_cluster_entities)
+        top_rankings.append(top_cluster_rankings)
         if output:
-            print("Cluster:", cluster_names[c],  "Entites", top_cluster_entities)
-    return top_entities
+            print("Cluster:", cluster_names[c], "Max/min", max(ranking[c]), min(ranking[c]),  "Entites", top_cluster_entities)
+            print("Cluster:", cluster_names[c], "Max/min", max(ranking[c]), min(ranking[c]), "Entites", top_cluster_rankings)
+    return top_entities, top_rankings
 
 
-data_type = "movies"
-file_name = "films200-genresCV1S0 SFT0 allL0100kappa KMeans CA400 MC1 MS0.4 ATS2000 DS800"
+data_type = "placetypes"
+file_name = "places NONNETCV5S0 SFT0 allL050kappa KMeans CA200 MC1 MS0.4 ATS2000 DS400"
 cluster_names = dt.import2dArray("../data/" + data_type + "/cluster/dict/" + file_name + ".txt","s")
 ranking = dt.import2dArray("../data/" + data_type + "/rank/numeric/" + file_name + ".txt")
 entity_names = dt.import1dArray("../data/" + data_type + "/nnet/spaces/entitynames.txt")
@@ -49,9 +55,9 @@ cluster_ids = None
 
 #normal_top_entities = getTopEntitiesOnRanking(ranking, entity_names, cluster_names, cluster_length, top_x, cluster_ids)
 
-file_name = "films200-genresCV1S0 SFT0 allL0100kappa KMeans CA400 MC1 MS0.4 ATS2000 DS800 genresFT BOCFi NTtanh1 NT1300linear"
+file_name = "places NONNETCV5S0 SFT0 allL050kappa KMeans CA200 MC1 MS0.4 ATS2000 DS400 foursquareFT BOCFi NTtanh1 NT1300linear"
 ranking = dt.import2dArray("../data/" + data_type + "/nnet/clusters/" + file_name + ".txt")
-#finetuned_top_entities = getTopEntitiesOnRanking(ranking, entity_names, cluster_names, cluster_length, top_x, cluster_ids)
+finetuned_top_entities = getTopEntitiesOnRanking(ranking, entity_names, cluster_names, cluster_length, top_x, cluster_ids)
 
 
 def id_from_array(array, name):
@@ -62,40 +68,51 @@ def id_from_array(array, name):
     return None
 
 # Must be the full top entities, with numerical values
-def compareTopEntitiesOnRanking(ranking_1, ranking_2, cluster_names, cluster_length, top_x, output=True, reverse=False):
-    all_diffs = np.zeros(shape = (len(ranking_1), len(ranking_1[0])))
+def compareTopEntitiesOnRanking(ranking_1, ranking_2, cluster_names, cluster_length, top_x, output=True, reverse=False,
+                                from_top=-1):
 
-    pos = np.zeros( shape=(len(all_diffs), len(all_diffs[0])))
+    if from_top == -1:
+        from_top = len(ranking_1[0])
+
+
+    pos = np.zeros( shape=(len(ranking_1), len(ranking_1[0])))
     for r in range(len(ranking_1)):
         for v in range(len(ranking_1[r])):
             pos[r][v] = v
 
     #Convert the rankings to sorted lists and create empty 1-15,000 array
-    sorted_ranking_names1 = np.empty(dtype="object",shape = (len(all_diffs), len(all_diffs[0])))
-    sorted_ranking1 = np.empty(shape = (len(all_diffs), len(all_diffs[0])))
-    sorted_pos = np.zeros( shape = (len(all_diffs), len(all_diffs[0])))
+    sorted_ranking_names1 = np.empty(dtype="object",shape = (len(ranking_1), from_top))
+    sorted_ranking1 = np.empty(shape = (len(ranking_1), from_top))
+    sorted_ranking1_by2 = np.empty(shape = (len(ranking_1), from_top))
+    sorted_pos = np.zeros( shape = (len(ranking_1), from_top))
 
     for c in range(len(ranking_1)):
-        sorted_ranking_names1[c] = list(reversed(entity_names[np.argsort(ranking_1[c])]))
-        sorted_ranking1[c] = list(reversed(ranking[c][np.argsort(ranking_1[c])]))
-        sorted_pos[c] = list(reversed(pos[c][np.argsort(ranking_1[c])]))
+        sorted_ranking_names1[c] = list(reversed(entity_names[np.argsort(ranking_1[c])]))[:from_top]
+        sorted_ranking1[c] = list(reversed(ranking_1[c][np.argsort(ranking_1[c])]))[:from_top]
+        sorted_ranking1_by2[c] = list(reversed(ranking_1[c][np.argsort(ranking_2[c])]))[:from_top]
+        sorted_pos[c] = list(reversed(pos[c][np.argsort(ranking_1[c])]))[:from_top]
 
-    sorted_ranking_names2 = np.empty(dtype="object", shape = (len(all_diffs), len(all_diffs[0])))
-    sorted_ranking2 = np.zeros(shape = (len(all_diffs), len(all_diffs[0])))
-    sorted_pos2 = np.zeros( shape = (len(all_diffs), len(all_diffs[0])))
+    sorted_ranking_names2 = np.empty(dtype="object", shape = (len(ranking_1), from_top))
+    sorted_ranking2 = np.zeros(shape = (len(ranking_1), from_top))
+    sorted_ranking2_by1 = np.empty(shape = (len(ranking_1), from_top))
+    sorted_pos2 = np.zeros( shape = (len(ranking_1), from_top))
 
-    for c in range(len(ranking_1)):
-        sorted_ranking_names2[c] = list(reversed(entity_names[np.argsort(ranking_2[c])]))
-        sorted_ranking2[c] = list(reversed(ranking[c][np.argsort(ranking_2[c])]))
-        sorted_pos2[c] = list(reversed(pos[c][np.argsort(ranking_2[c])]))
+    for c in range(len(ranking_2)):
+        sorted_ranking_names2[c] = list(reversed(entity_names[np.argsort(ranking_2[c])]))[:from_top]
+        sorted_ranking2[c] = list(reversed(ranking_2[c][np.argsort(ranking_2[c])]))[:from_top]
+        sorted_ranking2_by1[c] = list(reversed(ranking_2[c][np.argsort(ranking_1[c])]))[:from_top]
+        sorted_pos2[c] = list(reversed(pos[c][np.argsort(ranking_2[c])]))[:from_top]
+
+
+    all_diffs = np.zeros(shape = (len(sorted_ranking1), len(sorted_ranking2[0])))
 
     # Get the diffs between the sorted lists
-    for c in range(len(ranking_1)):
-        for v in range(len(ranking_1[c])):
+    for c in range(len(sorted_ranking1)):
+        for v in range(len(sorted_ranking1[c])):
             if reverse:
-                all_diffs[c][v] = sorted_ranking2[c][v] - sorted_ranking1[c][v]
+                all_diffs[c][v] = sorted_ranking2[c][v] - sorted_ranking1_by2[c][v]
             else:
-                all_diffs[c][v] = sorted_ranking1[c][v] - sorted_ranking2[c][v]
+                all_diffs[c][v] = sorted_ranking1[c][v] - sorted_ranking2_by1[c][v]
 
     # Sort and include sorted pos
     sorted_diffs = np.zeros(shape = (len(all_diffs), len(all_diffs[0])))
@@ -130,8 +147,29 @@ def compareTopEntitiesOnRanking(ranking_1, ranking_2, cluster_names, cluster_len
 
     return all_diffs, sorted_diffs
 
-data_type = "movies"
-file_name = "films200-genresCV1S0 SFT0 allL0100kappa KMeans CA400 MC1 MS0.4 ATS2000 DS800"
+
+def compareEntityOnCluster(ranking1, ranking2, clusters,  entity_names, entity_name="", entity_id=-1, cluster_name="", cluster_id=-1):
+    for c in range(len(clusters)):
+        if cluster_name in clusters[c]:
+            cluster_id = c
+            break
+    to_compare1 = None
+    to_compare2 = None
+    if cluster_id != -1:
+        to_compare1 = ranking1[cluster_id]
+        to_compare2 = ranking2[cluster_id]
+    else:
+        print("NO CLUSTER ID")
+    entity_id = id_from_array(entity_names, entity_name)
+    if entity_id is not None and entity_id != -1:
+        print("ranking1", entity_name, to_compare1[entity_id])
+        print("ranking2", entity_name, to_compare2[entity_id])
+        print("difference", entity_name, to_compare1[entity_id] - to_compare2[entity_id])
+    else:
+        print("NO ENTITY ID")
+
+data_type = "placetypes"
+file_name = "places NONNETCV5S0 SFT0 allL050kappa KMeans CA200 MC1 MS0.4 ATS2000 DS400"
 cluster_names = dt.import2dArray("../data/" + data_type + "/cluster/dict/" + file_name + ".txt","s")
 ranking1 = dt.import2dArray("../data/" + data_type + "/rank/numeric/" + file_name + ".txt")
 entity_names = dt.import1dArray("../data/" + data_type + "/nnet/spaces/entitynames.txt")
@@ -141,11 +179,15 @@ cluster_ids = None
 #Reverse = False: How far certain moves in A have fallen after being in B
 #Reverse = True: How high certain movies have grown in A after being in B
 reverse = False
+from_top = 100
 
-file_name = "films200-genresCV1S0 SFT0 allL0100kappa KMeans CA400 MC1 MS0.4 ATS2000 DS800 genresFT BOCFi NTtanh1 NT1300linear"
+file_name = "places NONNETCV5S0 SFT0 allL050kappa KMeans CA200 MC1 MS0.4 ATS2000 DS400 foursquareFT BOCFi NTtanh1 NT1300linear"
 ranking2 = dt.import2dArray("../data/" + data_type + "/nnet/clusters/" + file_name + ".txt")
 
-compareTopEntitiesOnRanking(ranking1, ranking2, cluster_names, cluster_length, top_x, output=True, reverse=reverse)
+#compareTopEntitiesOnRanking(ranking1, ranking2, cluster_names, cluster_length, top_x, output=True, reverse=reverse, from_top=from_top)
+
+compareEntityOnCluster(ranking1, ranking2, cluster_names,  entity_names, entity_name="house", cluster_name="classical")
+
 """
 data_type = "movies"
 classify = "genres"
