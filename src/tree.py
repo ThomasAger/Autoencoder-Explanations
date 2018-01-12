@@ -169,11 +169,11 @@ class DecisionTree:
                         break
             else:
                 ac_x_train =  [vectors[:11314]]
-                ac_x_test = [vectors[11314:]]
+                ac_x_test = [vectors[int(11314* 0.8):]]
                 ac_y_train =  [labels[l][:11314]]
-                ac_y_test = [labels[l][11314:]]
-                ac_x_dev =  [ac_x_train[:int(len(ac_x_train) * 0.2)]]
-                ac_y_dev =  [ac_y_train[:int(len(ac_y_train) *0.2)]]
+                ac_y_test = [labels[l][int(11314* 0.8):]]
+                ac_x_dev =  [vectors[int(11314 *0.8):11314]]
+                ac_y_dev =  [labels[l][int(11314 *0.8):11314]]
             predictions = []
 
             if development:
@@ -189,6 +189,9 @@ class DecisionTree:
                     clf.fit(ac_x_train[splits], ac_y_train[splits])
                     joblib.dump(clf, model_name_fn)
                 predictions.append(clf.predict(ac_x_test[splits]))
+
+            ac_y_test = list(ac_y_test)
+            predictions = list(predictions)
 
             for i in range(len(predictions)):
                 if len(predictions) == 1:

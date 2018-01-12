@@ -16,16 +16,16 @@ import tree
 import hierarchy
 import ndcg
 import nnet
-import wekatree
+#import wekatree
 from sklearn.model_selection import KFold
 from sklearn.preprocessing import MultiLabelBinarizer
-import weka.core.jvm as jvm
+#import weka.core.jvm as jvm
 import random
 import sys
 from itertools import product
 import time
 
-jvm.start(max_heap_size="512m")
+#jvm.start(max_heap_size="512m")
 
 def main(data_type, classification_task_a, file_name, init_vector_path, hidden_activation, is_identity_a, amount_of_finetune_a,
          breakoff_a, kappa_a, score_limit_a, rewrite_files, cluster_multiplier_a, threads, dropout_noise, learn_rate_a, epochs_a, cross_val, ep,
@@ -856,7 +856,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                 all_csv_fns.append(avg_fn)
 
     dt.arrangeByScore(np.unique(np.asarray(all_csv_fns)),loc + " " + arrange_name + file_name[:50] + str(len(all_csv_fns)) + ".csv")
-    jvm.stop()
+    #jvm.stop()
 
 print("Begin top of parameters")
 
