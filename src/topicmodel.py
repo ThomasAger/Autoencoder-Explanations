@@ -43,10 +43,8 @@ def LDA(tf, names, components, file_name,   doc_topic_prior, topic_word_prior,  
 
     print("\nTopics in LDA model:")
     topics = print_top_words(lda, names)
-    flipped_topics = []
-    for t in topics:
-        flipped_topics.append(np.flipud(np.asarray(t.split())))
-    dt.write2dArray(flipped_topics, "../data/" + data_type + "/LDA/names/" + file_name + ".txt")
+    topics.reverse()
+    dt.write1dArray(topics, "../data/" + data_type + "/LDA/names/" + file_name + ".txt")
     dt.write2dArray(new_rep.transpose(), rep_name)
     joblib.dump(lda, model_name)
 
@@ -55,7 +53,7 @@ def main(data_type, class_labels_fn, class_names_fn, ft_names_fn, max_depth, lim
          high_amt, low_amt, cross_val, rewrite_files, classify):
 
     print("importing class all")
-    tf = np.asarray(dt.import2dArray("../data/"+data_type+"/bow/ppmi/class-all-"+str(high_amt)+"-"+str(low_amt)+"-all"))
+    tf = np.asarray(dt.import2dArray("../data/"+data_type+"/bow/frequency/phrases/class-all-"+str(high_amt)+"-"+str(low_amt)+"-all"))
     names = dt.import1dArray(ft_names_fn)
     variables_to_execute = list(product(doc_topic_prior, topic_word_prior, n_topics))
     print("executing", len(variables_to_execute), "variations")
@@ -90,14 +88,14 @@ def main(data_type, class_labels_fn, class_names_fn, ft_names_fn, max_depth, lim
 
             tree.DecisionTree(topic_model_fn, class_labels_fn, class_names_fn, dimension_names_fn, file_name, 10000,
                               max_depth=max_depth, balance="balanced", criterion="entropy", save_details=True, cv_splits=cross_val,
-                              split_to_use=c,  data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files, development=dt_dev,
+                              split_to_use=c,  data_type=data_type, csv_fn=csv_name, rewrite_files=True, development=dt_dev,
                               limit_entities=limit_entities,
                               limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn=topic_model_fn,
                               cluster_duplicates=True, save_results_so_far=False)
 
             tree.DecisionTree(topic_model_fn, class_labels_fn, class_names_fn, dimension_names_fn, file_name + "None", 10000,
                               max_depth=None, balance="balanced", criterion="entropy", save_details=False,
-                              data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,cv_splits=cross_val,
+                              data_type=data_type, csv_fn=csv_name, rewrite_files=True,cv_splits=cross_val,
                               split_to_use=c,  development=dt_dev, limit_entities=limit_entities,
                               limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn=topic_model_fn,
                               cluster_duplicates=True, save_results_so_far=False)
@@ -106,69 +104,26 @@ def main(data_type, class_labels_fn, class_names_fn, ft_names_fn, max_depth, lim
         file_name = og_fn + " " + str(cross_val) + "CV " + str(0) + classify + "Dev" + str(dt_dev)
         csvs.append("../data/" + data_type + "/rules/tree_csv/" + file_name + "AVG.csv")
     dt.arrangeByScore(np.unique(np.asarray(csvs)), final_csv_fn)
-
-data_type = "newsgroups"
-high_amt = 30
-low_amt = 18836
-classify = ["newsgroups"]
-doc_topic_prior = [ 0.1, 0.01, 0.001]
-topic_word_prior = [0.1, 0.01, 0.001]
-n_topics = [50, 10, 30, 100, 200, 400]
-"""
 data_type = "movies"
 high_amt = 100
 low_amt = 10
 
 classify = ["genres"]
-doc_topic_prior = [ 0.01, 0.1, 0.001]
-topic_word_prior = [0.001, 0.1, 0.01]
-n_topics = [50, 30, 10, 100, 200, 400]
-"""
-"""
-classify = ["keywords"]
-doc_topic_prior = [ 0.01]
-topic_word_prior = [0.001]
-n_topics = [50]
-"""
-"""
-classify = ["ratings"]
-doc_topic_prior = [ 0.1]
-topic_word_prior = [0.01]
-n_topics = [10]
-"""
-"""
-data_type = "placetypes"
-high_amt = 50
-low_amt = 10
-"""
-"""
-classify = ["geonames"]
-doc_topic_prior = [ 0.1]
-topic_word_prior = [0.001]
-n_topics = [30]
-"""
-"""
-classify = ["foursquare"]
-doc_topic_prior = [ 0.1]
-topic_word_prior = [0.01]
-n_topics = [30]
-"""
-"""
-classify = ["opencyc"]
-doc_topic_prior = [ 0.01]
-topic_word_prior = [0.001]
-n_topics = [10]
-"""
+
+
 max_depth = 3
 limit_entities = False
-dt_dev = True
+dt_dev = False
 vector_names_fn = "../data/" + data_type + "/nnet/spaces/entitynames.txt"
 feature_names_fn = "../data/" + data_type + "/bow/names/"+str(high_amt)+"-"+str(low_amt)+"-all.txt"
 rewrite_files = False
 cross_val = 1
 
+doc_topic_prior = [ 0.001]
+topic_word_prior = [0.001]
+n_topics = [400]
 for c in classify:
-    file_name = "all-ppmi-" + str(high_amt) + "-" + str(low_amt)
+    file_name = "all-" + str(high_amt) + "-" + str(low_amt)
     final_csv_name = "final" + c + str(dt_dev)
     class_labels_fn = "../data/" + data_type + "/classify/"+c+"/class-all"
     class_names_fn = "../data/" + data_type + "/classify/"+c+"/names.txt"

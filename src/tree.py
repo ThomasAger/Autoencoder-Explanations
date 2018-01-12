@@ -205,7 +205,10 @@ class DecisionTree:
                                                                                  average="binary")
                 cv_prec.append(prec)
                 cv_recall.append(recall)
-                f1 = 2 * ((prec * recall) / (prec + recall))
+                try:
+                    f1 = 2 * ((prec * recall) / (prec + recall))
+                except ZeroDivisionError:
+                    f1 = 0
                 accuracy = accuracy_score(ac_y_test[i], predictions[i])
                 cv_acc.append(accuracy)
                 scores = [[label_names[l], "f1", f1, "accuracy", accuracy]]
