@@ -158,19 +158,19 @@ class DecisionTree:
                             c += 1
                             continue
                     ac_y_test.append(labels[l][test])
-                    ac_y_train.append(labels[l][train[int(len(train) * 0.2):]])
-                    ac_x_train.append(vectors[train[int(len(train) * 0.2):]])
+                    ac_y_train.append(labels[l][train[:int(len(train) * 0.8)]])
+                    ac_x_train.append(vectors[train[:int(len(train) * 0.8)]])
                     ac_x_test.append(vectors[test])
-                    ac_x_dev.append(vectors[train[:int(len(train) * 0.2)]])
-                    ac_y_dev.append(labels[l][train[:int(len(train) * 0.2)]])
+                    ac_x_dev.append(vectors[train[int(len(train) * 0.8):len(train)]])
+                    ac_y_dev.append(labels[l][train[int(len(train) * 0.8):len(train)]])
                     c += 1
                     if cv_splits == 1:
                         break
             else:
-                ac_x_train =  [vectors[:11314]]
-                ac_y_train =  [labels[l][:11314]]
-                ac_x_test = [vectors[int(11314* 0.8):]]
-                ac_y_test = [labels[l][int(11314* 0.8):]]
+                ac_x_train =  [vectors[:int(11314 *0.8)]]
+                ac_y_train =  [labels[l][:int(11314 *0.8)]]
+                ac_x_test = [vectors[11314:]]
+                ac_y_test = [labels[l][11314:]]
                 ac_x_dev =  [vectors[int(11314 *0.8):11314]]
                 ac_y_dev =  [labels[l][int(11314 *0.8):11314]]
             predictions = []

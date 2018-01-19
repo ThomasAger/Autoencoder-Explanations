@@ -65,7 +65,8 @@ class NeuralNetwork:
                  from_ae=True, save_outputs=False, label_names_fn="",
                  rewrite_files=False, cv_splits=1,cutoff_start=0.2, development=False,
                  class_weight=None, csv_fn=None, tune_vals=False, get_nnet_vectors_path=None, classification_name="all",
-                 limit_entities=False, limited_label_fn="", vector_names_fn="", identity_activation="linear", loc="../data/"):
+                 limit_entities=False, limited_label_fn="", vector_names_fn="", identity_activation="linear", loc="../data/",
+                 lock_weights_and_redo=False):
 
         total_file_name = loc + data_type + "/nnet/spaces/" + file_name
         weights_fn =loc + data_type + "/nnet/weights/" + file_name + "L0.txt"
@@ -465,12 +466,14 @@ class NeuralNetwork:
         if self.from_ae:
             for p in range(len(self.past_weights)):
                 print(p, "Past AE layer", self.input_size, self.hidden_layer_size,  self.identity_activation)
+
+                if self.dropout_noise is not None and self.dropout_noise != 0.0:
+                    print("Dropout layer", self.dropout_noise)
+                    model.add(Dropout(self.dropout_noise))
+
                 model.add(Dense(output_dim=self.hidden_layer_size, input_dim=self.input_size, activation= self.identity_activation,
                                      weights=self.past_weights[p], W_regularizer=l2(self.reg)))
 
-            if self.dropout_noise is not None and self.dropout_noise != 0.0:
-                print("Dropout layer", self.dropout_noise)
-                model.add(Dropout(self.dropout_noise))
 
         # Add an identity layer that has equal values to the input space to find some more nonlinear relationships
         if self.is_identity:
