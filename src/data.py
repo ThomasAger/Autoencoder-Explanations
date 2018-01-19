@@ -923,13 +923,17 @@ def averageCSVs(csv_array_fns):
         for col in range(1, len(csv_array[csv])):
             for val in range(len(csv_array[csv].iloc[col])):
                 csv_array[0].iloc[col][val] += csv_array[csv].iloc[col][val]
-    for col in range(1, len(csv_array[0])):
-        for val in range(len(csv_array[0].iloc[col])):
-            print(csv_array[0].iloc[col][val])
-            csv_array[0].iloc[col][val] = csv_array[0].iloc[col][val] / len(csv_array)
-            print(csv_array[0].iloc[col][val])
-    avg_fn = csv_array_fns[0][:len(csv_array_fns[0])-4] + "AVG.csv"
-    csv_array[0].to_csv(avg_fn)
+    if len(csv_array) != 0:
+        for col in range(1, len(csv_array[0])):
+            for val in range(len(csv_array[0].iloc[col])):
+                print(csv_array[0].iloc[col][val])
+                csv_array[0].iloc[col][val] = csv_array[0].iloc[col][val] / len(csv_array)
+                print(csv_array[0].iloc[col][val])
+        avg_fn = csv_array_fns[0][:len(csv_array_fns[0])-4] + "AVG.csv"
+        csv_array[0].to_csv(avg_fn)
+    else:
+        print("FAILED CSV")
+        avg_fn = "fail"
     return avg_fn
 
 def removeCSVText(filename):
@@ -955,6 +959,19 @@ og_st1, st1 = removeCSVText(string1)
 og_st2, st2 = removeCSVText(string2)
 findDifference(st1, st2)
 """
+
+def getScores(names, full_scores, full_names, file_name, data_type):
+    full_scores = import1dArray(full_scores)
+    full_names = import1dArray(full_names)
+    names = import1dArray(names)
+    final_scores = []
+    for j in range(len(names)):
+        for i in range(len(full_names)):
+            if names[j] == full_names[i]:
+                final_scores.append(full_scores[i])
+                break
+    write1dArray(final_scores, "../data/" + data_type + "/bow/scores/" + file_name + ".txt")
+    return "../data/" + data_type + "/bow/scores/" + file_name + ".txt"
 def getCSVsToAverage(csv_folder_fn,  starting_fn=""):
     fns = getFns(csv_folder_fn)
     fns_to_average = []

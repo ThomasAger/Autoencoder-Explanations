@@ -100,7 +100,6 @@ class DecisionTree:
         else:
             labels = [labels]
 
-
         all_top_clusters = []
         all_top_rankings = []
         all_top_names = []
@@ -169,8 +168,8 @@ class DecisionTree:
                         break
             else:
                 ac_x_train =  [vectors[:11314]]
-                ac_x_test = [vectors[int(11314* 0.8):]]
                 ac_y_train =  [labels[l][:11314]]
+                ac_x_test = [vectors[int(11314* 0.8):]]
                 ac_y_test = [labels[l][int(11314* 0.8):]]
                 ac_x_dev =  [vectors[int(11314 *0.8):11314]]
                 ac_y_dev =  [labels[l][int(11314 *0.8):11314]]
@@ -244,6 +243,7 @@ class DecisionTree:
                             orig_dot_file_fn = "//?/" + orig_dot_file_fn
                             tree.export_graphviz(clf, feature_names=output_names, class_names=class_names, out_file=orig_dot_file_fn,
                                          max_depth=max_depth, label='all', filled=True, impurity=True, node_ids=True, proportion=True, rounded=True)
+
                         except FileNotFoundError:
                             failed = True
                             print("doesnt work fam")
@@ -507,7 +507,7 @@ class DecisionTree:
 
 def main():
     cluster_to_classify = -1
-    max_depth = None
+    max_depth = 3
     classify = "newsgroups"
     data_type = "newsgroups"
     cv_split = 1
@@ -517,17 +517,17 @@ def main():
     cluster_labels_fn = "../data/"+data_type+"/classify/"+classify+"/class-All"
     threshold = 0.9
     split = 0.1
-    file_name = "places1ssss00"+classify
+    file_name = "newsgroupsss"+classify
     criterion = "entropy"
     balance = "balanced"
-    cluster_names_fn = "../data/"+data_type+"/nnet/spaces/entitynames.txt"
+    cluster_names_fn = "../data/"+data_type+"/cluster/dict/n100mdsCV1S0 SFT0 allL030kappa23232 Breakoff CA1161650 MC1 MS0.4 ATS2000 DS2323300 OMS FMSFT NTlinear[100] NT[100]100linearS6040V1.1cluster_ft_dir.txt"
     #cluster_names_fn = "../data/movies/bow/names/200.txt"
     #cluster_names_fn = "../data/movies/cluster/names/" + file_name + ".txt"
     #cluster_vectors_fn = "../data/movies/rank/numeric/" + file_name + "400.txt"
     #file_name = "L3" + file_name + "L3100N0.5InClusterN0.5FTadagradcategorical_crossentropy100Genres100L3L4"
 
     #vector_fn = "films100svmndcg0.9240pavPPMIN0.5FTRsgdmse1000"
-    vector_fn = "films200-genres100ndcg0.9200"
+    vector_fn = "n100mdsCV1S0 SFT0 allL030kappa23232 Breakoff CA1161650 MC1 MS0.4 ATS2000 DS2323300 OMS FMSFT NTlinear[100] NT[100]100linearS6040V1.1cluster_ft_dir"
     csv_name = vector_fn#"wines100trimmedsvmkappa0.9200"
     csv_fn = "../data/"+data_type+"/rules/tree_csv/"+csv_name+".csv"
     #vector_fn = "films100"
@@ -539,7 +539,7 @@ def main():
     #file_name = file_name + "finetune_pavppmi"
     #cluster_vectors_fn = "../data/"+data_type+"/nnet/spaces/"+vector_fn+".txt"
     #file_name = file_name + "vector"
-    cluster_vectors_fn = "../data/"+data_type+"/bow/ppmi/class-all-50-0.95-all"
+    cluster_vectors_fn = "../data/"+data_type+"/rank/numeric/n100mdsCV1S0 SFT0 allL030kappa23232 Breakoff CA1161650 MC1 MS0.4 ATS2000 DS2323300 OMS FMSFT NTlinear[100] NT[100]100linearS6040V1.1cluster_ft_dir.txt"
     clusters_fn = cluster_vectors_fn
     file_name = file_name + "ranks"
     #cluster_vectors_fn = "../data/"+data_type+"/nnet/spaces/"+vector_fn+".txt"

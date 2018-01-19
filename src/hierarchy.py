@@ -619,8 +619,8 @@ def initClustering(vector_fn, directions_fn, scores_fn, names_fn, amt_to_start, 
     directions = dt.import2dArray(directions_fn)
     scores = dt.import1dArray(scores_fn, "f")
     names = dt.import1dArray(names_fn)
-    type1 = np.ones(len(names)/2)
-    type2 = np.zeros(len(names)/2)
+    type1 = np.ones(int(len(names)/2))
+    type2 = np.zeros(int(len(names)/2))
     shuffle_ind = np.asarray(list(range(0, len(type1))))
     type = np.insert(type1, shuffle_ind, type2) # Kappa = 0, NDCG = 1
 

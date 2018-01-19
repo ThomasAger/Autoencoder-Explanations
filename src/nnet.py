@@ -56,7 +56,7 @@ class NeuralNetwork:
     def __init__(self,  class_path=None, get_scores=False,  randomize_finetune_weights=False, dropout_noise = None,
                  amount_of_hidden=0,
                  epochs=1,  learn_rate=0.01, loss="mse", batch_size=1, past_model_bias_fn=None, identity_swap=False,
-                 reg=0.0, amount_of_finetune=1, output_size=25,
+                 reg=0.0, amount_of_finetune=[], output_size=25,
                  hidden_activation="tanh", layer_init="glorot_uniform", output_activation="tanh", deep_size = None,
                  corrupt_finetune_weights = False, split_to_use=-1,
                    hidden_layer_size=100, file_name="unspecified_filename", vector_path=None, is_identity=False,
@@ -457,28 +457,40 @@ class NeuralNetwork:
 
         # If we want to swap the identity layer to before the hidden layer
         if self.identity_swap:
-            print("Identity swapped layer", self.input_size, self.hidden_layer_size, self.hidden_activation)
-            for a in range(self.amount_of_finetune):
-                model.add(Dense(output_dim=self.hidden_layer_size, input_dim=self.input_size,
-                                     activation=self.hidden_activation, init = self.layer_init))
+            print("Identity swapped layer", self.input_size, self.hidden_layer_size, self.identity_activation)
+            for a in range(len(self.amount_of_finetune)):
+                model.add(Dense(output_dim=self.amount_of_finetune[a], activation= self.identity_activation, init = self.layer_init))
 
         finetune_size = len(self.fine_tune_weights[0][0])
         if self.from_ae:
             for p in range(len(self.past_weights)):
-                print(p, "Past AE layer", self.input_size, self.hidden_layer_size, self.hidden_activation)
-                model.add(Dense(output_dim=self.hidden_layer_size, input_dim=self.input_size, activation=self.hidden_activation,
+                print(p, "Past AE layer", self.input_size, self.hidden_layer_size,  self.identity_activation)
+                model.add(Dense(output_dim=self.hidden_layer_size, input_dim=self.input_size, activation= self.identity_activation,
                                      weights=self.past_weights[p], W_regularizer=l2(self.reg)))
 
-            if self.dropout_noise is not None:
-                print("Dropout layer")
+            if self.dropout_noise is not None and self.dropout_noise != 0.0:
+                print("Dropout layer", self.dropout_noise)
                 model.add(Dropout(self.dropout_noise))
 
         # Add an identity layer that has equal values to the input space to find some more nonlinear relationships
         if self.is_identity:
-            for a in range(self.amount_of_finetune):
-                print("Identity layer", self.hidden_layer_size, self.hidden_layer_size, self.hidden_activation)
-                model.add(Dense(output_dim=self.hidden_layer_size, input_dim=self.hidden_layer_size, activation="linear",
-                      init=self.layer_init))
+            for a in range(len(self.amount_of_finetune)):
+                if a == 0:
+                    print("Identity layer", self.amount_of_finetune[a], self.input_size, self.identity_activation)
+                    model.add(Dense(output_dim=self.amount_of_finetune[a], activation=self.identity_activation,
+                          init=self.layer_init, input_dim=self.input_size))
+                    if self.dropout_noise is not None and self.dropout_noise != 0.0:
+                        print("Dropout layer")
+                        model.add(Dropout(self.dropout_noise))
+                else:
+                    print("Identity layer", self.amount_of_finetune[a],  self.identity_activation)
+                    model.add(Dense(output_dim=self.amount_of_finetune[a], activation=self.identity_activation,
+                          init=self.layer_init))
+                    if self.dropout_noise is not None and self.dropout_noise != 0.0:
+                        print("Dropout layer")
+                        model.add(Dropout(self.dropout_noise))
+
+
 
         if self.randomize_finetune_weights:
             print("Randomize finetune weights", self.hidden_layer_size, finetune_size, "linear")
@@ -492,7 +504,7 @@ class NeuralNetwork:
             print("Fine tune weights", self.hidden_layer_size, finetune_size, "linear")
 
             if not self.from_ae:
-                model.add(Dense(output_dim=finetune_size, input_dim=self.input_size, activation="linear",
+                model.add(Dense(output_dim=finetune_size, input_dim=self.hidden_layer_size, activation="linear",
                                      weights=self.fine_tune_weights))#
             else:
                 model.add(Dense(output_dim=finetune_size, input_dim=self.hidden_layer_size, activation="linear",

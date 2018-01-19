@@ -523,6 +523,8 @@ def splitDirections(directions_fn, scores_fn, names_fn, is_gini, amt_high_direct
             shuffle_ind = np.asarray(list(range(0, len(ind1))))
             ids = np.insert(ind1, shuffle_ind, ind2)
         names = names[ids]
+        if max(ids) > len(directions):
+            directions = np.asarray(directions).transpose()
         directions = directions[ids]
         high_directions = directions[:amt_high_directions]
         low_directions = directions[amt_high_directions:amt_low_directions]

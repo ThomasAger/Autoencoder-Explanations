@@ -43,7 +43,7 @@ def getTopEntitiesOnRanking(ranking, entity_names, cluster_names, cluster_length
             print("Cluster:", cluster_names[c], "Max/min", max(ranking[c]), min(ranking[c]), "Entites", top_cluster_rankings)
     return top_entities, top_rankings
 
-
+"""
 data_type = "placetypes"
 file_name = "places NONNETCV5S0 SFT0 allL050kappa KMeans CA200 MC1 MS0.4 ATS2000 DS400"
 cluster_names = dt.import2dArray("../data/" + data_type + "/cluster/dict/" + file_name + ".txt","s")
@@ -52,13 +52,13 @@ entity_names = dt.import1dArray("../data/" + data_type + "/nnet/spaces/entitynam
 top_x = 5
 cluster_length = 3
 cluster_ids = None
-
+"""
 #normal_top_entities = getTopEntitiesOnRanking(ranking, entity_names, cluster_names, cluster_length, top_x, cluster_ids)
-
+"""
 file_name = "places NONNETCV5S0 SFT0 allL050kappa KMeans CA200 MC1 MS0.4 ATS2000 DS400 foursquareFT BOCFi NTtanh1 NT1300linear"
 ranking = dt.import2dArray("../data/" + data_type + "/nnet/clusters/" + file_name + ".txt")
 finetuned_top_entities = getTopEntitiesOnRanking(ranking, entity_names, cluster_names, cluster_length, top_x, cluster_ids)
-
+"""
 
 def id_from_array(array, name):
     for n in range(len(array)):
@@ -168,9 +168,47 @@ def compareEntityOnCluster(ranking1, ranking2, clusters,  entity_names, entity_n
     else:
         print("NO ENTITY ID")
 
-data_type = "placetypes"
-file_name = "places NONNETCV5S0 SFT0 allL050kappa KMeans CA200 MC1 MS0.4 ATS2000 DS400"
-cluster_names = dt.import2dArray("../data/" + data_type + "/cluster/dict/" + file_name + ".txt","s")
+
+def getSimilarClusters(cluster_dict_1, cluster_dict_2, trim_amt, file_name, data_type):
+    matching_clusters = np.zeros(len(cluster_dict_1), dtype=np.int8)
+    positions = np.zeros(len(cluster_dict_1))
+    for c in range(len(cluster_dict_1)):
+        name_to_match = cluster_dict_1[c][0][:-1]
+        lowest_pos = 123123123
+        lowest_cluster = 123123123
+        for c2 in range(len(cluster_dict_2)):
+            for n2 in range(len(cluster_dict_2)):
+                if name_to_match == cluster_dict_2[c2][n2]:
+                    if n2 < lowest_pos:
+                        lowest_cluster = c2
+                        lowest_pos = n2
+                        break
+        matching_clusters[c] = lowest_cluster
+        positions[c] = lowest_pos
+    sorted_matching_indexes = matching_clusters[np.argsort(positions)]
+    sorted_orig_indexes = np.asarray(list(range(len(cluster_dict_1))))[np.argsort(positions)]
+    print("_--------------------------------------------------")
+    print("SORTED")
+    print("_--------------------------------------------------")
+    lines = []
+    for c in range(len(sorted_orig_indexes)):
+        line_p1 = ""
+        for n in cluster_dict_1[sorted_orig_indexes[c]][:trim_amt]:
+            line_p1 = line_p1 + n + " "
+        line_pl2 = ""
+        for k in cluster_dict_2[sorted_matching_indexes[c]][:trim_amt]:
+            line_pl2 = line_pl2 + k + " "
+        line =  line_p1 + " |||| " + line_pl2
+        lines.append(line)
+    dt.write1dArray(lines, "../data/" + data_type + "/investigate/" + file_name + str(trim_amt) + ".txt")
+
+data_type = "newsgroups"
+file_name = "n100mdsCV1S0 SFT0 allL030ndcg KMeans CA200 MC1 MS0.4 ATS2000 DS400"
+cluster_names = np.asarray(dt.import2dArray("../data/" + data_type + "/cluster/dict/" + file_name + ".txt","s"))
+topic_model_names = np.asarray(dt.import2dArray("../data/" + data_type + "/LDA/names/" + "all-ppmi-30-18836DTP0.1TWP0.1NT200.txt", "s"))
+trim_amt = 5
+getSimilarClusters(cluster_names, topic_model_names, trim_amt, file_name, data_type)
+
 ranking1 = dt.import2dArray("../data/" + data_type + "/rank/numeric/" + file_name + ".txt")
 entity_names = dt.import1dArray("../data/" + data_type + "/nnet/spaces/entitynames.txt")
 top_x = 5
