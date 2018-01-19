@@ -36,7 +36,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
          sim_t, one_for_all, ft_loss_a, ft_optimizer_a, bag_of_clusters_a, just_output, arrange_name, only_most_similar_a,
          dont_cluster_a, top_dt_clusters_a, by_class_finetune_a, cluster_duplicates_a, repeat_finetune_a, save_results_so_far,
          finetune_ppmi_a, average_nopav_ppmi_a, boc_average_a, identity_activation_a, ppmi_only_a, boc_only_a, pav_only_a,
-         multi_label_a ,use_dropout_in_finetune_a):
+         multi_label_a ,use_dropout_in_finetune_a, lock_weights_and_redo_a):
 
 
     prune_val = 2
@@ -80,6 +80,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
             pav_only_a = dt.stringToArray(pav_only_a)[0]
             max_depth_a = dt.stringToArray(max_depth_a)[0]
             use_dropout_in_finetune_a = dt.stringToArray((use_dropout_in_finetune_a))[0]
+            lock_weights_and_redo_a = dt.stringToArray(lock_weights_and_redo_a)[0]
         else:
             dissim_amt_a = dt.stringToArray(dissim_amt_a)
             breakoff_a = dt.stringToArray(breakoff_a)
@@ -117,6 +118,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
             max_depth_a = dt.stringToArray(max_depth_a)
             multi_label_a = dt.stringToArray(multi_label_a)
             use_dropout_in_finetune_a = dt.stringToArray(use_dropout_in_finetune_a)
+            lock_weights_and_redo_a = dt.stringToArray(lock_weights_and_redo_a)
 
         ep = int(ep)
         dropout_noise = float(dropout_noise)
@@ -187,6 +189,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
         max_depth_a = [max_depth_a[0]]
         multi_label_a = [multi_label_a[0]]
         use_dropout_in_finetune_a = [use_dropout_in_finetune_a[0]]
+        lock_weights_and_redo_a = [lock_weights_and_redo_a[0]]
 
     variables_to_execute = list(product(dissim_amt_a,breakoff_a,score_limit_a, amount_to_start_a,cluster_multiplier_a,
                                    kappa_a,classification_task_a,use_breakoff_dissim_a,get_all_a,half_ndcg_half_kappa_a,
@@ -557,7 +560,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                         amount_of_finetune_a,
                                         epochs_a, average_ppmi_a, finetune_ppmi_a, average_nopav_ppmi_a,
                                         boc_average_a, bag_of_clusters_a,
-                                        identity_activation_a, ppmi_only_a, boc_only_a, pav_only_a, use_dropout_in_finetune_a))
+                                        identity_activation_a, ppmi_only_a, boc_only_a, pav_only_a, use_dropout_in_finetune_a,
+                                        lock_weights_and_redo_a))
                             orig_fn = file_name
                             for v in variables_to_execute_a:
                                 learn_rate = v[0]
@@ -576,6 +580,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                 boc_only = v[13]
                                 pav_only = v[14]
                                 use_dropout_in_finetune = v[15]
+                                lock_weights_and_redo = v[16]
 
                                 if use_dropout_in_finetune is False:
                                     dropout_noise = 0.0
@@ -692,7 +697,10 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                         file_name = file_name + "S6040"
 
                                     file_name = file_name + "V1.2"
-                                    file_name = file_name + "V1.2"
+
+                                    if lock_weights_and_redo:
+                                        file_name = file_name + "LOCK"
+
                                     if use_dropout_in_finetune:
                                         file_name = file_name + " DO" + str(dropout_noise)
 
@@ -749,6 +757,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                             from_ae = False
                                         if not boc_only and not pav_only and ppmi_only == 0:
                                             print("NNET inc")
+                                            #init_vector_path = "../data/newsgroups/bow/ppmi/" + "class-all-30-18836-all"
+
                                             SDA = nnet.NeuralNetwork(noise=0, fine_tune_weights_fn=fine_tune_weights_fn, optimizer_name=optimizer_name,
                                                     past_model_bias_fn=past_model_bias_fn, save_outputs=True,
                                                     randomize_finetune_weights=randomize_finetune_weights, dropout_noise=dropout_noise,
@@ -760,7 +770,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                     file_name=file_name, from_ae=from_ae, finetune_size=finetune_size, data_type=data_type,
                                                                get_nnet_vectors_path= get_nnet_vectors_path, limit_entities=True,
                                                  vector_names_fn=vector_names_fn, classification_name=classification_name,
-                                                                 identity_activation=identity_activation)
+                                                                 identity_activation=identity_activation, lock_weights_and_redo=lock_weights_and_redo)
                                         ft_vector_path = loc + data_type + "/nnet/spaces/" + file_name + "L0.txt"
                                         ft_directions = loc + data_type + "/svm/directions/" + file_name + ".txt"
                                         #new_file_names[x] = file_name
@@ -1065,12 +1075,14 @@ rewrite_files = True
 """
 """
 """
+lock_weights_and_redo = [False]
+
 learn_rate= [ 0.001]
 cutoff_start = 0.2
 use_dropout_in_finetune = [True, False]
 
-is_identity = [ True]
-amount_of_finetune = [[100], [100,100,100]]
+is_identity = [ False, True]
+amount_of_finetune = [[100]]
 ft_loss = ["mse"]
 ft_optimizer = ["adagrad"]
 min_size = 1
@@ -1107,7 +1119,7 @@ bag_of_clusters = [True]
 finetune_ppmi = [False]
 average_nopav_ppmi_a = [False]
 boc_average = [ False]
-identity_activation = ["linear","tanh", "relu"]
+identity_activation = ["relu", "tanh", "linear"]
 
 top_dt_clusters = [False]
 top_dt_clusters = [False]
@@ -1129,7 +1141,7 @@ score_limit = [0.0]
 """
 hp_opt = True
 
-dt_dev = False
+dt_dev = True
 svm_classify = False
 rewrite_files = False
 max_depth = [3]
@@ -1154,7 +1166,7 @@ for c in range(chunk_amt):
                  skip_nn, dissim, dissim_amt, hp_opt, find_most_similar, use_breakoff_dissim, get_all, half_ndcg_half_kappa, sim_t,
                  one_for_all, bag_of_clusters, arrange_name, only_most_similar, dont_cluster, top_dt_clusters, by_class_finetune,
                  cluster_duplicates, repeat_finetune, save_results_so_far, finetune_ppmi, average_nopav_ppmi_a, boc_average,
-                 identity_activation, ppmi_only, boc_only, pav_only, multi_label, use_dropout_in_finetune]
+                 identity_activation, ppmi_only, boc_only, pav_only, multi_label, use_dropout_in_finetune, lock_weights_and_redo]
 
     sys.stdout.write("python pipeline.py ")
     variable_string = "python $SRCPATH/pipeline.py "
@@ -1262,6 +1274,7 @@ if len(args) > 0:
     pav_only = args[68]
     multi_label = args[69]
     use_dropout_in_finetune = args[70]
+    lock_weights_and_redo = args[71]
 
 print("begin main")
 
@@ -1276,4 +1289,4 @@ if  __name__ =='__main__':main(data_type, classification_task, file_name, init_v
                                half_ndcg_half_kappa, sim_t, one_for_all, ft_loss, ft_optimizer, bag_of_clusters, just_output,
                                arrange_name, only_most_similar, dont_cluster, top_dt_clusters, by_class_finetune, cluster_duplicates,
                                repeat_finetune, save_results_so_far, finetune_ppmi, average_nopav_ppmi_a, boc_average, identity_activation,
-                               ppmi_only, boc_only, pav_only, multi_label, use_dropout_in_finetune)
+                               ppmi_only, boc_only, pav_only, multi_label, use_dropout_in_finetune, lock_weights_and_redo)
