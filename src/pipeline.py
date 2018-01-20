@@ -282,7 +282,6 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                     csv_fns_nn.append([])
                 data_type = data_type
                 threads = threads
-                classification_task = classification_task
                 print(file_name)
                 print("SPLIT", str(splits), rewrite_files, arcca)
 
@@ -513,7 +512,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                 file_name = file_name + " tdev"
 
 
-                            csv_name = loc + data_type + "/rules/tree_csv/" + file_name +  ".csv"
+                            csv_name = loc + data_type + "/rules/tree_csv/" + file_name + " " + classification_task + ".csv"
 
                             csv_fns_dt[counter] = csv_name
                             if cv_splits == 0:
@@ -538,7 +537,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                               cluster_duplicates = cluster_duplicates, save_results_so_far=save_results_so_far,
                                               multi_label=multi_label)
 
-                            """
+
                             tree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_dict_fn, file_name  + " " + classification_task+ "None", 10000,
                                                   max_depth=None, balance="balanced", criterion="entropy", save_details=True,
                                               data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
@@ -546,7 +545,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                               limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn = clusters_fn,
                                               cluster_duplicates=cluster_duplicates, save_results_so_far=save_results_so_far,
                                               multi_label=multi_label)
-                            """
+
                             """
                             wekatree.DecisionTree(ranking_fn, classification_path, label_names_fn , cluster_dict_fn , file_name,
                                save_details=False, data_type=data_type,split_to_use=splits, pruning=2,
@@ -746,7 +745,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                         clusters_fn = class_path
                                         cluster_dict_fn = name_fn
 
-                                    csv_name = loc + data_type + "/rules/tree_csv/" + file_name + str(max_depth) +  ".csv"
+                                    csv_name = loc + data_type + "/rules/tree_csv/" + file_name + str(max_depth) + " " + classification_task +   ".csv"
                                     if cv_splits == 0:
                                         all_csv_fns.append(csv_name)
                                     else:
@@ -996,7 +995,7 @@ if classification_task[0] == "us-ratings":
 else:
     deep_size = [200]
 """
-
+"""
 data_type = "newsgroups"
 classification_task = ["newsgroups"]
 #arrange_name = arrange_name + classification_task[0]
@@ -1030,8 +1029,8 @@ else:
     file_name = "places NONNET"
 vector_path_replacement = loc+data_type+"/nnet/spaces/places100.txt"
 get_nnet_vectors_path = loc + data_type + "/nnet/spaces/places100.txt"
-deep_size = [50]
-"""
+deep_size = [100]
+
 if classification_task[0] == "geonames" or classification_task[0] == "foursquare" or classification_task[0] == "newsgroups" :
     hidden_activation = "tanh"
     dropout_noise = 0.5
@@ -1146,7 +1145,7 @@ svm_classify = False
 rewrite_files = False
 max_depth = [3]
 
-cross_val = 1
+cross_val = 5
 one_for_all = False
 
 arrange_name = "cluster ratings BCS" + str(max_depth)
