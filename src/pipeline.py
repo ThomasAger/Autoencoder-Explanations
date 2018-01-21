@@ -1002,14 +1002,14 @@ classification_task = ["newsgroups"]
 #arrange_name = arrange_name + classification_task[0]
 skip_nn = True
 if skip_nn is False:
-    file_name = "n100mdsnnet"
+    file_name = "n100mds2nnet"
 else:
-    file_name = "n100mds"
+    file_name = "n100mds2"
 lowest_amt = 30
 highest_amt = 18836
-init_vector_path = loc+data_type+"/nnet/spaces/mds100.txt"
-get_nnet_vectors_path = loc+data_type+"/nnet/spaces/mds100.txt"
-vector_path_replacement =  loc+data_type+"/nnet/spaces/mds100.txt"
+init_vector_path = loc+data_type+"/nnet/spaces/mds.txt"
+get_nnet_vectors_path = loc+data_type+"/nnet/spaces/mds.txt"
+vector_path_replacement =  loc+data_type+"/nnet/spaces/mds.txt"
 #init_vector_path = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
 #get_nnet_vectors_path = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
 #vector_path_replacement = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"

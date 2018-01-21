@@ -236,14 +236,14 @@ class NeuralNetwork:
                 if c != split_to_use:
                     c += 1
                     continue
-            x_train.append(entity_vectors[train[int(len(train) * 0.2):]])
-            y_train.append(entity_classes[train[int(len(train) * 0.2):]])
+            x_train.append(entity_vectors[train[:int(len(train) * 0.8)]])
+            y_train.append(entity_classes[train[:int(len(train) * 0.8)]])
             x_test.append(entity_vectors[test])
             y_test.append(entity_classes[test])
-            x_dev.append(entity_vectors[train[:int(len(train) * 0.2)]])
-            y_dev.append(entity_classes[train[:int(len(train) * 0.2)]])
+            x_dev.append(entity_vectors[train[int(len(train) * 0.8):len(train)]])
+            y_dev.append(entity_classes[train[int(len(train) * 0.8):len(train)]])
 
-            train_x_c, train_y_c = entity_vectors[train[int(len(train) * 0.2):]], entity_classes[train[int(len(train) * 0.2):]]
+            train_x_c, train_y_c = entity_vectors[train[:int(len(train) * 0.8)]], entity_classes[train[:int(len(train) * 0.8)]]
 
             if fine_tune_weights_fn is not None:
                 train_x_c = entity_vectors
