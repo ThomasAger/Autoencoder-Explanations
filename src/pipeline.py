@@ -28,7 +28,7 @@ import time
 #jvm.start(max_heap_size="512m")
 
 def main(data_type, classification_task_a, file_name, init_vector_path, hidden_activation, is_identity_a, amount_of_finetune_a,
-         breakoff_a, kappa_a, score_limit_a, rewrite_files, cluster_multiplier_a, threads, dropout_noise, learn_rate_a, epochs_a, cross_val, ep,
+         breakoff_a, kappa_a, score_limit_a, rewrite_files, cluster_multiplier_a, threads, dropout_noise_a, learn_rate_a, epochs_a, cross_val, ep,
          output_activation, cs, deep_size, classification, direction_count, lowest_amt, loss, development, add_all_terms_a,
          average_ppmi_a, optimizer_name, class_weight, amount_to_start_a, chunk_amt, chunk_id, lr, vector_path_replacement, dt_dev,
          use_pruned, max_depth_a, min_score, min_size, limit_entities_a, svm_classify, get_nnet_vectors_path, arcca, loc, largest_cluster,
@@ -81,6 +81,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
             max_depth_a = dt.stringToArray(max_depth_a)[0]
             use_dropout_in_finetune_a = dt.stringToArray((use_dropout_in_finetune_a))[0]
             lock_weights_and_redo_a = dt.stringToArray(lock_weights_and_redo_a)[0]
+            dropout_noise_a = dt.stringToArray(dropout_noise_a)[0]
         else:
             dissim_amt_a = dt.stringToArray(dissim_amt_a)
             breakoff_a = dt.stringToArray(breakoff_a)
@@ -119,9 +120,9 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
             multi_label_a = dt.stringToArray(multi_label_a)
             use_dropout_in_finetune_a = dt.stringToArray(use_dropout_in_finetune_a)
             lock_weights_and_redo_a = dt.stringToArray(lock_weights_and_redo_a)
+            dropout_noise_a = dt.stringToArray(dropout_noise_a)
 
         ep = int(ep)
-        dropout_noise = float(dropout_noise)
         cross_val = int(cross_val)
         lowest_amt = int(lowest_amt)
         threads = int(threads)
@@ -190,12 +191,13 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
         multi_label_a = [multi_label_a[0]]
         use_dropout_in_finetune_a = [use_dropout_in_finetune_a[0]]
         lock_weights_and_redo_a = [lock_weights_and_redo_a[0]]
+        dropout_noise_a = [dropout_noise_a[0]]
 
     variables_to_execute = list(product(dissim_amt_a,breakoff_a,score_limit_a, amount_to_start_a,cluster_multiplier_a,
                                    kappa_a,classification_task_a,use_breakoff_dissim_a,get_all_a,half_ndcg_half_kappa_a,
                                    limit_entities_a,add_all_terms_a,only_most_similar_a,dont_cluster_a,
                                    top_dt_clusters_a,by_class_finetune_a, cluster_duplicates_a, repeat_finetune_a, max_depth_a,
-                                        multi_label_a))
+                                        multi_label_a, dropout_noise_a))
     all_csv_fns = []
     original_fn = []
     for vt in variables_to_execute:
@@ -220,6 +222,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
         repeat_finetune = vt[17]
         max_depth = vt[18]
         multi_label = vt[19]
+        dropout_noise = vt[20]
         class_task_index = 0
 
         for c in range(len(classification_task_a)):
@@ -583,8 +586,6 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
 
                                 if use_dropout_in_finetune is False:
                                     dropout_noise = 0.0
-                                else:
-                                    dropout_noise = 0.5
 
                                 if top_dt_clusters:
                                     ranking_fn = loc+ data_type + "/rules/rankings/" + file_name + ".txt"
@@ -943,7 +944,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
             else:
                 all_csv_fns.append(avg_fn)
 
-    dt.arrangeByScore(np.unique(np.asarray(all_csv_fns)),loc + " " + arrange_name + file_name[:50] + str(len(all_csv_fns)) + ".csv")
+    dt.arrangeByScore(np.unique(np.asarray(all_csv_fns)),loc + " " + arrange_name + file_name[:50] + " " + classification_task + " " +  str(len(all_csv_fns)) + ".csv")
     #jvm.stop()
 
 print("Begin top of parameters")
@@ -974,9 +975,9 @@ init_vector_path = loc+data_type+"/pca/class-all-50-10-alld100"
 vector_path_replacement = loc+data_type+"/pca/class-all-50-10-alld100"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 """
-"""
+
 data_type = "movies"
-classification_task = ["keywords","ratings"] #Run keywords as separate process
+classification_task = ["ratings", "keywords", "genres"] #Run keywords as separate process
 #arrange_name = arrange_name + classification_task[0]
 skip_nn = True
 if skip_nn is False:
@@ -994,7 +995,7 @@ if classification_task[0] == "us-ratings":
     deep_size = [200]
 else:
     deep_size = [200]
-"""
+
 """
 data_type = "newsgroups"
 classification_task = ["newsgroups"]
@@ -1014,7 +1015,7 @@ vector_path_replacement =  loc+data_type+"/nnet/spaces/mds100.txt"
 #vector_path_replacement = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
 deep_size = [100]
 """
-
+"""
 data_type = "placetypes"
 classification_task = ["opencyc", "geonames", "foursquare"]
 lowest_amt = 50
@@ -1030,10 +1031,10 @@ else:
 vector_path_replacement = loc+data_type+"/nnet/spaces/places100.txt"
 get_nnet_vectors_path = loc + data_type + "/nnet/spaces/places100.txt"
 deep_size = [100]
-
+"""
 if classification_task[0] == "geonames" or classification_task[0] == "foursquare" or classification_task[0] == "newsgroups" :
     hidden_activation = "tanh"
-    dropout_noise = 0.5
+    dropout_noise = [0.5, 0.3, 0.1]
     output_activation = "softmax"
     trainer = "adadelta"
     loss="categorical_crossentropy"
@@ -1043,7 +1044,7 @@ if classification_task[0] == "geonames" or classification_task[0] == "foursquare
     ep=400
 else:
     hidden_activation = "tanh"
-    dropout_noise = 0.5
+    dropout_noise = [0.5, 0.3, 0.1]
     output_activation = "sigmoid"
     trainer = "adagrad"
     loss="binary_crossentropy"
@@ -1056,8 +1057,8 @@ else:
     else:
         ep = 600
     lr = 0.01
-
 """
+
 hidden_activation = "tanh"
 dropout_noise = 0.2
 output_activation = "softmax"
@@ -1081,7 +1082,7 @@ cutoff_start = 0.2
 use_dropout_in_finetune = [True, False]
 
 is_identity = [ False, True]
-amount_of_finetune = [[100]]
+amount_of_finetune = [[200]]
 ft_loss = ["mse"]
 ft_optimizer = ["adagrad"]
 min_size = 1
@@ -1145,7 +1146,7 @@ svm_classify = False
 rewrite_files = False
 max_depth = [3]
 
-cross_val = 5
+cross_val = 1
 one_for_all = False
 
 arrange_name = "cluster ratings BCS" + str(max_depth)
@@ -1274,18 +1275,19 @@ if len(args) > 0:
     multi_label = args[69]
     use_dropout_in_finetune = args[70]
     lock_weights_and_redo = args[71]
-
-print("begin main")
-
-if  __name__ =='__main__':main(data_type, classification_task, file_name, init_vector_path, hidden_activation,
-                               is_identity, amount_of_finetune, breakoff, score_type, score_limit, rewrite_files,
-                               cluster_multiplier, threads, dropout_noise, learn_rate, epochs, cross_val, ep,
-                               output_activation, cutoff_start, deep_size, classification_task, highest_amt,
-                               lowest_amt, loss, nnet_dev, add_all_terms, average_ppmi, trainer, class_weight,
-                               amount_to_start, chunk_amt, chunk_id, lr, vector_path_replacement, dt_dev, use_pruned, max_depth,
-                               min_score, min_size, limit_entities, svm_classify, get_nnet_vectors_path, arcca, loc, largest_cluster,
-                               skip_nn, dissim, dissim_amt, hp_opt, find_most_similar, use_breakoff_dissim, get_all,
-                               half_ndcg_half_kappa, sim_t, one_for_all, ft_loss, ft_optimizer, bag_of_clusters, just_output,
-                               arrange_name, only_most_similar, dont_cluster, top_dt_clusters, by_class_finetune, cluster_duplicates,
-                               repeat_finetune, save_results_so_far, finetune_ppmi, average_nopav_ppmi_a, boc_average, identity_activation,
-                               ppmi_only, boc_only, pav_only, multi_label, use_dropout_in_finetune, lock_weights_and_redo)
+if  __name__ =='__main__':
+    print("begin main")
+    for c in classification_task:
+        ct_1 = [c]
+        main(data_type, ct_1, file_name, init_vector_path, hidden_activation,
+                                       is_identity, amount_of_finetune, breakoff, score_type, score_limit, rewrite_files,
+                                       cluster_multiplier, threads, dropout_noise, learn_rate, epochs, cross_val, ep,
+                                       output_activation, cutoff_start, deep_size, ct_1, highest_amt,
+                                       lowest_amt, loss, nnet_dev, add_all_terms, average_ppmi, trainer, class_weight,
+                                       amount_to_start, chunk_amt, chunk_id, lr, vector_path_replacement, dt_dev, use_pruned, max_depth,
+                                       min_score, min_size, limit_entities, svm_classify, get_nnet_vectors_path, arcca, loc, largest_cluster,
+                                       skip_nn, dissim, dissim_amt, hp_opt, find_most_similar, use_breakoff_dissim, get_all,
+                                       half_ndcg_half_kappa, sim_t, one_for_all, ft_loss, ft_optimizer, bag_of_clusters, just_output,
+                                       arrange_name, only_most_similar, dont_cluster, top_dt_clusters, by_class_finetune, cluster_duplicates,
+                                       repeat_finetune, save_results_so_far, finetune_ppmi, average_nopav_ppmi_a, boc_average, identity_activation,
+                                       ppmi_only, boc_only, pav_only, multi_label, use_dropout_in_finetune, lock_weights_and_redo)

@@ -109,6 +109,7 @@ class NeuralNetwork:
         self.deep_size = deep_size
         self.fine_tune_weights_fn = fine_tune_weights_fn
         self.identity_activation = identity_activation
+        self.lock_weights_and_redo = lock_weights_and_redo
 
         print(data_type)
 

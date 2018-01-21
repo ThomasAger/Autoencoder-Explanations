@@ -108,20 +108,20 @@ data_type = "movies"
 high_amt = 100
 low_amt = 10
 
-classify = ["genres"]
+classify = ["genres", "keywords", "ratings"]
 
 
 max_depth = 3
 limit_entities = False
-dt_dev = False
+dt_dev = True
 vector_names_fn = "../data/" + data_type + "/nnet/spaces/entitynames.txt"
 feature_names_fn = "../data/" + data_type + "/bow/names/"+str(high_amt)+"-"+str(low_amt)+"-all.txt"
 rewrite_files = False
 cross_val = 1
 
-doc_topic_prior = [ 0.001]
-topic_word_prior = [0.001]
-n_topics = [400]
+doc_topic_prior = [ 0.001, 0.01, 0.1]
+topic_word_prior = [0.001, 0.01, 0.1]
+n_topics = [10,30,50,100,200,400]
 for c in classify:
     file_name = "all-" + str(high_amt) + "-" + str(low_amt)
     final_csv_name = "final" + c + str(dt_dev)
