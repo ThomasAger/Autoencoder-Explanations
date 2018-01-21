@@ -43,6 +43,7 @@ def createPCA(tf, depth):
     return pos
 
 def getDissimilarityMatrix(tf):
+    tf = tf.transpose()
     dm = np.empty([len(tf), len(tf)], dtype="float64")
     pithing = 2/pi
     norms = np.empty(len(tf), dtype="float64")
@@ -56,7 +57,7 @@ def getDissimilarityMatrix(tf):
     #Calculate dot products
     for ei in range(len(tf)):
         for ej in range(len(tf)):
-            dot_product[ei][ej] = np.dot(tf[ei].todense(), tf[ej].todense())
+            dot_product[ei][ej] = np.dot(tf[ei], tf[ej])
         print("dp", ei)
 
     norm_multiplied = np.empty([len(tf), len(tf)], dtype="float64")
@@ -78,6 +79,10 @@ def getDissimilarityMatrix(tf):
         print(ei)
     return dm
 
+pithing = 2/pi
+ang = pithing * np.arccos(0.1 / 0.1)
+
+
 def main(data_type, clf, min, max, depth, rewrite_files):
     dm_fn = "../data/" + data_type + "/mds/class-all-" + str(min) + "-" + str(max) \
                     + "-" + clf  + "dm"
@@ -92,8 +97,7 @@ def main(data_type, clf, min, max, depth, rewrite_files):
     shorten_fn = "../data/" + data_type + "/bow/ppmi/class-all-" + str(min) + "-" + str(max) \
                                            + "-" + clf+ "round"
 
-    term_frequency_fn = init_vector_path = "../data/" + data_type + "/bow/ppmi/class-all-" + str(min) + "-" + str(max) \
-                                           + "-" + clf
+    term_frequency_fn = init_vector_path = "../data/" + data_type + "/bow/ppmi/class-all-30-18836-all"
     if dt.allFnsAlreadyExist([dm_fn, mds_fn, svd_fn, shorten_fn]):
         print("all files exist")
         exit()
@@ -112,7 +116,7 @@ def main(data_type, clf, min, max, depth, rewrite_files):
         dt.write2dArray(dm, dm_fn)
         print("wrote dm")
 
-
+    """ Pretty sure none of this works
     if dt.allFnsAlreadyExist([mds_fn]) and not rewrite_files:
         mds = dt.import2dArray(mds_fn)
     else:
@@ -148,6 +152,7 @@ def main(data_type, clf, min, max, depth, rewrite_files):
         pca = createPCA(short, depth)
         dt.write2dArray(pca, pca_fn)
         print("wrote pca")
+    """
 
 data_type = "newsgroups"
 clf = "all"

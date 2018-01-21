@@ -72,6 +72,8 @@ def balanceClasses(movie_vectors, class_array):
 
     return movie_vectors, class_array
 
+
+
 def import2dArray(file_name, file_type="f"):
     with open(file_name, "r") as infile:
         if file_type == "i":
@@ -85,7 +87,10 @@ def import2dArray(file_name, file_type="f"):
                     dv[v] = int(dv[v][:-1])
         else:
             array = [list(line.strip().split()) for line in infile]
+    print("successful import", file_name)
     return np.asarray(array)
+
+
 
 def importFirst2dArray(file_name, file_type="f", amount=100):
     array = []
@@ -234,6 +239,9 @@ def readArrayDict1D(file_name):
         print(name)
     return dict
 
+
+
+
 def splitData(training_data, movie_vectors, movie_labels):
     x_train = np.asarray(movie_vectors[:training_data])
     y_train = np.asarray(movie_labels[:training_data])
@@ -279,6 +287,21 @@ def write2dArray(array, name):
                 file.write(str(array[i][n]) + " ")
             file.write("\n")
         file.close()
+    print("successful write", name)
+"""
+a = import2dArray("D:\Eclipse\MDS/class-all-30-18836-alldm", "f")
+
+a = np.nan_to_num(a)
+
+write2dArray(a, "class-all-30-18836-alldmnTn")
+"""
+"""
+mds = import2dArray("../data/newsgroups/nnet/spaces/mds.txt")
+
+mds = mds.transpose()
+
+write2dArray(mds, "../data/newsgroups/nnet/spaces/mds.txt")
+"""
 def sortIndexesByArraySize(array):
     array_of_lens = []
     for i in range(len(array)):

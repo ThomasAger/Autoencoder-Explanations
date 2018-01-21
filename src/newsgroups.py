@@ -40,8 +40,8 @@ print(classes[train_len+2])
 
 classification = "all"
 highest_amt = 18836
-lowest_amt = 30
 
+lowest_amt = 30
 all_fn = "../data/newsgroups/bow/frequency/phrases/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-" + classification
 tf_vectorizer = CountVectorizer(max_df=highest_amt, min_df=lowest_amt, stop_words='english')
 print("completed vectorizer")
