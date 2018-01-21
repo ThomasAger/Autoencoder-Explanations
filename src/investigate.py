@@ -171,6 +171,12 @@ def compareEntityOnCluster(ranking1, ranking2, clusters,  entity_names, entity_n
 
 def getSimilarClusters(cluster_dict_1, cluster_dict_2, trim_amt, file_name, data_type):
     matching_clusters = np.zeros(len(cluster_dict_1), dtype=np.int8)
+    new_cluster_dict_2 = []
+    for c in cluster_dict_2:
+        new_cluster_dict_2.append(np.flipud(c))
+        new_cluster_dict_2.append(np.flipud(c))
+    cluster_dict_2 = None
+    cluster_dict_2 = new_cluster_dict_2
     positions = np.zeros(len(cluster_dict_1))
     for c in range(len(cluster_dict_1)):
         name_to_match = cluster_dict_1[c][0][:-1]
@@ -202,10 +208,10 @@ def getSimilarClusters(cluster_dict_1, cluster_dict_2, trim_amt, file_name, data
         lines.append(line)
     dt.write1dArray(lines, "../data/" + data_type + "/investigate/" + file_name + str(trim_amt) + ".txt")
 
-data_type = "newsgroups"
-file_name = "n100mdsCV1S0 SFT0 allL030ndcg KMeans CA200 MC1 MS0.4 ATS2000 DS400"
+data_type = "movies"
+file_name = "films200-genresCV1S0 SFT0 allL0100kappa KMeans CA400 MC1 MS0.4 ATS2000 DS800"
 cluster_names = np.asarray(dt.import2dArray("../data/" + data_type + "/cluster/dict/" + file_name + ".txt","s"))
-topic_model_names = np.asarray(dt.import2dArray("../data/" + data_type + "/LDA/names/" + "all-ppmi-30-18836DTP0.1TWP0.1NT200.txt", "s"))
+topic_model_names = np.asarray(dt.import2dArray("../data/" + data_type + "/LDA/names/" + "all-100-10DTP0.001TWP0.001NT400.txt", "s"))
 trim_amt = 5
 getSimilarClusters(cluster_names, topic_model_names, trim_amt, file_name, data_type)
 
