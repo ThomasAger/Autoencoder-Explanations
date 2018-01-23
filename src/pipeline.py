@@ -584,8 +584,6 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                 use_dropout_in_finetune = v[15]
                                 lock_weights_and_redo = v[16]
 
-                                if use_dropout_in_finetune is False:
-                                    dropout_noise = 0.0
 
                                 if top_dt_clusters:
                                     ranking_fn = loc+ data_type + "/rules/rankings/" + file_name + ".txt"
@@ -701,7 +699,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                     if lock_weights_and_redo:
                                         file_name = file_name + "LOCK"
 
-                                    if use_dropout_in_finetune:
+                                    if dropout_noise > 0.0:
                                         file_name = file_name + " DO" + str(dropout_noise)
 
                                     fine_tune_weights_fn = [clusters_fn]
@@ -1034,7 +1032,7 @@ deep_size = [100]
 """
 if classification_task[0] == "geonames" or classification_task[0] == "foursquare" or classification_task[0] == "newsgroups" :
     hidden_activation = "tanh"
-    dropout_noise = [0.5, 0.3, 0.1]
+    dropout_noise = [0.5, 0.3, 0.1, 0.0]
     output_activation = "softmax"
     trainer = "adadelta"
     loss="categorical_crossentropy"
@@ -1044,7 +1042,7 @@ if classification_task[0] == "geonames" or classification_task[0] == "foursquare
     ep=400
 else:
     hidden_activation = "tanh"
-    dropout_noise = [0.5, 0.3, 0.1]
+    dropout_noise = [0.5, 0.3, 0.1, 0.0]
     output_activation = "sigmoid"
     trainer = "adagrad"
     loss="binary_crossentropy"
