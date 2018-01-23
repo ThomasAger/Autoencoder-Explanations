@@ -975,7 +975,7 @@ init_vector_path = loc+data_type+"/pca/class-all-50-10-alld100"
 vector_path_replacement = loc+data_type+"/pca/class-all-50-10-alld100"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 """
-
+"""
 data_type = "movies"
 classification_task = ["ratings", "keywords", "genres"] #Run keywords as separate process
 #arrange_name = arrange_name + classification_task[0]
@@ -995,8 +995,8 @@ if classification_task[0] == "us-ratings":
     deep_size = [200]
 else:
     deep_size = [200]
-
 """
+
 data_type = "newsgroups"
 classification_task = ["newsgroups"]
 #arrange_name = arrange_name + classification_task[0]
@@ -1014,7 +1014,7 @@ vector_path_replacement =  loc+data_type+"/nnet/spaces/mds.txt"
 #get_nnet_vectors_path = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
 #vector_path_replacement = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
 deep_size = [100]
-"""
+
 """
 data_type = "placetypes"
 classification_task = ["opencyc", "geonames", "foursquare"]
@@ -1075,14 +1075,14 @@ rewrite_files = True
 """
 """
 """
-lock_weights_and_redo = [False]
+lock_weights_and_redo = [True, False]
 
 learn_rate= [ 0.001]
 cutoff_start = 0.2
-use_dropout_in_finetune = [True, False]
+use_dropout_in_finetune = [False, True]
 
-is_identity = [ False, True]
-amount_of_finetune = [[200]]
+is_identity = [ True]
+amount_of_finetune = [[100] ]
 ft_loss = ["mse"]
 ft_optimizer = ["adagrad"]
 min_size = 1
@@ -1119,7 +1119,7 @@ bag_of_clusters = [True]
 finetune_ppmi = [False]
 average_nopav_ppmi_a = [False]
 boc_average = [ False]
-identity_activation = ["relu", "tanh", "linear"]
+identity_activation = ["tanh", "relu", "linear"]
 
 top_dt_clusters = [False]
 top_dt_clusters = [False]

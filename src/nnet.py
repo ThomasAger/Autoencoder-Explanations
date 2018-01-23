@@ -197,7 +197,6 @@ class NeuralNetwork:
             self.fine_tune_weights.append(r.transpose())
             self.fine_tune_weights.append(np.zeros(shape=len(r), dtype="float64"))
         else:
-
             model_builder = self.classifierNetwork
 
         models = []
@@ -207,7 +206,8 @@ class NeuralNetwork:
         y_test = []
         x_dev = []
         y_dev = []
-
+        train_x_c = []
+        train_y_c =[]
 
         c = 0
         for i in range(cv_splits):
@@ -254,6 +254,24 @@ class NeuralNetwork:
             c+= 1
             if cv_splits == 1 or split_to_use == c:
                 break
+        if lock_weights_and_redo:
+            print("REDO WITH LOCKED WEIGHTS")
+
+            unlocked_model = Sequential()
+            for l in range(0, len(models[0].layers) - 1):
+                unlocked_model.add(models[0].layers[l])
+
+            self.end_space = unlocked_model.predict(entity_vectors)
+            total_file_name = loc + data_type + "/nnet/spaces/" + file_name
+            dt.write2dArray(self.end_space, total_file_name + "L" + str(l) + "LSPACE" + ".txt")
+            unlocked_model.add(Dense(output_dim=finetune_size, input_dim=self.hidden_layer_size, activation="linear",
+                            weights=self.fine_tune_weights))  #
+            unlocked_model.compile(loss=self.loss, optimizer=self.optimizer)
+
+            models[0] = unlocked_model
+            hist = models[0].fit(train_x_c, train_y_c, nb_epoch=self.epochs,
+                                 batch_size=self.batch_size, verbose=1, class_weight=class_weight)
+
         original_fn = file_name
         for m in range(len(models)):
             if development:
@@ -507,12 +525,12 @@ class NeuralNetwork:
         else:
             print("Fine tune weights", self.hidden_layer_size, finetune_size, "linear")
 
-            if not self.from_ae:
-                model.add(Dense(output_dim=finetune_size, input_dim=self.hidden_layer_size, activation="linear",
-                                     weights=self.fine_tune_weights))#
-            else:
-                model.add(Dense(output_dim=finetune_size, input_dim=self.hidden_layer_size, activation="linear",
-                                     weights=self.fine_tune_weights))#
+        if not self.from_ae:
+            model.add(Dense(output_dim=finetune_size, input_dim=self.hidden_layer_size, activation="linear",
+                                 weights=self.fine_tune_weights))#
+        else:
+            model.add(Dense(output_dim=finetune_size, input_dim=self.hidden_layer_size, activation="linear",
+                                 weights=self.fine_tune_weights))#
 
         if self.get_scores:
             if self.randomize_finetune_weights or self.corrupt_finetune_weights or len(self.fine_tune_weights_fn) > 0:
@@ -521,10 +539,14 @@ class NeuralNetwork:
                     Dense(output_dim=self.output_size, input_dim=finetune_size, activation=self.output_activation,
                           init=self.layer_init))
 
+        if self.lock_weights_and_redo:
+            model.layers[len(model.layers)-1].trainable = False
+
         print("Compiling")
         model.compile(loss=self.loss, optimizer=self.optimizer)
 
         return model
+
 
 import random
 import sys
