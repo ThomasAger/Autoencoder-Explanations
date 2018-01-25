@@ -210,9 +210,11 @@ class DecisionTree:
                     f1 = 0
                 accuracy = accuracy_score(ac_y_test[i], predictions[i])
                 cv_acc.append(accuracy)
-                scores = [[label_names[l], "f1", f1, "accuracy", accuracy]]
                 if math.isnan(f1):
                     print("NAN", prec, recall)
+                    f1 = 0.0
+                scores = [[label_names[l], "f1", f1, "accuracy", accuracy]]
+
                 print(scores)
                 class_names = ["NOT " + label_names[l], label_names[l]]
 
@@ -344,6 +346,10 @@ class DecisionTree:
             average_prec = np.average(cv_prec)
             average_recall = np.average(cv_recall)
             f1 = 2 * ((average_prec * average_recall) / (average_prec + average_recall))
+
+            if math.isnan(f1):
+                print("NAN", prec, recall)
+                f1 = 0.0
             f1_array.append(f1)
             prec_array.append(average_prec)
             recall_array.append(average_recall)
@@ -367,6 +373,9 @@ class DecisionTree:
 
         f1_average = 2 * ((average_prec * average_recall) / (average_prec + average_recall))
 
+        if math.isnan(f1_average):
+            print("NAN", prec, recall)
+            f1_average = 0.0
         all_y_test = np.asarray(all_y_test)
         all_predictions = np.asarray(all_predictions)
 
