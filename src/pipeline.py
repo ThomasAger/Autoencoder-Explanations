@@ -929,15 +929,15 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
             #    for a in range(len(csv_fns_nn_a)):
             #        dt.averageCSVs(csv_fns_nn_a[a])
     loc ="../data/"+data_type+"/rules/tree_csv/"
-    if cross_val > 1:
-        for fn in original_fn:
-            avg_fn = fn[:-4] +"AVG.csv"
-            fn = fn.split("/")[len(fn.split("/"))-1]
-            try:
-                fns_to_add = dt.getCSVsToAverage("../data/"+data_type+"/rules/tree_csv/",fn)
-            except IndexError:
-                fns_to_add = dt.getCSVsToAverage("../data/" + data_type + "/rules/tree_csv/", fn[:-4] + str(max_depth) + ".csv")
-            all_csv_fns.append(fns_to_add)
+
+    for fn in original_fn:
+        avg_fn = fn[:-4] +"AVG.csv"
+        fn = fn.split("/")[len(fn.split("/"))-1]
+        try:
+            fns_to_add = dt.getCSVsToAverage("../data/"+data_type+"/rules/tree_csv/",fn)
+        except IndexError:
+            fns_to_add = dt.getCSVsToAverage("../data/" + data_type + "/rules/tree_csv/", fn[:-4] + str(max_depth) + ".csv")
+        all_csv_fns.append(fns_to_add)
 
     dt.arrangeByScore(
         np.unique(

@@ -1001,16 +1001,32 @@ def getScores(names, full_scores, full_names, file_name, data_type):
 def getCSVsToAverage(csv_folder_fn,  starting_fn=""):
     fns = getFns(csv_folder_fn)
     fns_to_average = []
-    cross_val = int(starting_fn.split()[1][len(starting_fn.split()[1])-3])
+    try:
+        cross_val = int(starting_fn.split()[0][len(starting_fn.split()[1]) - 3])
+    except ValueError:
+        try:
+            cross_val = int(starting_fn.split()[0][len(starting_fn.split()[0]) - 3])
+        except ValueError:
+            cross_val = 12354432
+        except IndexError:
+            cross_val = 123131355
+    except IndexError:
+        cross_val = 9898989
+
     og_st_fn, st_fn = removeCSVText(starting_fn)
     print(og_st_fn)
     for f in fns:
         if len(st_fn) > 0:
             og_f, cut_fn = removeCSVText(f)
             try:
-                cross_val_cut_fn = int(f.split()[1][len(f.split()[1])-3])
+                cross_val_cut_fn = int(f.split()[0][len(f.split()[0])-3])
             except ValueError:
-                cross_val_cut_fn = 2323232
+                try:
+                    cross_val_cut_fn = int(f.split()[0][len(f.split()[0]) - 3])
+                except ValueError:
+                    cross_val_cut_fn = 1235334432
+                except IndexError:
+                    cross_val_cut_fn = 12333131355
             except IndexError:
                 cross_val_cut_fn = 232322
             if st_fn == cut_fn and cross_val == cross_val_cut_fn:
