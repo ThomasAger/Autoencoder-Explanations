@@ -329,7 +329,12 @@ def write_to_csv_key(csv_fn, col_names, cols_to_add, keys):
 
 
 def read_csv(csv_fn):
-    return pd.read_csv(csv_fn, index_col=0)
+    csv = pd.read_csv(csv_fn, index_col=0)
+    for col in range(0, len(csv)):
+        for val in range(len(csv.iloc[col])):
+            if np.isnan(csv.iloc[col][val] ):
+                print("!NAN!", col, val)
+    return csv
 
 def write_csv(csv_fn, col_names, cols_to_add, key):
     d = {}
@@ -338,15 +343,6 @@ def write_csv(csv_fn, col_names, cols_to_add, key):
     df = pd.DataFrame(d, index=key)
     df.to_csv(csv_fn)
 
-def average_csv(csv_fns):
-    csvs = []
-    for i in range(len(csv_fns)):
-        csvs.append(read_csv(csv_fns[i]))
-    for c in csvs:
-        for col in c:
-            for val in col:
-                print(val)
-        print("Average")
 
 csv_fns = []
 for i in range(5):
@@ -940,18 +936,25 @@ def remove_indexes(indexes, array_fn):
 
 def averageCSVs(csv_array_fns):
     csv_array = []
+    i = 0
     for csv_name in csv_array_fns:
+        print(i, csv_name)
+        i = i + 1
         csv_array.append(read_csv(csv_name))
     for csv in range(1, len(csv_array)):
         for col in range(1, len(csv_array[csv])):
             for val in range(len(csv_array[csv].iloc[col])):
                 csv_array[0].iloc[col][val] += csv_array[csv].iloc[col][val]
+                if np.isnan(csv_array[0].iloc[col][val] ):
+                    print("NAN",  csv, col, val)
     if len(csv_array) != 0:
         for col in range(1, len(csv_array[0])):
             for val in range(len(csv_array[0].iloc[col])):
                 print(csv_array[0].iloc[col][val])
                 csv_array[0].iloc[col][val] = csv_array[0].iloc[col][val] / len(csv_array)
                 print(csv_array[0].iloc[col][val])
+                if np.isnan(csv_array[0].iloc[col][val] ):
+                    print("NAN", csv_array[0].iloc[col][val], col, val)
         avg_fn = csv_array_fns[0][:len(csv_array_fns[0])-4] + "AVG.csv"
         csv_array[0].to_csv(avg_fn)
     else:
@@ -998,12 +1001,19 @@ def getScores(names, full_scores, full_names, file_name, data_type):
 def getCSVsToAverage(csv_folder_fn,  starting_fn=""):
     fns = getFns(csv_folder_fn)
     fns_to_average = []
+    cross_val = int(starting_fn.split()[1][len(starting_fn.split()[1])-3])
     og_st_fn, st_fn = removeCSVText(starting_fn)
     print(og_st_fn)
     for f in fns:
         if len(st_fn) > 0:
             og_f, cut_fn = removeCSVText(f)
-            if st_fn == cut_fn:
+            try:
+                cross_val_cut_fn = int(f.split()[1][len(f.split()[1])-3])
+            except ValueError:
+                cross_val_cut_fn = 2323232
+            except IndexError:
+                cross_val_cut_fn = 232322
+            if st_fn == cut_fn and cross_val == cross_val_cut_fn:
                 print(og_f)
                 print(cut_fn)
                 fns_to_average.append(f)
@@ -1125,9 +1135,7 @@ def arrangeByScore(csv_fns, arra_name):
         try:
             csv_fns[c] = split[len(split)-1]
         except IndexError:
-            print()
-            print(split)
-            print(csv_fns[c])
+            print("FAIL", split, csv_fns[c])
 
     col_names = ["1 ACC D3", "2 F1 D3","3 ACC DN", "4 F1 DN","5 ACC J48", "6 F1 J48",  "7 MICRO F1 D3",  "8 MICRO F1 DN", "9 MICRO F1 J48"]
     average_rows = []

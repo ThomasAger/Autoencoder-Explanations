@@ -929,20 +929,20 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
             #    for a in range(len(csv_fns_nn_a)):
             #        dt.averageCSVs(csv_fns_nn_a[a])
     loc ="../data/"+data_type+"/rules/tree_csv/"
-    if cross_val > 0:
+    if cross_val > 1:
         for fn in original_fn:
             avg_fn = fn[:-4] +"AVG.csv"
-            if dt.fileExists(avg_fn) is False:
-                fn = fn.split("/")[len(fn.split("/"))-1]
-                try:
-                    fns_to_add = dt.getCSVsToAverage("../data/"+data_type+"/rules/tree_csv/",fn)
-                except IndexError:
-                    fns_to_add = dt.getCSVsToAverage("../data/" + data_type + "/rules/tree_csv/", fn[:-4] + str(max_depth) + ".csv")
-                all_csv_fns.append(fns_to_add)
-            else:
-                all_csv_fns.append(avg_fn)
+            fn = fn.split("/")[len(fn.split("/"))-1]
+            try:
+                fns_to_add = dt.getCSVsToAverage("../data/"+data_type+"/rules/tree_csv/",fn)
+            except IndexError:
+                fns_to_add = dt.getCSVsToAverage("../data/" + data_type + "/rules/tree_csv/", fn[:-4] + str(max_depth) + ".csv")
+            all_csv_fns.append(fns_to_add)
 
-    dt.arrangeByScore(np.unique(np.asarray(all_csv_fns)),loc + " " + arrange_name + file_name[:50] + " " + classification_task + " " +  str(len(all_csv_fns)) + ".csv")
+    dt.arrangeByScore(
+        np.unique(
+            np.asarray(all_csv_fns))
+        ,loc + " " + arrange_name + file_name[:50] + " " + classification_task + " " +  str(len(all_csv_fns)) + ".csv")
     #jvm.stop()
 
 print("Begin top of parameters")
@@ -994,7 +994,7 @@ if classification_task[0] == "us-ratings":
 else:
     deep_size = [200]
 """
-
+"""
 data_type = "newsgroups"
 classification_task = ["newsgroups"]
 #arrange_name = arrange_name + classification_task[0]
@@ -1029,10 +1029,10 @@ else:
 vector_path_replacement = loc+data_type+"/nnet/spaces/places100.txt"
 get_nnet_vectors_path = loc + data_type + "/nnet/spaces/places100.txt"
 deep_size = [100]
-"""
+
 if classification_task[0] == "geonames" or classification_task[0] == "foursquare" or classification_task[0] == "newsgroups" :
     hidden_activation = "tanh"
-    dropout_noise = [0.5, 0.3, 0.1, 0.0]
+    dropout_noise = [0.0]
     output_activation = "softmax"
     trainer = "adadelta"
     loss="categorical_crossentropy"
@@ -1042,7 +1042,7 @@ if classification_task[0] == "geonames" or classification_task[0] == "foursquare
     ep=400
 else:
     hidden_activation = "tanh"
-    dropout_noise = [0.5, 0.3, 0.1, 0.0]
+    dropout_noise = [0.0]
     output_activation = "sigmoid"
     trainer = "adagrad"
     loss="binary_crossentropy"
@@ -1073,13 +1073,13 @@ rewrite_files = True
 """
 """
 """
-lock_weights_and_redo = [True, False]
+lock_weights_and_redo = [False]
 
 learn_rate= [ 0.001]
 cutoff_start = 0.2
-use_dropout_in_finetune = [False, True]
+use_dropout_in_finetune = [False]
 
-is_identity = [ True]
+is_identity = [False, True]
 amount_of_finetune = [[100] ]
 ft_loss = ["mse"]
 ft_optimizer = ["adagrad"]
@@ -1097,7 +1097,7 @@ breakoff = [False]
 score_limit = [0.9] #23232 val to use for all terms
 amount_to_start = [2000]
 cluster_multiplier = [2]#50 #23233  val to use for all terms
-score_type = ["ndcg", "kappa"]
+score_type = ["kappa", "ndcg"]
 use_breakoff_dissim = [False]
 get_all = [False]
 half_ndcg_half_kappa = [False]
@@ -1117,7 +1117,7 @@ bag_of_clusters = [True]
 finetune_ppmi = [False]
 average_nopav_ppmi_a = [False]
 boc_average = [ False]
-identity_activation = ["tanh", "relu", "linear"]
+identity_activation = ["relu", "tanh", "linear"]
 
 top_dt_clusters = [False]
 top_dt_clusters = [False]
