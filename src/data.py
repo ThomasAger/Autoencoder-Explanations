@@ -1005,7 +1005,7 @@ def getCSVsToAverage(csv_folder_fn,  starting_fn=""):
         cross_val = int(starting_fn.split()[0][len(starting_fn.split()[1]) - 3])
     except ValueError:
         try:
-            cross_val = int(starting_fn.split()[0][len(starting_fn.split()[0]) - 3])
+            cross_val = int(starting_fn.split()[1][len(starting_fn.split()[1]) - 3])
         except ValueError:
             cross_val = 12354432
         except IndexError:
@@ -1022,7 +1022,7 @@ def getCSVsToAverage(csv_folder_fn,  starting_fn=""):
                 cross_val_cut_fn = int(f.split()[0][len(f.split()[0])-3])
             except ValueError:
                 try:
-                    cross_val_cut_fn = int(f.split()[0][len(f.split()[0]) - 3])
+                    cross_val_cut_fn = int(f.split()[1][len(f.split()[1]) - 3])
                 except ValueError:
                     cross_val_cut_fn = 1235334432
                 except IndexError:
