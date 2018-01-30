@@ -1016,6 +1016,14 @@ def getCSVsToAverage(csv_folder_fn,  starting_fn=""):
             if st_fn == cut_fn and cross_val == cross_val_cut_fn:
                 print(og_f)
                 print(cut_fn)
+                # Checking if its a different dimension of placetype
+                if "places" in og_st_fn:
+                    if "NONNET20" not in starting_fn and "NONNET20"  in f:
+                        print("continue")
+                        continue
+                    elif "NONNET50" not in starting_fn and "NONNET50"  in f:
+                        print("continue")
+                        continue
                 fns_to_average.append(f)
         else:
             fns_to_average.append(f)

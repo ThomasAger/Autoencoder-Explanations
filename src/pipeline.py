@@ -349,6 +349,10 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                     #for j in range(len(new_file_names)):
 
                     for x in range(len(deep_size)):
+                        if skip_nn == True:
+                            deep_size = [amount_of_finetune_a[0][len(amount_of_finetune_a[0])-1]]
+                            x = 0
+
                         if limit_entities is False:
                             new_classification_task = "all"
                         else:
@@ -709,12 +713,12 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                     identity_swap = False
                                     randomize_finetune_weights = False
                                     from_ae = True
-                                    finetune_size = cluster_amt
+                                    finetune_size = int(cluster_amt/2)
 
                                     loss = ft_loss
                                     optimizer_name = ft_optimizer
 
-                                    hidden_layer_size = deep_size[x]
+                                    hidden_layer_size = finetune_size
 
                                     past_model_weights_fn = [loc + data_type + "/nnet/weights/" + new_file_names[x] + ".txt"]
                                     past_model_bias_fn = [loc + data_type + "/nnet/bias/" + new_file_names[x] + ".txt"]
@@ -1015,20 +1019,24 @@ deep_size = [100]
 
 """
 data_type = "placetypes"
-classification_task = ["opencyc", "geonames", "foursquare"]
+classification_task = ["opencyc"]
 lowest_amt = 50
 highest_amt = 10
-#init_vector_path = "../data/"+data_type+"/bow/ppmi/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+classification_task
-#file_name = "placetypes bow"
-init_vector_path = "../data/"+data_type+"/nnet/spaces/places100.txt"
+
+places_size = 50
+init_vector_path = "../data/"+data_type+"/nnet/spaces/places"+str(places_size)+".txt"
 skip_nn = True
 if skip_nn is False:
-    file_name = "places mds 100"
+    file_name = "places mds "+str(places_size)
 else:
-    file_name = "places NONNET"
-vector_path_replacement = loc+data_type+"/nnet/spaces/places100.txt"
-get_nnet_vectors_path = loc + data_type + "/nnet/spaces/places100.txt"
-deep_size = [100]
+    if places_size == 100:
+        file_name = "places NONNET"
+    else:
+        file_name = "places NONNET"+str(places_size)
+
+vector_path_replacement = loc+data_type+"/nnet/spaces/places"+str(places_size)+".txt"
+get_nnet_vectors_path = loc + data_type + "/nnet/spaces/places"+str(places_size)+".txt"
+deep_size = [places_size]
 
 if classification_task[0] == "geonames" or classification_task[0] == "foursquare" or classification_task[0] == "newsgroups" :
     hidden_activation = "tanh"
@@ -1079,8 +1087,8 @@ learn_rate= [ 0.001]
 cutoff_start = 0.2
 use_dropout_in_finetune = [False]
 
-is_identity = [False, True]
-amount_of_finetune = [[100] ]
+is_identity = [False]
+amount_of_finetune = [[places_size] ]
 ft_loss = ["mse"]
 ft_optimizer = ["adagrad"]
 min_size = 1
@@ -1097,7 +1105,7 @@ breakoff = [False]
 score_limit = [0.9] #23232 val to use for all terms
 amount_to_start = [2000]
 cluster_multiplier = [2]#50 #23233  val to use for all terms
-score_type = ["kappa", "ndcg"]
+score_type = ["ndcg"]
 use_breakoff_dissim = [False]
 get_all = [False]
 half_ndcg_half_kappa = [False]
@@ -1117,7 +1125,7 @@ bag_of_clusters = [True]
 finetune_ppmi = [False]
 average_nopav_ppmi_a = [False]
 boc_average = [ False]
-identity_activation = ["relu", "tanh", "linear"]
+identity_activation = ["linear"]
 
 top_dt_clusters = [False]
 top_dt_clusters = [False]
@@ -1139,15 +1147,15 @@ score_limit = [0.0]
 """
 hp_opt = True
 
-dt_dev = True
+dt_dev = False
 svm_classify = False
 rewrite_files = False
 max_depth = [3]
 
-cross_val = 1
+cross_val = 5
 one_for_all = False
 
-arrange_name = "cluster ratings BCS" + str(max_depth)
+arrange_name = "cluster ratings BCS" + str(max_depth) + str(dt_dev)
 
 threads=1
 chunk_amt = 0

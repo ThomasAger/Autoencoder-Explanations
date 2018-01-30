@@ -1077,10 +1077,10 @@ dt.write1dArray(entities_unique, "../data/movies/classify/ratings/available_enti
 get_all = False
 additional_name = ""
 #make_individual = True
-make_individual = True
+make_individual = False
 sparse_matrix = False
 print("??")
-
+"""
 class_type = "movies"
 classification = "all"
 raw_fn = "../data/raw/previous work/movievectors/tokens/"
@@ -1111,7 +1111,7 @@ max=10
 
 if  __name__ =='__main__':main(min, max, class_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn, use_all_files,
                                sparse_matrix, word_count_amt, classification)
-
+"""
 
 class_type = "placetypes"
 classification = "all"
@@ -1121,8 +1121,8 @@ cut_first_line = False
 entity_name_fn = "../data/"+class_type+"/nnet/spaces/entitynames.txt"
 use_all_files = None#""
 word_count_amt = 0
-min=50
-max=10
+min=10
+max=1
 
 
 if  __name__ =='__main__':main(min, max, class_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn, use_all_files,
