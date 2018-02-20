@@ -39,6 +39,7 @@ def importNumpyVectors(numpy_vector_path=None):
 def convertLine(line):
     line = list(map(float, line.strip().split()))
     return line
+
 def import1dArray(file_name, file_type="s"):
     with open(file_name, "r") as infile:
         if file_type == "f":
@@ -51,6 +52,7 @@ def import1dArray(file_name, file_type="s"):
         else:
             array = [line.strip() for line in infile]
     return np.asarray(array)
+
 def balanceClasses(movie_vectors, class_array):
     count = 0
     count2 = 0
@@ -274,12 +276,14 @@ def allFnsAlreadyExist(all_fns):
 def write2dArray(array, name):
     try:
         file = open(name, "w")
+        print("starting array")
         for i in range(len(array)):
             for n in range(len(array[i])):
                 file.write(str(array[i][n]) + " ")
             file.write("\n")
         file.close()
     except FileNotFoundError:
+        print("FAILURE, TRYING FAILSAFE")
         name = "//?/" + name
         file = open(name, "w")
         for i in range(len(array)):
@@ -1182,6 +1186,13 @@ def arrangeByScore(csv_fns, arra_name):
 
     print("x")
 
+#write1dArray(list(range(20000)), "../data/sentiment/nnet/spaces/entitynames.txt")
+
+"""
+space = np.load("../data/newsgroups/nnet/spaces/MF5000 ML200 BS32 FBTrue DO0.3 RDO0.05 E64 ES16LS32 L1.txt.npy")
+
+write2dArray(space, "../data/sentiment/nnet/spaces/5kdefaultsentDEV.txt")
+"""
 
 """ #REVERSAL """
 """
