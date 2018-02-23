@@ -73,22 +73,27 @@ def balanceClasses(movie_vectors, class_array):
     return movie_vectors, class_array
 
 
-
+import scipy.sparse as sp
 def import2dArray(file_name, file_type="f"):
-    with open(file_name, "r") as infile:
-        if file_type == "i":
-            array = [list(map(int, line.strip().split())) for line in infile]
-        elif file_type == "f":
-            array = [list(map(float, line.strip().split())) for line in infile]
-        elif file_type == "discrete":
-            array = [list(line.strip().split()) for line in infile]
-            for dv in array:
-                for v in range(len(dv)):
-                    dv[v] = int(dv[v][:-1])
-        else:
-            array = [list(line.strip().split()) for line in infile]
+    if file_name[-4:] == ".npz":
+        print("SPARSE ARRAY")
+        array = sp.load_npz(file_name)
+    else:
+        with open(file_name, "r") as infile:
+            if file_type == "i":
+                array = [list(map(int, line.strip().split())) for line in infile]
+            elif file_type == "f":
+                array = [list(map(float, line.strip().split())) for line in infile]
+            elif file_type == "discrete":
+                array = [list(line.strip().split()) for line in infile]
+                for dv in array:
+                    for v in range(len(dv)):
+                        dv[v] = int(dv[v][:-1])
+            else:
+                array = [list(line.strip().split()) for line in infile]
+        array = np.asarray(array)
     print("successful import", file_name)
-    return np.asarray(array)
+    return array
 
 
 
@@ -908,7 +913,7 @@ def getNonZero(class_names_fn, file_name):
     for c in range(len(class_all)):
         print(np.count_nonzero(class_all[c]))
 
-#getNonZero("../data/movies/classify/genres/names.txt", "../data/movies/classify/genres/class-all")
+
 import string
 import re
 def keepNumbers(string):
@@ -998,6 +1003,7 @@ def getScores(names, full_scores, full_names, file_name, data_type):
                 break
     write1dArray(final_scores, "../data/" + data_type + "/bow/scores/" + file_name + ".txt")
     return "../data/" + data_type + "/bow/scores/" + file_name + ".txt"
+
 def getCSVsToAverage(csv_folder_fn,  starting_fn=""):
     fns = getFns(csv_folder_fn)
     fns_to_average = []
@@ -1173,6 +1179,12 @@ def arrangeByScore(csv_fns, arra_name):
     write_csv( arra_name, col_names, average_rows, csv_fns)
 
     print("x")
+
+#fs = import2dArray("../data/placetypes/classify/foursquare/class-all").transpose()
+#geo = import2dArray("../data/placetypes/classify/geonames/class-all").transpose()
+#cyc = import2dArray("../data/placetypes/classify/opencyc/class-all").transpose()
+
+#getNonZero("../data/placetypes/classify/foursquare/names.txt","../data/placetypes/classify/foursquare/class-all")
 
 
 """ #REVERSAL """

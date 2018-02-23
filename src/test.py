@@ -33,267 +33,324 @@ from sklearn.neighbors import NearestCentroid
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.utils.extmath import density
 from sklearn import metrics
+import scipy.sparse as sp
+import MovieTasks as mt
+import data as dt
+import tensorflow
+np.set_printoptions(suppress=True)
+import math
+# mt.printIndividualFromAll("sentim
+from math import pi
+import csr_csc_dot as ccd
+
+def convertPPMISparse(mat):
+    """
+     Converted from code from svdmi
+     https://github.com/Bollegala/svdmi/blob/master/src/svdmi.py
+     """
+    (nrows, ncols) = mat.shape
+    print("no. of rows =", nrows)
+    print("no. of cols =", ncols)
+    colTotals = mat.sum(axis=0)
+    rowTotals = mat.sum(axis=1).T
+    N = np.sum(rowTotals)
+    rowMatSparse = np.zeros(nrows, dtype=np.float)
+    for i in range(nrows):
+        if rowTotals[0, i] != 0:
+            rowMatSparse[i] = 1.0 / rowTotals[0, i]
+    colMatSparse = np.zeros(ncols, dtype=np.float)
+    for j in range(ncols):
+        if colTotals[0, j] != 0:
+            colMatSparse[j] = 1.0 / colTotals[0, j]
+    P = N * mat
+    P = P.astype(np.float64)
+    for i in range(len(rowMatSparse)):
+        P[i] *= rowMatSparse[i]
+    for i in range(len(colMatSparse)):
+        P[:,i] *= colMatSparse[i]
+    cx = sp.coo_matrix(P)
+    for i, j, v in zip(cx.row, cx.col, cx.data):
+        P[i,j] = max(math.log(v), 0)
+    return P
+
+def getDissimilarityMatrix(tf):
+
+    tf = tf.toarray()
+    tf = tf.transpose()
+    docs_len = tf.shape[0]
+
+    dm = np.empty([docs_len, docs_len], dtype="float64")
+    pithing = 2/pi
+    norms = np.empty(docs_len, dtype="float64")
+
+    #Calculate norms
+    for ei in range(docs_len):
+        norms[ei] = np.linalg.norm(tf[ei])
+        print("norm", ei)
+    dot_product = np.empty([docs_len, docs_len], dtype="float64")
+
+    #Calculate dot products
+    for ei in range(docs_len):
+        for ej in range(docs_len):
+            dot_product[ei][ej] = np.dot(tf[ei], tf[ej])
+        print("dp", ei)
+
+    norm_multiplied = np.empty([docs_len, docs_len], dtype="float64")
+
+    # Calculate dot products
+    for ei in range(docs_len):
+        for ej in range(docs_len):
+            norm_multiplied[ei][ej] = norms[ei] * norms[ej]
+        print("dp", ei)
+
+    norm_multiplied = dt.shortenFloatsNoFn(norm_multiplied)
+    dot_product = dt.shortenFloatsNoFn(dot_product)
+
+    #Get angular differences
+    for ei in range(docs_len):
+        for ej in range(docs_len):
+            ang = pithing * np.arccos(dot_product[ei][ej] / norm_multiplied[ei][ej])
+            dm[ei][ej] = ang
+        print(ei)
+    return dm
+import scipy.sparse.linalg
+import sklearn.metrics.pairwise as smp
+def getDissimilarityMatrixSparse(tf_transposed):
+    tf_transposed = sp.csr_matrix(tf_transposed)
+    tf = sp.csr_matrix.transpose(tf_transposed)
+    tf = sp.csr_matrix(tf)
+    flat_tf = tf.toarray()
+    docs_len = tf.shape[0]
+
+    dm = np.zeros([docs_len, docs_len], dtype="float64")
+    pithing = 2/pi
+    #norms = np.zeros(docs_len, dtype="float64")
+    s_norms = np.zeros(docs_len, dtype="float64")
+
+    #Calculate norms
+    for ei in range(docs_len):
+        #norms[ei] = np.linalg.norm(flat_tf[ei])
+        s_norms[ei] = sp.linalg.norm(tf[ei])
+        #print("norm", ei, norms[ei])
+        #print("s_norm", ei, s_norms[ei]
+        if ei %100 == 0:
+            print(ei)
+
+    #dot_product = np.zeros([docs_len, docs_len], dtype="float64")
+    s_dot_product = np.zeros([docs_len, docs_len], dtype="float64")
+
+    #Calculate dot products
+    for ei in range(docs_len):
+        for ej in range(docs_len):
+            s_dp = tf[ei].dot(tf_transposed[:, ej])
+            if len(s_dp.data) != 0:
+                s_dot_product[ei][ej] = s_dp.data[0]
+            print("dp", ej)
+            #print("dp", ei, docs_len, ej, dot_product[ei][ej])
+            #print("s_dp", ei, docs_len, ej, s_dot_product[ei][ej])
+        print("dp", ei)
+
+    norm_multiplied = np.zeros([docs_len, docs_len], dtype="float64")
+
+    # Calculate dot products
+    for ei in range(docs_len):
+        for ej in range(docs_len):
+            norm_multiplied[ei][ej] = s_norms[ei] * s_norms[ej]
+        print("norms", ei)
 
 
-# Display progress logs on stdout
-logging.basicConfig(level=logging.INFO,
-                    format='%(asctime)s %(levelname)s %(message)s')
+    norm_multiplied = dt.shortenFloatsNoFn(norm_multiplied)
+    s_dot_product = dt.shortenFloatsNoFn(s_dot_product)
+
+    #Get angular differences
+    for ei in range(docs_len):
+        for ej in range(docs_len):
+            ang = pithing * np.arccos(s_dot_product[ei][ej] / norm_multiplied[ei][ej])
+            dm[ei][ej] = ang
+        print(ei)
+
+    for ei in range(docs_len):
+        for ej in range(docs_len):
+            dm[ei][ej] = calcAngSparse(tf[ei], tf[ej])
+        print(ei)
+    return dm
 
 
-# parse commandline arguments
-op = OptionParser()
-op.add_option("--report",
-              action="store_true", dest="print_report",
-              help="Print a detailed classification report.")
-op.add_option("--chi2_select",
-              action="store", type="int", dest="select_chi2",
-              help="Select some number of features using a chi-squared test")
-op.add_option("--confusion_matrix",
-              action="store_true", dest="print_cm",
-              help="Print the confusion matrix.")
-op.add_option("--top10",
-              action="store_true", dest="print_top10",
-              help="Print ten most discriminative terms per class"
-                   " for every classifier.")
-op.add_option("--all_categories",
-              action="store_true", dest="all_categories",
-              help="Whether to use all categories or not.")
-op.add_option("--use_hashing",
-              action="store_true",
-              help="Use a hashing vectorizer.")
-op.add_option("--n_features",
-              action="store", type=int, default=2 ** 16,
-              help="n_features when using the hashing vectorizer.")
-op.add_option("--filtered",
-              action="store_true",
-              help="Remove newsgroup information that is easily overfit: "
-                   "headers, signatures, and quoting.")
+def calcAng(e1, e2):
+    return (2 / pi) * np.arccos(np.dot(e1, e2) / (np.linalg.norm(e1) * np.linalg.norm(e2)))
 
 
-def is_interactive():
-    return not hasattr(sys.modules['__main__'], '__file__')
+def calcAngSparse(e1, e2, e2_transposed, norm_1, norm_2):
+    dp = 0
+    s_dp = e1.dot(e2_transposed)
+    if s_dp.nnz != 0:
+        dp = s_dp.data[0]
+    norm_dp = norm_1 * norm_2
+    return (2 / pi) * np.arccos(dp / norm_dp)
 
-# work-around for Jupyter notebook and IPython console
-argv = [] if is_interactive() else sys.argv[1:]
-(opts, args) = op.parse_args(argv)
-if len(args) > 0:
-    op.error("this script takes no arguments.")
-    sys.exit(1)
+import timeit
 
-print(__doc__)
-op.print_help()
-print()
+def calcAngChunk(e1, e2,  norm_1, norm_2):
+    dp = 0
+    dp = np.dot(e1, e2)
+    norm_dp = norm_1 * norm_2
+    return (2 / pi) * np.arccos(dp / norm_dp)
 
+def getDsimMatrixChunk(tf, chunk):
+    tf_transposed = sp.csc_matrix(tf)
+    tf = tf.transpose()
+    tf = sp.csr_matrix(tf)
+    docs_len = tf.shape[0]
+    dm = np.zeros([docs_len, docs_len], dtype="float64")
+    norms = np.zeros(docs_len, dtype="float64")
 
-# #############################################################################
-# Load some categories from the training set
-
-remove = ('headers', 'footers', 'quotes')
-categories = None
-
-print("Loading 20 newsgroups dataset for categories:")
-print(categories if categories else "all")
-
-data_train = fetch_20newsgroups(subset='train', categories=categories,
-                                shuffle=False,
-                                remove=remove)
-
-data_test = fetch_20newsgroups(subset='test', categories=categories,
-                               shuffle=False,
-                               remove=remove)
-print('data loaded')
-
-# order of labels in `target_names` can be different from `categories`
-target_names = data_train.target_names
+    #Calculate norms
+    for ei in range(docs_len):
+        norms[ei] = sp.linalg.norm(tf[ei])
+        if ei %100 == 0:
+            print("norms", ei)
 
 
-def size_mb(docs):
-    return sum(len(s.encode('utf-8')) for s in docs) / 1e6
 
-data_train_size_mb = size_mb(data_train.data)
-data_test_size_mb = size_mb(data_test.data)
+    for c in range(int(docs_len/chunk)):
+        chunked_tf = tf[c*chunk: c+1*chunk].toarray()
+        for i in range(c*chunk, c+1*chunk):
+            for i in range(c * chunk, c + 1 * chunk):
+                dm[i][j] = calcAngChunk(chunked_tf[i], chunked_tf[j],  norms[i], norms[j])
+                if j %10000 == 0:
+                    print("j", j)
+            print("i", i)
+    return dm
 
-print("%d documents - %0.3fMB (training set)" % (
-    len(data_train.data), data_train_size_mb))
-print("%d documents - %0.3fMB (test set)" % (
-    len(data_test.data), data_test_size_mb))
-print()
+def getDsimMatrix(tf):
 
-# split a training set and a test set
-y_train, y_test = data_train.target, data_test.target
+    tf_transposed = sp.csc_matrix(tf)
+    tf = tf.transpose()
+    tf = sp.csr_matrix(tf).astype(np.float64)
+    docs_len = tf.shape[0]
+    dm = np.zeros([docs_len, docs_len], dtype=np.float64)
+    norms = np.zeros(docs_len, dtype=np.float64)
 
-print("Extracting features from the training data using a sparse vectorizer")
-t0 = time()
-if opts.use_hashing:
-    vectorizer = HashingVectorizer(stop_words='english', alternate_sign=False,
-                                   n_features=opts.n_features)
-    X_train = vectorizer.transform(data_train.data)
-else:
-    vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5,
-                                 stop_words='english')
-    X_train = vectorizer.fit_transform(data_train.data)
-duration = time() - t0
-print("done in %fs at %0.3fMB/s" % (duration, data_train_size_mb / duration))
-print("n_samples: %d, n_features: %d" % X_train.shape)
-print()
+    #Calculate norms
+    for ei in range(docs_len):
+        norms[ei] = sp.linalg.norm(tf[ei])
+        if ei %100 == 0:
+            print("norms", ei)
+    for i in range(docs_len):
+        for j in range(docs_len):
+            dm[i][j] = calcAngSparse(tf[i], tf[j], tf_transposed[:,j], norms[i], norms[j])
+            if j %10000 == 0:
+                print("j", j)
+        print("i", i)
+        break
+    return dm
 
-print("Extracting features from the test data using the same vectorizer")
-t0 = time()
-X_test = vectorizer.transform(data_test.data)
-duration = time() - t0
-print("done in %fs at %0.3fMB/s" % (duration, data_test_size_mb / duration))
-print("n_samples: %d, n_features: %d" % X_test.shape)
-print()
+def getDsimMatrixDense(tf):
+    tf = tf.transpose().toarray()
+    docs_len = tf.shape[0]
+    dm = np.zeros([docs_len, docs_len], dtype="float32")
 
-# mapping from integer feature name to original token string
-if opts.use_hashing:
-    feature_names = None
-else:
-    feature_names = vectorizer.get_feature_names()
+    for i in range(docs_len):
+        for j in range(docs_len):
+            dm[i][j] = calcAng(tf[i], tf[j])
+            if j %10000 == 0:
+                print("j", j)
+        print("i", i)
+    return dm
 
-if opts.select_chi2:
-    print("Extracting %d best features by a chi-squared test" %
-          opts.select_chi2)
-    t0 = time()
-    ch2 = SelectKBest(chi2, k=opts.select_chi2)
-    X_train = ch2.fit_transform(X_train, y_train)
-    X_test = ch2.transform(X_test)
-    if feature_names:
-        # keep selected feature names
-        feature_names = [feature_names[i] for i
-                         in ch2.get_support(indices=True)]
-    print("done in %fs" % (time() - t0))
-    print()
+import cProfile
+import re
+"""
+tf = np.random.uniform(low=0.0, high=8.0, size=(1000, 1000))
+for i in range(len(tf)):
+    for j in range(len(tf[i])):
+        if np.random.randint(low=0, high=2, size=1) == 0:
+            tf[i][j] = 0
 
-if feature_names:
-    feature_names = np.asarray(feature_names)
+ppmi = sp.csr_matrix(tf)
+print("saving")
+sp.save_npz("../data/temp/big_matrix", ppmi)
+print("saved")
+"""
+#ppmi = sp.load_npz("../data/temp/big_matrix.npz")
 
-
-def trim(s):
-    """Trim string to fit on terminal (assuming 80-column display)"""
-    return s if len(s) <= 80 else s[:77] + "..."
-
-
-# #############################################################################
-# Benchmark classifiers
-def benchmark(clf):
-    print('_' * 80)
-    print("Training: ")
-    print(clf)
-    t0 = time()
-    clf.fit(X_train, y_train)
-    train_time = time() - t0
-    print("train time: %0.3fs" % train_time)
-
-    t0 = time()
-    pred = clf.predict(X_test)
-    test_time = time() - t0
-    print("test time:  %0.3fs" % test_time)
-
-    score = metrics.accuracy_score(y_test, pred)
-    print("accuracy:   %0.3f" % score)
-
-    if hasattr(clf, 'coef_'):
-        print("dimensionality: %d" % clf.coef_.shape[1])
-        print("density: %f" % density(clf.coef_))
-
-        if opts.print_top10 and feature_names is not None:
-            print("top 10 keywords per class:")
-            for i, label in enumerate(target_names):
-                top10 = np.argsort(clf.coef_[i])[-10:]
-                print(trim("%s: %s" % (label, " ".join(feature_names[top10]))))
-        print()
-
-    if opts.print_report:
-        print("classification report:")
-        print(metrics.classification_report(y_test, pred,
-                                            target_names=target_names))
-
-    if opts.print_cm:
-        print("confusion matrix:")
-        print(metrics.confusion_matrix(y_test, pred))
-
-    print()
-    clf_descr = str(clf).split('(')[0]
-    return clf_descr, score, train_time, test_time
-
-
-results = []
-for clf, name in (
-        (RidgeClassifier(tol=1e-2, solver="lsqr"), "Ridge Classifier"),
-        (Perceptron(n_iter=50), "Perceptron"),
-        (PassiveAggressiveClassifier(n_iter=50), "Passive-Aggressive"),
-        (KNeighborsClassifier(n_neighbors=10), "kNN"),
-        (RandomForestClassifier(n_estimators=100), "Random forest")):
-    print('=' * 80)
-    print(name)
-    results.append(benchmark(clf))
-
-for penalty in ["l2", "l1"]:
-    print('=' * 80)
-    print("%s penalty" % penalty.upper())
-    # Train Liblinear model
-    results.append(benchmark(LinearSVC(penalty=penalty, dual=False,
-                                       tol=1e-3)))
-
-    # Train SGD model
-    results.append(benchmark(SGDClassifier(alpha=.0001, n_iter=50,
-                                           penalty=penalty)))
-
-# Train SGD with Elastic Net penalty
-print('=' * 80)
-print("Elastic-Net penalty")
-results.append(benchmark(SGDClassifier(alpha=.0001, n_iter=50,
-                                       penalty="elasticnet")))
-
-# Train NearestCentroid without threshold
-print('=' * 80)
-print("NearestCentroid (aka Rocchio classifier)")
-results.append(benchmark(NearestCentroid()))
-
-# Train sparse Naive Bayes classifiers
-print('=' * 80)
-print("Naive Bayes")
-results.append(benchmark(MultinomialNB(alpha=.01)))
-results.append(benchmark(BernoulliNB(alpha=.01)))
-
-print('=' * 80)
-print("LinearSVC with L1-based feature selection")
-# The smaller C, the stronger the regularization.
-# The more regularization, the more sparsity.
-results.append(benchmark(Pipeline([
-  ('feature_selection', SelectFromModel(LinearSVC(penalty="l1", dual=False,
-                                                  tol=1e-3))),
-  ('classification', LinearSVC(penalty="l2"))])))
-
-# make some plots
-
-indices = np.arange(len(results))
-
-results = [[x[i] for x in results] for i in range(4)]
-
-clf_names, score, training_time, test_time = results
-training_time = np.array(training_time) / np.max(training_time)
-test_time = np.array(test_time) / np.max(test_time)
-
-plt.figure(figsize=(12, 8))
-plt.title("Score")
-plt.barh(indices, score, .2, label="score", color='navy')
-plt.barh(indices + .3, training_time, .2, label="training time",
-         color='c')
-plt.barh(indices + .6, test_time, .2, label="test time", color='darkorange')
-plt.yticks(())
-plt.legend(loc='best')
-plt.subplots_adjust(left=.25)
-plt.subplots_adjust(top=.95)
-plt.subplots_adjust(bottom=.05)
-
-for i, c in zip(indices, clf_names):
-    plt.text(-.3, i, c)
-
-plt.show()
+#cProfile.run('getDsimMatrix(ppmi)')
 
 """
+orig_dm = getDsimMatrixDense(ppmi)
+sparse_dm = getDissimilarityMatrix(ppmi)
+
+for i in range(len(orig_dm)):
+    broke = False
+    for j in range(len(sparse_dm[i])):
+        if orig_dm[i][j] != sparse_dm[i][j]:
+            print(i, j, "sparse", sparse_dm[i][j], "non-sparse", orig_dm[i][j])
+            broke = True
+    if broke is False:
+        print("Clear")
+print("done")
+"""
+
+def calcAngSparse(e1, e2, e2_transposed, norm_1, norm_2):
+    dp = 0
+    s_dp = e1.dot(e2_transposed)
+    if s_dp.nnz != 0:
+        dp = s_dp.data[0]
+    norm_dp = norm_1 * norm_2
+    return (2 / pi) * np.arccos(dp / norm_dp)
+
+
+def getDsimMatrix(tf, chunk):
+
+    tf_transposed = sp.csc_matrix(tf)
+    tf = tf.transpose()
+    tf = sp.csr_matrix(tf).astype("float32")
+    docs_len = tf.shape[0]
+    dm = np.zeros([docs_len, docs_len], dtype="float32")
+    norms = np.zeros(docs_len, dtype="float32")
+
+    #Calculate norms
+    for ei in range(docs_len):
+        norms[ei] = sp.linalg.norm(tf[ei])
+        if ei %100 == 0:
+            print("norms", ei)
+    for i in range(docs_len):
+        for j in range(i+1):
+            dm[i][j] = calcAngSparse(tf[i], tf[j], tf_transposed[:,j], norms[i], norms[j])
+            if j %10000 == 0:
+                print("j", j)
+        print("i", i)
+    return dm
+
+
+#ppmi = sp.load_npz("../data/temp/big_matrix.npz")
+
+tf = np.random.uniform(low=0.0, high=8.0, size=(10, 10))
+for i in range(len(tf)):
+    for j in range(len(tf[i])):
+        if np.random.randint(low=0, high=2, size=1) == 0:
+            tf[i][j] = 0
+
+ppmi = sp.csr_matrix(tf)
+
+sparse_dm = getDsimMatrix(ppmi)
+
+print("dun")
+
+#cProfile.run('getDsimMatrix(ppmi)')
+"""
+#Get some test matrices
+m1=np.random.rand(5,500)
+m2=np.random.rand(10,500)
+m1_csr=csr_matrix(m1,dtype=np.float32)  #Sparse matrix 1
+m2_csc=csc_matrix(m2,dtype=np.float32)  #Sparse_matrix 2
+out=np.zeros((m1.shape[0],m2.shape[0]),np.float32)
+# fast m1.dot(m2.T)
+
+print("Sparse dot result")
+print(out)
+
+
 predicted_classes = [[0,1,1,0,1,1,1,0,1,0,1,1,1,0,0,0,0,0,0,0,1,1,1,1],
                      [0, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1, 0, 1, 1],
                      [0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1]]
@@ -304,7 +361,10 @@ real_classes = [[0,0,1,0,0,1,1,1,1,1,1,0,1,1,0,0,0,0,1,0,1,0,1,0],
 
 clf = tree.DecisionTreeClassifier(max_depth=3, criterion="entropy", class_weight="balanced")
 clf.fit(predicted_classes, real_classes)
+
+
 """
+
 """ test f1 score
 #Multi-label fake data
 predicted_classes = [[0,1,1,0,1,1,1,0,1,0,1,1,1,0,0,0,0,0,0,0,1,1,1,1],
@@ -376,3 +436,7 @@ print("f1 from formula, multi-label, micro average prec recall fscore support", 
 print("f1 from fbeta, multi-label, micro average prec recall fscore support", fbeta)
 
 """
+
+
+
+

@@ -268,7 +268,7 @@ def getAvailableEntities(entity_names_fns, data_type, classification):
 
 from sklearn.feature_extraction.text import TfidfTransformer
 
-def convertPPMI(mat):
+def convertPPMI(mat, return_sparse= False):
     """
      Compute the PPMI values for the raw co-occurrence matrix.
      PPMI values will be written to mat and it will get overwritten.
@@ -291,27 +291,45 @@ def convertPPMI(mat):
         print(j)
     mat = mat.toarray()
     P = N * mat * rowMat * colMat
-    P = np.fmax(np.zeros((nrows,ncols), dtype=np.float64), np.log(P))
+    P = np.fmax_n(np.zeros((nrows,ncols), dtype=np.float64), np.log(P))
+    if return_sparse:
+        P = sp.csr_matrix(P)
     return P
-
+import math
 def convertPPMISparse(mat):
     """
-     Compute the PPMI values for the raw co-occurrence matrix.
-     PPMI values will be written to mat and it will get overwritten.
+     Converted from code from svdmi
+     https://github.com/Bollegala/svdmi/blob/master/src/svdmi.py
      """
     (nrows, ncols) = mat.shape
+    print("no. of rows =", nrows)
+    print("no. of cols =", ncols)
     colTotals = mat.sum(axis=0)
     rowTotals = mat.sum(axis=1).T
     N = np.sum(rowTotals)
-    rowMat = np.ones((nrows, ncols), dtype=np.float)
+    rowMatSparse = np.zeros(nrows, dtype=np.float)
     for i in range(nrows):
-        rowMat[i,:] = 0 if rowTotals[0,i] == 0 else rowMat[i,:] * (1.0 / rowTotals[0,i])
-    colMat = np.ones((nrows, ncols), dtype=np.float)
+        if rowTotals[0, i] != 0:
+            rowMatSparse[i] = 1.0 / rowTotals[0, i]
+    colMatSparse = np.zeros(ncols, dtype=np.float)
     for j in range(ncols):
-        colMat[:,j] = 0 if colTotals[0,j] == 0 else (1.0 / colTotals[0,j])
-    P = N * mat.toarray() * rowMat * colMat
-    P = np.fmax(np.zeros((nrows,ncols), dtype=np.float64), np.log(P))
-    return sp.csr_matrix(P)
+        if colTotals[0, j] != 0:
+            colMatSparse[j] = 1.0 / colTotals[0, j]
+    P = N * mat
+    P = P.astype(np.float64)
+    for i in range(len(rowMatSparse)):
+        P[i] *= rowMatSparse[i]
+    for i in range(len(colMatSparse)):
+        P[:,i] *= colMatSparse[i]
+    cx = sp.coo_matrix(P)
+    for i, j, v in zip(cx.row, cx.col, cx.data):
+        if v > 0:
+            P[i,j] = max(math.log(v), 0)
+        else:
+            P[i, j] = 0
+    return P
+
+
 
 def convertToTfIDF(data_type, lowest_count, highest_count, freq_arrays_fn, class_type):
     freq = np.asarray(dt.import2dArray(freq_arrays_fn))
@@ -326,19 +344,19 @@ def convertToTfIDF(data_type, lowest_count, highest_count, freq_arrays_fn, class
 
 
 
-def printIndividualFromAll(data_type, type, lowest_count, max,  classification, all_fn=None, names_array = None):
+def printIndividualFromAll(data_type, type, lowest_count, max_n,  classification, all_fn=None, names_array = None):
     fn = "../data/" + data_type + "/bow/"
     if all_fn is None:
-        all_fn = fn + type + "/class-all-"+str(lowest_count)+"-"+str(max)+"-"+str(classification)
+        all_fn = fn + type + "/class-all-"+str(lowest_count)+"-"+str(max_n)+"-"+str(classification)
     if names_array is None:
-        names = dt.import1dArray(fn + "names/"+str(lowest_count)+"-"+str(max)+"-"+str(classification)+".txt")
+        names = dt.import1dArray(fn + "names/"+str(lowest_count)+"-"+str(max_n)+"-"+str(classification)+".txt")
     else:
         names = names_array
     with open(all_fn) as all:
         c = 0
         for la in all:
             convert = dt.convertLine(la)
-            dt.write1dArray(convert, fn+ type+"/class-"+str(names[c]+"-"+str(lowest_count)+"-"+str(max)+"-"+str(classification)))
+            dt.write1dArray(convert, fn+ type+"/class-"+str(names[c]+"-"+str(lowest_count)+"-"+str(max_n)+"-"+str(classification)))
             print(c, len(names), names[c])
             c+=1
     print("wrote individual from all")
@@ -937,8 +955,8 @@ exit()
 #trimRankings("../data/movies/nnet/spaces/films200.txt", "../data/"+data_type+"/classify/genres/available_indexes.txt", phrase_names, folder_name)
 
 """
-min=10
-max=1
+min_n=10
+max_n=1
 class_type = "movies"
 classification = "keywords"
 raw_fn = "../data/raw/previous work/movievectors/tokens/"
@@ -948,24 +966,24 @@ get_all = False
 additional_name = ""
 make_individual = True
 """
-def main(min, max, data_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn,
+def main(min_n, max_n, data_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn,
          use_all_files, sparse_matrix, word_count_amt, classification):
 
     getVectors(raw_fn, entity_name_fn, extension, "../data/"+data_type+"/bow/",
-           min, max, cut_first_line, get_all, additional_name,  make_individual, classification, use_all_files, 1000, data_type,
+           min_n, max_n, cut_first_line, get_all, additional_name,  make_individual, classification, use_all_files, 1000, data_type,
                sparse_matrix)
 
-    bow = sp.csr_matrix(dt.import2dArray("../data/"+data_type+"/bow/frequency/phrases/class-all-"+str(min)+"-" + str(max)+"-"+classification))
-    dt.write2dArray(convertPPMI( bow), "../data/"+data_type+"/bow/ppmi/class-all-"+str(min)+"-"+str(max)+"-" + classification)
+    bow = sp.csr_matrix(dt.import2dArray("../data/"+data_type+"/bow/frequency/phrases/class-all-"+str(min_n)+"-" + str(max_n)+"-"+classification))
+    dt.write2dArray(convertPPMI( bow), "../data/"+data_type+"/bow/ppmi/class-all-"+str(min_n)+"-"+str(max_n)+"-" + classification)
 
     print("indiviual from all")
-    printIndividualFromAll(data_type, "ppmi", min, max,  classification)
+    printIndividualFromAll(data_type, "ppmi", min_n, max_n,  classification)
 
-    printIndividualFromAll(data_type, "binary/phrases", min, max,  classification)
+    printIndividualFromAll(data_type, "binary/phrases", min_n, max_n,  classification)
 
-    convertToTfIDF(data_type, min, max, "../data/"+data_type+"/bow/frequency/phrases/class-all-"+str(min)+"-"+str(max)+"-"+classification, classification)
+    convertToTfIDF(data_type, min_n, max_n, "../data/"+data_type+"/bow/frequency/phrases/class-all-"+str(min_n)+"-"+str(max_n)+"-"+classification, classification)
 
-    printIndividualFromAll(data_type, "tfidf", min, max,  classification)
+    printIndividualFromAll(data_type, "tfidf", min_n, max_n,  classification)
 
 
 """ ratings conversion to class-all"""
@@ -1089,11 +1107,11 @@ cut_first_line = True
 entity_name_fn = "../data/raw/previous work/filmIds.txt"
 use_all_files = None#""
 word_count_amt = 0
-min=100
-max=10
+min_n=100
+max_n=10
 
 
-if  __name__ =='__main__':main(min, max, class_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn, use_all_files,
+if  __name__ =='__main__':main(min_n, max_n, class_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn, use_all_files,
                                sparse_matrix, word_count_amt, classification)
 
 
@@ -1105,11 +1123,11 @@ cut_first_line = True
 use_all_files =  "../data/raw/previous work/winevectors/"
 entity_name_fn = "../data/"+class_type+"/nnet/spaces/entitynames.txt"
 word_count_amt = 1000
-min=50
-max=10
+min_n=50
+max_n=10
 
 
-if  __name__ =='__main__':main(min, max, class_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn, use_all_files,
+if  __name__ =='__main__':main(min_n, max_n, class_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn, use_all_files,
                                sparse_matrix, word_count_amt, classification)
 
 
@@ -1121,11 +1139,11 @@ cut_first_line = False
 entity_name_fn = "../data/"+class_type+"/nnet/spaces/entitynames.txt"
 use_all_files = None#""
 word_count_amt = 0
-min=50
-max=10
+min_n=50
+max_n=10
 
 
-if  __name__ =='__main__':main(min, max, class_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn, use_all_files,
+if  __name__ =='__main__':main(min_n, max_n, class_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn, use_all_files,
                                sparse_matrix, word_count_amt, classification)
 
 """

@@ -43,28 +43,30 @@ def createPCA(tf, depth):
     return pos
 
 def getDissimilarityMatrix(tf):
-    tf = tf.transpose()
-    dm = np.empty([len(tf), len(tf)], dtype="float64")
+    tf = tf.transpose().astype(np.float32).toarray()
+    docs_len = tf.shape[0]
+
+    dm = np.empty([docs_len, docs_len], dtype="float32")
     pithing = 2/pi
-    norms = np.empty(len(tf), dtype="float64")
+    norms = np.empty(docs_len, dtype=np.float32)
 
     #Calculate norms
-    for ei in range(len(tf)):
+    for ei in range(docs_len):
         norms[ei] = np.linalg.norm(tf[ei])
         print("norm", ei)
-    dot_product = np.empty([len(tf), len(tf)], dtype="float64")
+    dot_product = np.empty([docs_len, docs_len], dtype="float32")
 
     #Calculate dot products
-    for ei in range(len(tf)):
-        for ej in range(len(tf)):
+    for ei in range(docs_len):
+        for ej in range(docs_len):
             dot_product[ei][ej] = np.dot(tf[ei], tf[ej])
         print("dp", ei)
 
-    norm_multiplied = np.empty([len(tf), len(tf)], dtype="float64")
+    norm_multiplied = np.empty([docs_len, docs_len], dtype="float32")
 
     # Calculate dot products
-    for ei in range(len(tf)):
-        for ej in range(len(tf)):
+    for ei in range(docs_len):
+        for ej in range(docs_len):
             norm_multiplied[ei][ej] = norms[ei] * norms[ej]
         print("dp", ei)
 
@@ -72,11 +74,126 @@ def getDissimilarityMatrix(tf):
     dot_product = dt.shortenFloatsNoFn(dot_product)
 
     #Get angular differences
-    for ei in range(len(tf)):
-        for ej in range(len(tf)):
+    for ei in range(docs_len):
+        for ej in range(docs_len):
             ang = pithing * np.arccos(dot_product[ei][ej] / norm_multiplied[ei][ej])
             dm[ei][ej] = ang
         print(ei)
+    return dm
+import scipy.sparse as sp
+import scipy.sparse.linalg
+def getDissimilarityMatrixSparse(tf_transposed):
+    tf_transposed = sp.csr_matrix(tf_transposed)
+    tf = sp.csr_matrix.transpose(tf_transposed)
+    tf = sp.csr_matrix(tf)
+    #flat_tf = tf.toarray()
+    docs_len = tf.shape[0]
+
+    dm = np.zeros([docs_len, docs_len], dtype="float64")
+    pithing = 2/pi
+    #norms = np.zeros(docs_len, dtype="float64")
+    s_norms = np.zeros(docs_len, dtype="float64")
+
+    #Calculate norms
+    for ei in range(docs_len):
+        #norms[ei] = np.linalg.norm(flat_tf[ei])
+        s_norms[ei] = sp.linalg.norm(tf[ei])
+        #print("norm", ei, norms[ei])
+        #print("s_norm", ei, s_norms[ei]
+        if ei %100 == 0:
+            print(ei)
+
+    #dot_product = np.zeros([docs_len, docs_len], dtype="float64")
+    s_dot_product = np.zeros([docs_len, docs_len], dtype="float64")
+
+    #Calculate dot products
+    for ei in range(docs_len):
+        for ej in range(docs_len):
+            s_dp = tf[ei].dot(tf_transposed[:, ej])
+            if len(s_dp.data) != 0:
+                s_dot_product[ei][ej] = s_dp.data[0]
+            print("dp", ej)
+            #print("dp", ei, docs_len, ej, dot_product[ei][ej])
+            #print("s_dp", ei, docs_len, ej, s_dot_product[ei][ej])
+        print("dp", ei)
+
+    norm_multiplied = np.zeros([docs_len, docs_len], dtype="float64")
+
+    # Calculate dot products
+    for ei in range(docs_len):
+        for ej in range(docs_len):
+            norm_multiplied[ei][ej] = s_norms[ei] * s_norms[ej]
+        print("norms", ei)
+
+
+    norm_multiplied = dt.shortenFloatsNoFn(norm_multiplied)
+    s_dot_product = dt.shortenFloatsNoFn(s_dot_product)
+
+    #Get angular differences
+    for ei in range(docs_len):
+        for ej in range(docs_len):
+            ang = pithing * np.arccos(s_dot_product[ei][ej] / norm_multiplied[ei][ej])
+            dm[ei][ej] = ang
+        print(ei)
+    return dm
+
+def calcAngSparse(e1, e2, e2_transposed, norm_1, norm_2):
+    dp = 0
+    s_dp = e1.dot(e2_transposed)
+    if s_dp.nnz != 0:
+        dp = s_dp.data[0]
+    norm_dp = norm_1 * norm_2
+    return (2 / pi) * np.arccos(dp / norm_dp)
+
+def calcAngChunk(e1, e2,  norm_1, norm_2):
+    dp = 0
+    dp = np.dot(e1, e2)
+    norm_dp = norm_1 * norm_2
+    return (2 / pi) * np.arccos(dp / norm_dp)
+
+def getDsimMatrix(tf):
+
+    tf_transposed = sp.csc_matrix(tf)
+    tf = tf.transpose()
+    tf = sp.csr_matrix(tf).astype("float32")
+    docs_len = tf.shape[0]
+    dm = np.zeros([docs_len, docs_len], dtype="float32")
+    norms = np.zeros(docs_len, dtype="float32")
+
+    #Calculate norms
+    for ei in range(docs_len):
+        norms[ei] = sp.linalg.norm(tf[ei])
+        if ei %100 == 0:
+            print("norms", ei)
+    for i in range(docs_len):
+        for j in range(i+1):
+            dm[i][j] = calcAngSparse(tf[i], tf[j], tf_transposed[:,j], norms[i], norms[j])
+            if j %10000 == 0:
+                print("j", j)
+        print("i", i)
+    return dm
+
+def calcAng(e1, e2, norm1, norm2):
+    return (2 / pi) * np.arccos(np.dot(e1, e2) / (norm1 * norm2))
+
+def getDsimMatrixDense(tf):
+    #tf = np.asarray(tf.astype(np.float32).transpose().toarray())
+    tf = tf.transpose()
+    docs_len = tf.shape[0]
+    dm = np.zeros([docs_len, docs_len], dtype="float32")
+    norms = np.zeros(docs_len, dtype="float32")
+
+    # Calculate norms
+    for ei in range(docs_len):
+        norms[ei] = np.linalg.norm(tf[ei])
+        if ei % 100 == 0:
+            print("norms", ei)
+    for i in range(docs_len):
+        for j in range(docs_len):
+            dm[i][j] = calcAng(tf[i], tf[j], norms[i], norms[j])
+            if j %10000 == 0:
+                print("j", j)
+        print("i", i)
     return dm
 
 pithing = 2/pi
@@ -97,12 +214,10 @@ def main(data_type, clf, min, max, depth, rewrite_files):
     shorten_fn = "../data/" + data_type + "/bow/ppmi/class-all-" + str(min) + "-" + str(max) \
                                            + "-" + clf+ "round"
 
-    term_frequency_fn = init_vector_path = "../data/" + data_type + "/bow/ppmi/class-all-30-18836-all"
+    term_frequency_fn = init_vector_path = "../data/" + data_type + "/bow/ppmi/class-all-"+str(min)+"-"+str(max)+"-all.npz"
     if dt.allFnsAlreadyExist([dm_fn, mds_fn, svd_fn, shorten_fn]):
         print("all files exist")
         exit()
-
-    tf = None
 
     #Get MDS
 
@@ -112,7 +227,7 @@ def main(data_type, clf, min, max, depth, rewrite_files):
         print("read dm")
     else:
         tf = dt.import2dArray(term_frequency_fn)
-        dm = getDissimilarityMatrix(tf)
+        dm = getDsimMatrix(tf)
         dt.write2dArray(dm, dm_fn)
         print("wrote dm")
 
@@ -154,11 +269,11 @@ def main(data_type, clf, min, max, depth, rewrite_files):
         print("wrote pca")
     """
 
-data_type = "newsgroups"
+data_type = "sentiment"
 clf = "all"
 
-min=30
-max=18836
+min=20
+max=37370
 depth = 100
 
 rewrite_files = True
