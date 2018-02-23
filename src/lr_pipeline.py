@@ -36,7 +36,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
          sim_t, one_for_all, ft_loss_a, ft_optimizer_a, bag_of_clusters_a, just_output, arrange_name, only_most_similar_a,
          dont_cluster_a, top_dt_clusters_a, by_class_finetune_a, cluster_duplicates_a, repeat_finetune_a, save_results_so_far,
          finetune_ppmi_a, average_nopav_ppmi_a, boc_average_a, identity_activation_a, ppmi_only_a, boc_only_a, pav_only_a,
-         multi_label_a ,use_dropout_in_finetune_a, lock_weights_and_redo_a, logistic_regression):
+         multi_label_a ,use_dropout_in_finetune_a, lock_weights_and_redo_a):
 
 
     prune_val = 2
@@ -369,9 +369,6 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
 
                         file_name = file_name + str(lowest_amt)
 
-                        if logistic_regression:
-                            file_name = file_name + "LR"
-
                         """ Begin Parameters """
                         """ SVM """
                         svm_type = "svm"
@@ -403,8 +400,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                         svm.createSVM(vector_path, bow_path, property_names_fn, file_name, lowest_count=lowest_amt,
                           highest_count=highest_count, data_type=data_type, get_kappa=score_type,
                           get_f1=False, svm_type=svm_type, getting_directions=True, threads=threads, rewrite_files=rewrite_files,
-                                      classification=new_classification_task, lowest_amt=lowest_amt, chunk_amt=chunk_amt, chunk_id=chunk_id,
-                                      logistic_regression=logistic_regression)
+                                      classification=new_classification_task, lowest_amt=lowest_amt, chunk_amt=chunk_amt, chunk_id=chunk_id)
+
 
                         if chunk_amt > 0:
                             if chunk_id == chunk_amt-1:
@@ -503,6 +500,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                 ft_score_fn = dt.getScores(ft_names_fn, scores_fn, names_fn, file_name, data_type)
 
                             else:
+
                                 cluster.getClusters(directions_fn, scores_fn, names_fn, False, dissim_amt, amount_to_start, file_name, cluster_amt,
                                                     dissim, min_score, data_type, rewrite_files=rewrite_files,
                                                          half_kappa_half_ndcg=half_ndcg_half_kappa, dont_cluster=dont_cluster)
@@ -617,7 +615,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                   get_f1=True, single_class=True,svm_type=svm_type, getting_directions=False, threads=1,
                                                   rewrite_files=rewrite_files,
                                                   classification=classification, lowest_amt=lowest_amt, chunk_amt=chunk_amt,
-                                                  chunk_id=chunk_id, logistic_regression=logistic_regression)
+                                                  chunk_id=chunk_id)
 
 
                                 file_name = current_fn
@@ -663,10 +661,6 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                     elif boc_average:
                                         file_name = file_name + " BOCPPMI"
                                         class_path = loc + data_type + "/finetune/boc/" + file_name + ".txt"
-                                    elif logistic_regression:
-                                        file_name = file_name + " LR"
-                                        class_path = loc + data_type + "/finetune/boc/" + file_name + ".txt"
-
                                     else:
                                         class_path = loc + data_type + "/finetune/" + file_name + ".txt"
                                     if boc_only:
@@ -689,9 +683,6 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                     classification=classification, lowest_amt=lowest_amt, limit_entities=limit_entities,highest_amt=highest_count)
                                     elif boc_average:
                                         fto.bagOfClusters(cluster_dict_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=rewrite_files,
-                                                    classification=classification, lowest_amt=lowest_amt, limit_entities=limit_entities,highest_amt=highest_count)
-                                    elif logistic_regression:
-                                        fto.logisticRegression(cluster_dict_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=rewrite_files,
                                                     classification=classification, lowest_amt=lowest_amt, limit_entities=limit_entities,highest_amt=highest_count)
                                     else:
                                         fto.pavPPMI(cluster_dict_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=rewrite_files,
@@ -1027,7 +1018,6 @@ vector_path_replacement =  loc+data_type+"/nnet/spaces/mds.txt"
 deep_size = [100]
 
 """
-"""
 data_type = "placetypes"
 classification_task = ["opencyc"]
 lowest_amt = 50
@@ -1047,28 +1037,6 @@ else:
 vector_path_replacement = loc+data_type+"/nnet/spaces/places"+str(places_size)+".txt"
 get_nnet_vectors_path = loc + data_type + "/nnet/spaces/places"+str(places_size)+".txt"
 deep_size = [places_size]
-"""
-
-data_type = "sentiment"
-classification_task = ["sentiment"]
-#arrange_name = arrange_name + classification_task[0]
-skip_nn = True
-
-space_name = "25kdefaultsentDEV"
-
-if skip_nn is False:
-    file_name = space_name
-else:
-    file_name = space_name
-lowest_amt = 30
-highest_amt = 10000
-init_vector_path = loc+data_type+"/nnet/spaces/.txt"
-get_nnet_vectors_path = loc+data_type+"/nnet/spaces/"+space_name+".txt"
-vector_path_replacement =  loc+data_type+"/nnet/spaces/"+space_name+".txt"
-#init_vector_path = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
-#get_nnet_vectors_path = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
-#vector_path_replacement = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
-deep_size = [32]
 
 if classification_task[0] == "geonames" or classification_task[0] == "foursquare" or classification_task[0] == "newsgroups" :
     hidden_activation = "tanh"
@@ -1120,7 +1088,7 @@ cutoff_start = 0.2
 use_dropout_in_finetune = [False]
 
 is_identity = [False]
-amount_of_finetune = [deep_size ]
+amount_of_finetune = [[places_size] ]
 ft_loss = ["mse"]
 ft_optimizer = ["adagrad"]
 min_size = 1
@@ -1135,9 +1103,9 @@ dissim = 0.0
 dissim_amt = [2]
 breakoff = [False]
 score_limit = [0.9] #23232 val to use for all terms
-amount_to_start = [8000]
+amount_to_start = [2000]
 cluster_multiplier = [2]#50 #23233  val to use for all terms
-score_type = [ "ndcg"]
+score_type = ["ndcg"]
 use_breakoff_dissim = [False]
 get_all = [False]
 half_ndcg_half_kappa = [False]
@@ -1187,11 +1155,9 @@ max_depth = [3]
 cross_val = 5
 one_for_all = False
 
-logistic_regression = True
-
 arrange_name = "cluster ratings BCS" + str(max_depth) + str(dt_dev)
 
-threads=3
+threads=1
 chunk_amt = 0
 chunk_id = 0
 for c in range(chunk_amt):
@@ -1315,6 +1281,7 @@ if len(args) > 0:
     multi_label = args[69]
     use_dropout_in_finetune = args[70]
     lock_weights_and_redo = args[71]
+
 if  __name__ =='__main__':
     print("begin main")
     for c in classification_task:
@@ -1330,4 +1297,4 @@ if  __name__ =='__main__':
                                        half_ndcg_half_kappa, sim_t, one_for_all, ft_loss, ft_optimizer, bag_of_clusters, just_output,
                                        arrange_name, only_most_similar, dont_cluster, top_dt_clusters, by_class_finetune, cluster_duplicates,
                                        repeat_finetune, save_results_so_far, finetune_ppmi, average_nopav_ppmi_a, boc_average, identity_activation,
-                                       ppmi_only, boc_only, pav_only, multi_label, use_dropout_in_finetune, lock_weights_and_redo, logistic_regression)
+                                       ppmi_only, boc_only, pav_only, multi_label, use_dropout_in_finetune, lock_weights_and_redo)

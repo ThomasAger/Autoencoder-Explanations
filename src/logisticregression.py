@@ -1,6 +1,5 @@
 
 from sklearn import svm
-from sklearn import linear_model
 import numpy as np
 from sklearn.metrics import cohen_kappa_score, mean_squared_error, f1_score, accuracy_score
 import data as dt
@@ -61,29 +60,6 @@ class SVM:
 
         return kappa_score, f1, direction,  0, 0
 
-
-    def runLR(self, property_name):
-        y = dt.import1dArray("../data/" + self.data_type + "/bow/binary/phrases/class-" + property_name + "-" + str(
-        self.lowest_amt) + "-" + str(self.higher_amt) + "-" + self.classification)
-
-        #x_train, y_train = dt.balanceClasses(x_train, y_train)
-        clf = linear_model.LogisticRegression(class_weight="balanced")
-
-        clf.fit(self.x_train, y)
-
-        direction = clf.coef_.tolist()[0]
-        y_pred = clf.predict(self.x_test)
-        y_pred = y_pred.tolist()
-        f1 = 0.0
-        kappa_score = cohen_kappa_score(y, y_pred)
-
-
-        ktau = 0.0
-        #ppmi_score, ppmi_ratio = get_ppmi_score(y_pred, property_name)
-
-        return kappa_score, f1, direction,  0, 0
-
-
     def runClassifySVM(self, y_test, y_train):
         clf = svm.LinearSVC(class_weight="balanced")
 
@@ -94,7 +70,7 @@ class SVM:
         acc = accuracy_score(y_test, y_pred)
         return f1, acc
 
-    def runAllSVMs(self, y_test, y_train, property_names, file_name, svm_type, getting_directions, threads, logistic_regression):
+    def runAllSVMs(self, y_test, y_train, property_names, file_name, svm_type, getting_directions, threads):
 
         kappa_scores = [0.0] * len(property_names)
         directions = [None] * len(property_names)
@@ -123,11 +99,7 @@ class SVM:
             property_names_a = np.delete(np.asarray(property_names_a), threads_indexes_to_remove, axis=0)
 
             pool = ThreadPool(threads)
-            if logistic_regression:
-                kappa = pool.starmap(self.runSVM, zip(property_names_a))
-            else:
-                kappa = pool.starmap(self.runLR, zip(property_names_a))
-
+            kappa = pool.starmap(self.runSVM, zip(property_names_a))
             pool.close()
             pool.join()
             for t in range(len(kappa)):
@@ -143,7 +115,7 @@ class SVM:
     def __init__(self, vector_path, class_path, property_names_fn, file_name, svm_type, training_size=10000,  lowest_count=200,
                       highest_count=21470000, get_kappa=True, get_f1=True, single_class=True, data_type="movies",
                       getting_directions=True, threads=1, chunk_amt = 0, chunk_id = 0,
-                     rewrite_files=False, classification="all", loc ="../data/", logistic_regression=False):
+                     rewrite_files=False, classification="all", loc ="../data/"):
 
         self.get_kappa = True
         self.get_f1 = get_f1
@@ -203,7 +175,7 @@ class SVM:
         if self.get_f1 is False:
             print("running svms")
             kappa_scores, directions, ktau_scores, property_names = self.runAllSVMs(y_test, y_train,property_names, file_name,
-                                                               svm_type, getting_directions, threads, logistic_regression)
+                                                               svm_type, getting_directions, threads)
 
             dt.write1dArray(kappa_scores, kappa_fn)
             dt.write2dArray(directions, directions_fn)
@@ -224,11 +196,11 @@ class SVM:
 def createSVM(vector_path, class_path, property_names_fn, file_name, svm_type, training_size=10000,  lowest_count=200,
                       highest_count=21470000, get_kappa=True, get_f1=True, single_class=True, data_type="movies",
                       getting_directions=True, threads=1, chunk_amt=0, chunk_id=0,
-                     rewrite_files=False, classification="genres", lowest_amt=0, loc="../data/", logistic_regression=False):
+                     rewrite_files=False, classification="genres", lowest_amt=0, loc="../data/"):
     svm = SVM(vector_path, class_path, property_names_fn, file_name, svm_type, training_size=training_size,  lowest_count=lowest_count,
                       highest_count=highest_count, get_kappa=get_kappa, get_f1=get_f1, single_class=single_class, data_type=data_type,
                       getting_directions=getting_directions, threads=threads, chunk_amt=chunk_amt, chunk_id=chunk_id,
-                     rewrite_files=rewrite_files, classification=classification, loc=loc, logistic_regression=logistic_regression)
+                     rewrite_files=rewrite_files, classification=classification, loc=loc)
 
 
 def main(vectors_fn, classes_fn, property_names, training_size, file_name, lowest_count, largest_count):
