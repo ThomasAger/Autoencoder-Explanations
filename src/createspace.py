@@ -166,7 +166,7 @@ def getDsimMatrix(tf):
         if ei %100 == 0:
             print("norms", ei)
     for i in range(docs_len):
-        for j in range(docs_len):
+        for j in range(i+1):
             dm[i][j] = calcAngSparse(tf[i], tf[j], tf_transposed[:,j], norms[i], norms[j])
             if j %10000 == 0:
                 print("j", j)
