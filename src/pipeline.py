@@ -1054,17 +1054,17 @@ classification_task = ["sentiment"]
 #arrange_name = arrange_name + classification_task[0]
 skip_nn = True
 
-space_name = "25kdefaultsentDEV"
+space_name = "MF5000 ML300 BS32 FBTrue DO0.3 RDO0.05 E64 ES16LS32 UAFalseSFFalse FState"
 
 if skip_nn is False:
-    file_name = space_name
+    file_name = "LSTMFstateNN5k30032"
 else:
-    file_name = space_name
+    file_name = "LSTMFstate5k30032"
 lowest_amt = 30
-highest_amt = 10000
+highest_amt = 5000
 init_vector_path = loc+data_type+"/nnet/spaces/.txt"
-get_nnet_vectors_path = loc+data_type+"/nnet/spaces/"+space_name+".txt"
-vector_path_replacement =  loc+data_type+"/nnet/spaces/"+space_name+".txt"
+get_nnet_vectors_path = loc+data_type+"/nnet/spaces/"+space_name+".npy"
+vector_path_replacement =  loc+data_type+"/nnet/spaces/"+space_name+".npy"
 #init_vector_path = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
 #get_nnet_vectors_path = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
 #vector_path_replacement = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
@@ -1135,9 +1135,9 @@ dissim = 0.0
 dissim_amt = [2]
 breakoff = [False]
 score_limit = [0.9] #23232 val to use for all terms
-amount_to_start = [8000]
-cluster_multiplier = [2]#50 #23233  val to use for all terms
-score_type = [ "ndcg"]
+amount_to_start = [5000]
+cluster_multiplier = [8]#50 #23233  val to use for all terms
+score_type = [ "kappa"]
 use_breakoff_dissim = [False]
 get_all = [False]
 half_ndcg_half_kappa = [False]
@@ -1179,19 +1179,19 @@ score_limit = [0.0]
 """
 hp_opt = True
 
-dt_dev = False
+dt_dev = True
 svm_classify = False
 rewrite_files = False
 max_depth = [3]
 
-cross_val = 5
+cross_val = 1
 one_for_all = False
 
-logistic_regression = True
+logistic_regression = False
 
 arrange_name = "cluster ratings BCS" + str(max_depth) + str(dt_dev)
 
-threads=3
+threads=5
 chunk_amt = 0
 chunk_id = 0
 for c in range(chunk_amt):

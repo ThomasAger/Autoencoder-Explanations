@@ -77,18 +77,22 @@ def balanceClasses(movie_vectors, class_array):
 
 
 def import2dArray(file_name, file_type="f"):
-    with open(file_name, "r") as infile:
-        if file_type == "i":
-            array = [list(map(int, line.strip().split())) for line in infile]
-        elif file_type == "f":
-            array = [list(map(float, line.strip().split())) for line in infile]
-        elif file_type == "discrete":
-            array = [list(line.strip().split()) for line in infile]
-            for dv in array:
-                for v in range(len(dv)):
-                    dv[v] = int(dv[v][:-1])
-        else:
-            array = [list(line.strip().split()) for line in infile]
+    if file_name[-4:] == ".npy":
+        array = np.load(file_name)#
+    else:
+        with open(file_name, "r") as infile:
+            if file_type == "i":
+                array = [list(map(int, line.strip().split())) for line in infile]
+            elif file_type == "f":
+                array = [list(map(float, line.strip().split())) for line in infile]
+            elif file_type == "discrete":
+                array = [list(line.strip().split()) for line in infile]
+                for dv in array:
+                    for v in range(len(dv)):
+                        dv[v] = int(dv[v][:-1])
+            else:
+                array = [list(line.strip().split()) for line in infile]
+
     print("successful import", file_name)
     return np.asarray(array)
 
