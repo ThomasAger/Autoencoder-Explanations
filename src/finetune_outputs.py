@@ -197,8 +197,37 @@ def bagOfClusters(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type
     dt.write2dArray(frq, pavPPMI_fn)
     return frq
 
-def getLROnBag(names, data_type, lowest_amt, highest_amt, classification):
-    print("Okay")
+def getLROnBag(cluster_dict, data_type, lowest_amt, highest_amt, classification, file_name):
+    bag_of_clusters = []
+    # Note, prior we used the PPMI values directly here somehow...
+    loc = "../data/"+data_type+"/bow/frequency/phrases/"
+    final_fn = ""
+    for c in range(len(cluster_dict)):
+        # Remove the colons
+        for f in range(len(cluster_dict[c])):
+            if ":" in cluster_dict[c][f]:
+                cluster_dict[c][f] = cluster_dict[c][f][:-1]
+        # Add all of the frequences together to make a bag-of-clusters
+        p1 = loc + "class-" + cluster_dict[c][0]
+        p2 = "-" + str(lowest_amt) + "-" + str(highest_amt) + "-" + classification
+        accum_freqs = [0.0] * len(dt.import1dArray(p1 + p2 ,"i"))
+        counter = 0
+        # For all the cluster terms
+        for f in cluster_dict[c]:
+            if ":" in f:
+                f = f[:-1]
+            # Import the class
+            class_to_add = dt.import1dArray(loc + "class-" + f + "-" + str(lowest_amt) + "-" + str(highest_amt) + "-" + classification, "i")
+            # Add the current class to the older one
+            accum_freqs = np.add(accum_freqs, class_to_add)
+            counter += 1
+        # Append this clusters frequences to the group of them
+        bag_of_clusters.append(accum_freqs)
+    # Convert to binary
+    for c in range(len(bag_of_clusters)):
+        bag_of_clusters[c][bag_of_clusters[c] > 1] = 1
+    dt.write2dArray(bag_of_clusters, "../data/" + data_type + "/bow/boc/" + file_name + ".txt")
+    return bag_of_clusters
 
 def logisticRegression(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type="movies", rewrite_files=False,limit_entities=False,
             classification="genres", lowest_amt=0, highest_amt=2147000000):
@@ -216,9 +245,7 @@ def logisticRegression(cluster_names_fn, ranking_fn, file_name, do_p=False, data
     ranking = dt.import2dArray(ranking_fn)
     names = dt.import2dArray(cluster_names_fn, "s")
 
-    frq = getLROnBag(names, data_type, lowest_amt, highest_amt, classification)
-
-
+    frq = getLROnBag(names, data_type, lowest_amt, highest_amt, classification, file_name)
 
     dt.write2dArray(frq, lr_fn)
     return frq

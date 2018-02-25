@@ -75,9 +75,11 @@ def balanceClasses(movie_vectors, class_array):
     return movie_vectors, class_array
 
 
-
+import scipy.sparse as sp
 def import2dArray(file_name, file_type="f"):
-    if file_name[-4:] == ".npy":
+    if file_name[-4:] == ".npz":
+        array = sp.load_npz(file_name)
+    elif file_name[-4:] == ".npy":
         array = np.load(file_name)#
     else:
         with open(file_name, "r") as infile:
@@ -278,6 +280,8 @@ def allFnsAlreadyExist(all_fns):
         return True
     return False
 def write2dArray(array, name):
+
+
     try:
         file = open(name, "w")
         print("starting array")
@@ -295,6 +299,13 @@ def write2dArray(array, name):
                 file.write(str(array[i][n]) + " ")
             file.write("\n")
         file.close()
+    try:
+        if name[-4:] == ".txt":
+            name = name[:-4]
+        array = np.asarray(array)
+        np.save(name, array)
+    except FileNotFoundError:
+        print("failed")
     print("successful write", name)
 """
 a = import2dArray("D:\Eclipse\MDS/class-all-30-18836-alldm", "f")

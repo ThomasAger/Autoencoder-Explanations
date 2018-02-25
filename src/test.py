@@ -34,6 +34,11 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.utils.extmath import density
 from sklearn import metrics
 
+mat = np.random.randint(0, 20, (20,20))
 
-for char in "fart":
-    print(char)
+print(mat)
+
+for m in mat:
+    m[m > 1] = 1
+
+print(mat)

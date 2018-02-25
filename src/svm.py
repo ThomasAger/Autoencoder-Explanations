@@ -17,6 +17,7 @@ import math
 from functools import partial
 from multiprocessing.dummy import Pool as ThreadPool
 from sys import exit
+import scipy.sparse as sp
 class SVM:
 
     def runGaussianSVM(self, y_test, y_train, x_train, x_test, get_kappa, get_f1):
@@ -40,9 +41,10 @@ class SVM:
         return kappa_score, direction, f1, 0, 0
 
     x_train, x_test, get_kappa, get_f1, data_type, classification, lowest_amt, higher_amt, y_train, y_test = None, None, False, False, "", "", 0, 0, None, None
-    def runSVM(self, property_name):
-        y = dt.import1dArray("../data/" + self.data_type + "/bow/binary/phrases/class-" + property_name + "-" + str(
-        self.lowest_amt) + "-" + str(self.higher_amt) + "-" + self.classification)
+    def runSVM(self, property_name, y=None):
+        if y is None:
+            y = dt.import1dArray("../data/" + self.data_type + "/bow/binary/phrases/class-" + property_name + "-" + str(
+            self.lowest_amt) + "-" + str(self.higher_amt) + "-" + self.classification)
 
         #x_train, y_train = dt.balanceClasses(x_train, y_train)
         clf = svm.LinearSVC(class_weight="balanced")
@@ -62,9 +64,12 @@ class SVM:
         return kappa_score, f1, direction,  0, 0
 
 
-    def runLR(self, property_name):
-        y = dt.import1dArray("../data/" + self.data_type + "/bow/binary/phrases/class-" + property_name + "-" + str(
-        self.lowest_amt) + "-" + str(self.higher_amt) + "-" + self.classification)
+    def runLR(self, property_name, y=None):
+        if y is None:
+            y = dt.import1dArray("../data/" + self.data_type + "/bow/binary/phrases/class-" + property_name + "-" + str(
+            self.lowest_amt) + "-" + str(self.higher_amt) + "-" + self.classification)
+        else:
+            y = y[0]
 
         #x_train, y_train = dt.balanceClasses(x_train, y_train)
         clf = linear_model.LogisticRegression(class_weight="balanced")
@@ -94,7 +99,7 @@ class SVM:
         acc = accuracy_score(y_test, y_pred)
         return f1, acc
 
-    def runAllSVMs(self, y_test, y_train, property_names, file_name, svm_type, getting_directions, threads, logistic_regression):
+    def runAllSVMs(self, y_test, y_train, property_names, file_name, svm_type, getting_directions, threads, logistic_regression, sparse_array):
 
         kappa_scores = [0.0] * len(property_names)
         directions = [None] * len(property_names)
@@ -105,10 +110,12 @@ class SVM:
         threads_indexes_to_remove = []
         for y in range(0, len(property_names), threads):
             property_names_a = [None] * threads
+            sparse_selection = [None] * threads
             get_kappa_a = [None] * threads
             for t in range(threads):
                 try:
                     property_names_a[t] = property_names[y+t]
+                    sparse_selection[t] = sparse_array[y+t]
                 except IndexError as e:
                     break
             for p in range(len(property_names_a)):
@@ -122,11 +129,20 @@ class SVM:
             property_names = np.delete(np.asarray(property_names), indexes_to_remove, axis=0)
             property_names_a = np.delete(np.asarray(property_names_a), threads_indexes_to_remove, axis=0)
 
+            sparse_selection = np.delete(sparse_selection, threads_indexes_to_remove, axis=0)
+
             pool = ThreadPool(threads)
             if logistic_regression:
-                kappa = pool.starmap(self.runSVM, zip(property_names_a))
+                if sparse_array is None:
+                    kappa = pool.starmap(self.runLR, zip(property_names_a))
+                else:
+                    kappa = pool.starmap(self.runLR, zip(property_names_a, zip(sparse_selection)))
+
             else:
-                kappa = pool.starmap(self.runLR, zip(property_names_a))
+                if sparse_array is None:
+                    kappa = pool.starmap(self.runSVM, zip(property_names_a))
+                else:
+                    kappa = pool.starmap(self.runSVM, zip(property_names_a, zip(sparse_selection)))
 
             pool.close()
             pool.join()
@@ -143,7 +159,7 @@ class SVM:
     def __init__(self, vector_path, class_path, property_names_fn, file_name, svm_type, training_size=10000,  lowest_count=200,
                       highest_count=21470000, get_kappa=True, get_f1=True, single_class=True, data_type="movies",
                       getting_directions=True, threads=1, chunk_amt = 0, chunk_id = 0,
-                     rewrite_files=False, classification="all", loc ="../data/", logistic_regression=False):
+                     rewrite_files=False, classification="all", loc ="../data/", logistic_regression=False, sparse_array_fn=None):
 
         self.get_kappa = True
         self.get_f1 = get_f1
@@ -174,6 +190,9 @@ class SVM:
         if not getting_directions:
             classes = np.asarray(dt.import2dArray(class_path))
             print("imported classes")
+
+
+
         property_names = dt.import1dArray(property_names_fn)
         print("imported propery names")
         if chunk_amt > 0:
@@ -184,6 +203,10 @@ class SVM:
             else:
                 property_names = dt.chunks(property_names, int((len(property_names) / chunk_amt)))[chunk_id]
 
+        if sparse_array_fn is not None:
+            sparse_array = dt.import2dArray(sparse_array_fn)
+        else:
+            sparse_array = None
 
         if not getting_directions:
             x_train, x_test, y_train, y_test = train_test_split(vectors, classes, test_size=0.3, random_state=0)
@@ -203,7 +226,7 @@ class SVM:
         if self.get_f1 is False:
             print("running svms")
             kappa_scores, directions, ktau_scores, property_names = self.runAllSVMs(y_test, y_train,property_names, file_name,
-                                                               svm_type, getting_directions, threads, logistic_regression)
+                                                               svm_type, getting_directions, threads, logistic_regression, sparse_array)
 
             dt.write1dArray(kappa_scores, kappa_fn)
             dt.write2dArray(directions, directions_fn)
@@ -224,11 +247,13 @@ class SVM:
 def createSVM(vector_path, class_path, property_names_fn, file_name, svm_type, training_size=10000,  lowest_count=200,
                       highest_count=21470000, get_kappa=True, get_f1=True, single_class=True, data_type="movies",
                       getting_directions=True, threads=1, chunk_amt=0, chunk_id=0,
-                     rewrite_files=False, classification="genres", lowest_amt=0, loc="../data/", logistic_regression=False):
+                     rewrite_files=False, classification="genres", lowest_amt=0, loc="../data/", logistic_regression=False,
+              sparse_array_fn=None):
     svm = SVM(vector_path, class_path, property_names_fn, file_name, svm_type, training_size=training_size,  lowest_count=lowest_count,
                       highest_count=highest_count, get_kappa=get_kappa, get_f1=get_f1, single_class=single_class, data_type=data_type,
                       getting_directions=getting_directions, threads=threads, chunk_amt=chunk_amt, chunk_id=chunk_id,
-                     rewrite_files=rewrite_files, classification=classification, loc=loc, logistic_regression=logistic_regression)
+                     rewrite_files=rewrite_files, classification=classification, loc=loc, logistic_regression=logistic_regression,
+              sparse_array_fn=sparse_array_fn)
 
 
 def main(vectors_fn, classes_fn, property_names, training_size, file_name, lowest_count, largest_count):
