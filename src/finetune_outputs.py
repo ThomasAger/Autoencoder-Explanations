@@ -197,40 +197,37 @@ def bagOfClusters(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type
     dt.write2dArray(frq, pavPPMI_fn)
     return frq
 
-def getLROnBag(cluster_dict, data_type, lowest_amt, highest_amt, classification, file_name):
+def getLROnBag(cluster_dict, data_type, lowest_amt, highest_amt, classification, file_name, names, sparse_freqs):
     bag_of_clusters = []
     # Note, prior we used the PPMI values directly here somehow...
-    loc = "../data/"+data_type+"/bow/frequency/phrases/"
-    final_fn = ""
     for c in range(len(cluster_dict)):
         # Remove the colons
         for f in range(len(cluster_dict[c])):
             if ":" in cluster_dict[c][f]:
                 cluster_dict[c][f] = cluster_dict[c][f][:-1]
         # Add all of the frequences together to make a bag-of-clusters
-        p1 = loc + "class-" + cluster_dict[c][0]
-        p2 = "-" + str(lowest_amt) + "-" + str(highest_amt) + "-" + classification
-        accum_freqs = [0.0] * len(dt.import1dArray(p1 + p2 ,"i"))
-        counter = 0
+        name = cluster_dict[c][0]
+        word_array = sparse_freqs[np.where(names == name)].toarray()
+        accum_freqs = np.zeros(shape=len(word_array), dtype=np.int64)
         # For all the cluster terms
-        for f in cluster_dict[c]:
-            if ":" in f:
-                f = f[:-1]
+        for name in cluster_dict[c]:
+            if ":" in name:
+                name = name[:-1]
             # Import the class
-            class_to_add = dt.import1dArray(loc + "class-" + f + "-" + str(lowest_amt) + "-" + str(highest_amt) + "-" + classification, "i")
+            class_to_add = sparse_freqs[np.where(names == name)].toarray()
             # Add the current class to the older one
             accum_freqs = np.add(accum_freqs, class_to_add)
-            counter += 1
         # Append this clusters frequences to the group of them
         bag_of_clusters.append(accum_freqs)
     # Convert to binary
     for c in range(len(bag_of_clusters)):
         bag_of_clusters[c][bag_of_clusters[c] > 1] = 1
+        bag_of_clusters[c] = bag_of_clusters[c][0] # For some reason the internal arrays are the single element of another array
     dt.write2dArray(bag_of_clusters, "../data/" + data_type + "/bow/boc/" + file_name + ".txt")
     return bag_of_clusters
 
 def logisticRegression(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type="movies", rewrite_files=False,limit_entities=False,
-            classification="genres", lowest_amt=0, highest_amt=2147000000):
+            classification="genres", lowest_amt=0, highest_amt=2147000000, sparse_freqs_fn=None, bow_names_fn=None):
     lr_fn = "../data/" + data_type + "/finetune/boc/" + file_name + ".txt"
     all_fns = [lr_fn]
     if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
@@ -242,10 +239,11 @@ def logisticRegression(cluster_names_fn, ranking_fn, file_name, do_p=False, data
     if limit_entities is False:
         classification = "all"
 
-    ranking = dt.import2dArray(ranking_fn)
-    names = dt.import2dArray(cluster_names_fn, "s")
+    cluster_names = dt.import2dArray(cluster_names_fn, "s")
+    bow_names = dt.import1dArray(bow_names_fn, "s")
+    sparse_freqs = dt.import2dArray(sparse_freqs_fn, return_sparse=True)
 
-    frq = getLROnBag(names, data_type, lowest_amt, highest_amt, classification, file_name)
+    frq = getLROnBag(cluster_names, data_type, lowest_amt, highest_amt, classification, file_name, bow_names, sparse_freqs)
 
     dt.write2dArray(frq, lr_fn)
     return frq

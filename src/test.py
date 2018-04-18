@@ -1,44 +1,182 @@
-from sklearn.metrics import precision_recall_fscore_support
-from sklearn.metrics import f1_score
+'''This example demonstrates the use of fasttext for text classification
+Based on Joulin et al's paper:
+Bags of Tricks for Efficient Text Classification
+https://arxiv.org/abs/1607.01759
+Results on IMDB datasets with uni and bi-gram embeddings:
+    Uni-gram: 0.8813 test accuracy after 5 epochs. 8s/epoch on i7 cpu.
+    Bi-gram : 0.9056 test accuracy after 5 epochs. 2s/epoch on GTx 980M gpu.
+'''
+
+from __future__ import print_function
 import numpy as np
 
-# Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
-#         Olivier Grisel <olivier.grisel@ensta.org>
-#         Mathieu Blondel <mathieu@mblondel.org>
-#         Lars Buitinck
-# License: BSD 3 clause
+from keras.preprocessing import sequence
+from keras.models import Sequential
+from keras.layers import Dense
+from keras.layers import GlobalAveragePooling1D
+from keras.datasets import imdb
+from keras.layers import Conv1D, Embedding,Dropout
+from keras.models import Model
+
+def create_ngram_set(input_list, ngram_value=2):
+    """
+    Extract a set of n-grams from a list of integers.
+    >>> create_ngram_set([1, 4, 9, 4, 1, 4], ngram_value=2)
+    {(4, 9), (4, 1), (1, 4), (9, 4)}
+    >>> create_ngram_set([1, 4, 9, 4, 1, 4], ngram_value=3)
+    [(1, 4, 9), (4, 9, 4), (9, 4, 1), (4, 1, 4)]
+    """
+    return set(zip(*[input_list[i:] for i in range(ngram_value)]))
 
 
-import logging
-import numpy as np
-from optparse import OptionParser
-import sys
-from time import time
-import matplotlib.pyplot as plt
+def add_ngram(sequences, token_indice, ngram_range=2):
+    """
+    Augment the input list of list (sequences) by appending n-grams values.
+    Example: adding bi-gram
+    >>> sequences = [[1, 3, 4, 5], [1, 3, 7, 9, 2]]
+    >>> token_indice = {(1, 3): 1337, (9, 2): 42, (4, 5): 2017}
+    >>> add_ngram(sequences, token_indice, ngram_range=2)
+    [[1, 3, 4, 5, 1337, 2017], [1, 3, 7, 9, 2, 1337, 42]]
+    Example: adding tri-gram
+    >>> sequences = [[1, 3, 4, 5], [1, 3, 7, 9, 2]]
+    >>> token_indice = {(1, 3): 1337, (9, 2): 42, (4, 5): 2017, (7, 9, 2): 2018}
+    >>> add_ngram(sequences, token_indice, ngram_range=3)
+    [[1, 3, 4, 5, 1337, 2017], [1, 3, 7, 9, 2, 1337, 42, 2018]]
+    """
+    new_sequences = []
+    for input_list in sequences:
+        new_list = input_list[:]
+        for ngram_value in range(2, ngram_range + 1):
+            for i in range(len(new_list) - ngram_value + 1):
+                ngram = tuple(new_list[i:i + ngram_value])
+                if ngram in token_indice:
+                    new_list.append(token_indice[ngram])
+        new_sequences.append(new_list)
 
-from sklearn.datasets import fetch_20newsgroups
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.feature_extraction.text import HashingVectorizer
-from sklearn.feature_selection import SelectFromModel
-from sklearn.feature_selection import SelectKBest, chi2
-from sklearn.linear_model import RidgeClassifier
-from sklearn.pipeline import Pipeline
-from sklearn.svm import LinearSVC
-from sklearn.linear_model import SGDClassifier
-from sklearn.linear_model import Perceptron
-from sklearn.linear_model import PassiveAggressiveClassifier
-from sklearn.naive_bayes import BernoulliNB, MultinomialNB
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.neighbors import NearestCentroid
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.utils.extmath import density
-from sklearn import metrics
+    return new_sequences
 
-mat = np.random.randint(0, 20, (20,20))
+# Set parameters:
+# ngram_range = 2 will add bi-grams features
+ngram_range = 2
+max_features = 20000
+maxlen = 400
+batch_size = 32
+embedding_dims = 50
+epochs = 5
+dropout = 0.8
+filters = 0
+kernel = 5
+test = False
 
-print(mat)
 
-for m in mat:
-    m[m > 1] = 1
+file_name = "fastText D" + str(dropout) + " F" + str(filters) + " K" + str(kernel)
 
-print(mat)
+data_type = "sentiment"
+
+
+print(file_name)
+
+
+print('Loading data...')
+(x_train, y_train), (x_test, y_test) = imdb.load_data(num_words=max_features)
+if test:
+    x_train = x_train[:100]
+    x_test = x_test[:100]
+    y_train = y_train[:100]
+    y_test = y_test[:100]
+
+x_dev = x_train[int(len(x_train) * 0.8):]
+y_dev = y_train[int(len(y_train) * 0.8):]
+x_train = x_train[:int(len(x_train) * 0.8)]
+y_train = y_train[:int(len(y_train) * 0.8)]
+
+print(len(x_train), 'train sequences')
+print(len(x_test), 'test sequences')
+print(len(x_dev), 'test sequences')
+print('Average train sequence length: {}'.format(np.mean(list(map(len, x_train)), dtype=int)))
+print('Average test sequence length: {}'.format(np.mean(list(map(len, x_test)), dtype=int)))
+print('Average dev sequence length: {}'.format(np.mean(list(map(len, x_dev)), dtype=int)))
+
+if ngram_range > 1:
+    print('Adding {}-gram features'.format(ngram_range))
+    # Create set of unique n-gram from the training set.
+    ngram_set = set()
+    for input_list in x_train:
+        for i in range(2, ngram_range + 1):
+            set_of_ngram = create_ngram_set(input_list, ngram_value=i)
+            ngram_set.update(set_of_ngram)
+
+    # Dictionary mapping n-gram token to a unique integer.
+    # Integer values are greater than max_features in order
+    # to avoid collision with existing features.
+    start_index = max_features + 1
+    token_indice = {v: k + start_index for k, v in enumerate(ngram_set)}
+    indice_token = {token_indice[k]: k for k in token_indice}
+
+    # max_features is the highest integer that could be found in the dataset.
+    max_features = np.max(list(indice_token.keys())) + 1
+
+    # Augmenting x_train and x_test with n-grams features
+    x_train = add_ngram(x_train, token_indice, ngram_range)
+    x_test = add_ngram(x_test, token_indice, ngram_range)
+    x_dev = add_ngram(x_dev, token_indice, ngram_range)
+    print('Average train sequence length: {}'.format(np.mean(list(map(len, x_train)), dtype=int)))
+    print('Average test sequence length: {}'.format(np.mean(list(map(len, x_test)), dtype=int)))
+    print('Average dev sequence length: {}'.format(np.mean(list(map(len, x_dev)), dtype=int)))
+
+
+print('Pad sequences (samples x time)')
+x_train = sequence.pad_sequences(x_train, maxlen=maxlen)
+x_test = sequence.pad_sequences(x_test, maxlen=maxlen)
+x_dev = sequence.pad_sequences(x_dev, maxlen=maxlen)
+
+
+
+print('x_train shape:', x_train.shape)
+print('x_test shape:', x_test.shape)
+print('x_dev shape:', x_dev.shape)
+
+print('Build model...')
+model = Sequential()
+
+# we start off with an efficient embedding layer which maps
+# our vocab indices into embedding_dims dimensions
+model.add(Embedding(max_features,
+                    embedding_dims,
+                    input_length=maxlen))
+
+if dropout > 0.0:
+    model.add(Dropout(0.8))
+
+if filters > 0:
+    model.add(Conv1D(16, 5, padding='valid', activation='relu', strides=1))
+# we add a GlobalAveragePooling1D, which will average the embeddings
+# of all words in the document
+model.add(GlobalAveragePooling1D())
+
+# We project onto a single unit output layer, and squash it with a sigmoid:
+model.add(Dense(1, activation='sigmoid'))
+
+model.compile(loss='binary_crossentropy',
+              optimizer='adam',
+              metrics=['accuracy'])
+
+model.fit(x_train, y_train,
+          batch_size=batch_size,
+          epochs=epochs,
+          validation_data=(x_dev, y_dev))
+
+scores = model.evaluate(x_dev, y_dev, batch_size=batch_size)
+
+print("scores")
+print(scores)
+
+model.save("../data/"+data_type+"/fastText/model/" + file_name + ".model")
+np.savetxt("../data/"+data_type+"/fastText/score/" + file_name + ".txt", scores)
+
+print("vectors")
+target_layer = model.layers[-2]
+outputs = target_layer(target_layer.input)
+m = Model(model.input, outputs)
+hidden_state = m.predict(np.concatenate((x_train, x_dev, x_test), axis=0))
+np.save("../data/"+data_type+"/fastText/vectors/" + file_name + ".npy", hidden_state)

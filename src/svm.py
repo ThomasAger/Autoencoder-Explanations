@@ -4,11 +4,7 @@ from sklearn import linear_model
 import numpy as np
 from sklearn.metrics import cohen_kappa_score, mean_squared_error, f1_score, accuracy_score
 import data as dt
-from scipy import  linalg
-import itertools
-from sklearn.model_selection import cross_val_score
 
-import random
 from sklearn.cross_validation import train_test_split
 
 from sklearn.model_selection import cross_val_score
@@ -40,53 +36,74 @@ class SVM:
         #ppmi_score, ppmi_ratio = get_ppmi_score(y_pred, property_name)
         return kappa_score, direction, f1, 0, 0
 
+    def perf_measure(self, y_actual, y_hat):
+        TP = 0
+        FP = 0
+        TN = 0
+        FN = 0
+
+        for i in range(len(y_hat)):
+            if y_actual[i] == 1 and y_hat[i] == 1:
+                TP += 1
+            if y_hat[i] == 1 and y_actual[i] == 0:
+                FP += 1
+            if y_actual[i] == 0 and y_hat[i] == 0:
+                TN += 1
+            if y_hat[i] == 0 and y_actual[i] == 1:
+                FN += 1
+
+        return TP, FP, TN, FN
+
     x_train, x_test, get_kappa, get_f1, data_type, classification, lowest_amt, higher_amt, y_train, y_test = None, None, False, False, "", "", 0, 0, None, None
     def runSVM(self, property_name, y=None):
         if y is None:
             y = dt.import1dArray("../data/" + self.data_type + "/bow/binary/phrases/class-" + property_name + "-" + str(
-            self.lowest_amt) + "-" + str(self.higher_amt) + "-" + self.classification)
-
+            self.lowest_amt) + "-" + str(self.higher_amt) + "-" + self.classification, file_type="i")
+        else:
+            y = y[0]
+        for i in range(len(y)):
+            if y[i] >= 1:
+                y[i] = 1
         #x_train, y_train = dt.balanceClasses(x_train, y_train)
-        clf = svm.LinearSVC(class_weight="balanced")
-
+        clf = svm.LinearSVC(class_weight="balanced", dual=False)
+        #if len(self.x_train) !=
         clf.fit(self.x_train, y)
-
         direction = clf.coef_.tolist()[0]
         y_pred = clf.predict(self.x_test)
         y_pred = y_pred.tolist()
-        f1 = 0.0
-        kappa_score = cohen_kappa_score(y, y_pred)
+        f1 = f1_score(y[:len(y_pred)], y_pred)
+        kappa_score = cohen_kappa_score(y[:len(y_pred)], y_pred)
+        acc = accuracy_score(y[:len(y_pred)], y_pred)
 
+        TP, FP, TN, FN = self.perf_measure(y, y_pred)
+        print("TP", TP, "FP", FP, "TN", TN, "FN", FN)
 
-        ktau = 0.0
-        #ppmi_score, ppmi_ratio = get_ppmi_score(y_pred, property_name)
-
-        return kappa_score, f1, direction,  0, 0
+        return kappa_score, f1, direction,  acc, 0, TP, FP, TN, FN
 
 
     def runLR(self, property_name, y=None):
         if y is None:
             y = dt.import1dArray("../data/" + self.data_type + "/bow/binary/phrases/class-" + property_name + "-" + str(
-            self.lowest_amt) + "-" + str(self.higher_amt) + "-" + self.classification)
+            self.lowest_amt) + "-" + str(self.higher_amt) + "-" + self.classification, file_type="i")
         else:
             y = y[0]
-
+        for i in range(len(y)):
+            if y[i] >= 1:
+                y[i] = 1
         #x_train, y_train = dt.balanceClasses(x_train, y_train)
-        clf = linear_model.LogisticRegression(class_weight="balanced")
-
+        clf = linear_model.LogisticRegression(class_weight="balanced", dual=False)
         clf.fit(self.x_train, y)
-
         direction = clf.coef_.tolist()[0]
         y_pred = clf.predict(self.x_test)
         y_pred = y_pred.tolist()
-        f1 = 0.0
-        kappa_score = cohen_kappa_score(y, y_pred)
+        f1 = f1_score(y[:len(y_pred)], y_pred)
+        kappa_score = cohen_kappa_score(y[:len(y_pred)], y_pred)
+        acc = accuracy_score(y[:len(y_pred)], y_pred)
+        TP, FP, TN, FN = self.perf_measure(y, y_pred)
 
-
-        ktau = 0.0
         #ppmi_score, ppmi_ratio = get_ppmi_score(y_pred, property_name)
 
-        return kappa_score, f1, direction,  0, 0
+        return kappa_score, f1, direction,  acc, 0, TP, FP, TN, FN
 
 
     def runClassifySVM(self, y_test, y_train):
@@ -104,6 +121,12 @@ class SVM:
         kappa_scores = [0.0] * len(property_names)
         directions = [None] * len(property_names)
         f1_scores = [0.0] * len(property_names)
+        accs = [0.0] * len(property_names)
+        TPs = [0.0] * len(property_names)
+        FPs = [0.0] * len(property_names)
+        TNs = [0.0] * len(property_names)
+        FNs = [0.0] * len(property_names)
+
         saved_x_trans = None
         saved_test_x_trans = None
         indexes_to_remove = []
@@ -115,7 +138,8 @@ class SVM:
             for t in range(threads):
                 try:
                     property_names_a[t] = property_names[y+t]
-                    sparse_selection[t] = sparse_array[y+t]
+                    if sparse_array is not None:
+                        sparse_selection[t] = sparse_array[y+t]
                 except IndexError as e:
                     break
             for p in range(len(property_names_a)):
@@ -126,6 +150,10 @@ class SVM:
             kappa_scores = np.delete(np.asarray(kappa_scores), indexes_to_remove, axis=0)
             directions = np.delete(np.asarray(directions), indexes_to_remove, axis=0)
             f1_scores = np.delete(np.asarray(f1_scores), indexes_to_remove, axis=0)
+            TPs = np.delete(np.asarray(TPs), indexes_to_remove, axis=0)
+            FPs = np.delete(np.asarray(FPs), indexes_to_remove, axis=0)
+            TNs = np.delete(np.asarray(TNs), indexes_to_remove, axis=0)
+            FNs = np.delete(np.asarray(FNs), indexes_to_remove, axis=0)
             property_names = np.delete(np.asarray(property_names), indexes_to_remove, axis=0)
             property_names_a = np.delete(np.asarray(property_names_a), threads_indexes_to_remove, axis=0)
 
@@ -150,16 +178,22 @@ class SVM:
                 kappa_scores[y+t] = kappa[t][0]
                 f1_scores[y+t] = kappa[t][1]
                 directions[y+t] = kappa[t][2]
-                print(y, "/", len(property_names), "Score", kappa[t][0],  kappa[t][1], property_names_a[t])
+                accs[y+t] = kappa[t][3]
+                TPs[y+t] = kappa[t][5]
+                FPs[y+t] = kappa[t][6]
+                TNs[y+t] = kappa[t][7]
+                FNs[y+t] = kappa[t][8]
+                print(y, "/", len(property_names), "Score", kappa[t][0], "f1", kappa[t][1], "acc", kappa[t][3], property_names_a[t])
 
 
 
-        return kappa_scores, directions, f1_scores, property_names
+        return kappa_scores, directions, f1_scores, property_names, accs, TPs, FPs, TNs, FNs
 
     def __init__(self, vector_path, class_path, property_names_fn, file_name, svm_type, training_size=10000,  lowest_count=200,
                       highest_count=21470000, get_kappa=True, get_f1=True, single_class=True, data_type="movies",
                       getting_directions=True, threads=1, chunk_amt = 0, chunk_id = 0,
-                     rewrite_files=False, classification="all", loc ="../data/", logistic_regression=False, sparse_array_fn=None):
+                     rewrite_files=False, classification="all", loc ="../data/", logistic_regression=False, sparse_array_fn=None,
+                 only_these_fn=None):
 
         self.get_kappa = True
         self.get_f1 = get_f1
@@ -175,6 +209,10 @@ class SVM:
         ktau_scores_fn = loc + data_type + "/svm/f1/" + file_name + ".txt"
         kappa_fn = loc + data_type + "/svm/kappa/" + file_name + ".txt"
         acc_fn = loc + data_type + "/svm/acc/" + file_name + ".txt"
+        TP_fn = loc + data_type + "/svm/stats/TP " + file_name + ".txt"
+        FP_fn = loc + data_type + "/svm/stats/FP " + file_name + ".txt"
+        TN_fn = loc + data_type + "/svm/stats/TN " + file_name + ".txt"
+        FN_fn = loc + data_type + "/svm/stats/FN " + file_name + ".txt"
 
         all_fns = [directions_fn, kappa_fn]
         if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
@@ -208,6 +246,13 @@ class SVM:
         else:
             sparse_array = None
 
+        if sparse_array is not None:
+            for s in range(len(sparse_array)):
+                if len(np.nonzero(sparse_array[s])[0]) <= 1:
+                    print("WILL FAIL", s, len(np.nonzero(sparse_array[s])[0]))
+                else:
+                    print(len(np.nonzero(sparse_array[s])[0]))
+
         if not getting_directions:
             x_train, x_test, y_train, y_test = train_test_split(vectors, classes, test_size=0.3, random_state=0)
         else:
@@ -223,14 +268,30 @@ class SVM:
         self.y_train = y_train
         self.y_test = y_test
 
+        if only_these_fn is not None:
+            only_these = dt.import1dArray(only_these_fn, "s")
+            inds = []
+            for s in range(len(property_names)):
+                for o in only_these:
+                    if property_names[s] == o:
+                        inds.append(s)
+                        break
+            sparse_array = sparse_array[inds]
+            property_names = property_names[inds]
+
         if self.get_f1 is False:
             print("running svms")
-            kappa_scores, directions, ktau_scores, property_names = self.runAllSVMs(y_test, y_train,property_names, file_name,
+            kappa_scores, directions, f1_scores, property_names, accs, TPs, FPs, TNs, FNs = self.runAllSVMs(y_test, y_train,property_names, file_name,
                                                                svm_type, getting_directions, threads, logistic_regression, sparse_array)
 
             dt.write1dArray(kappa_scores, kappa_fn)
             dt.write2dArray(directions, directions_fn)
-            dt.write1dArray(ktau_scores, ktau_scores_fn)
+            dt.write1dArray(f1_scores, ktau_scores_fn)
+            dt.write1dArray(accs, acc_fn)
+            dt.write1dArray(TPs, TP_fn)
+            dt.write1dArray(FPs, FP_fn)
+            dt.write1dArray(TNs, TN_fn)
+            dt.write1dArray(FNs, FN_fn)
             dt.write1dArray(property_names, property_names_fn + file_name + ".txt")
         else:
             final_f1 = []
@@ -248,17 +309,19 @@ def createSVM(vector_path, class_path, property_names_fn, file_name, svm_type, t
                       highest_count=21470000, get_kappa=True, get_f1=True, single_class=True, data_type="movies",
                       getting_directions=True, threads=1, chunk_amt=0, chunk_id=0,
                      rewrite_files=False, classification="genres", lowest_amt=0, loc="../data/", logistic_regression=False,
-              sparse_array_fn=None):
+              sparse_array_fn=None, only_these_fn=None):
     svm = SVM(vector_path, class_path, property_names_fn, file_name, svm_type, training_size=training_size,  lowest_count=lowest_count,
                       highest_count=highest_count, get_kappa=get_kappa, get_f1=get_f1, single_class=single_class, data_type=data_type,
                       getting_directions=getting_directions, threads=threads, chunk_amt=chunk_amt, chunk_id=chunk_id,
                      rewrite_files=rewrite_files, classification=classification, loc=loc, logistic_regression=logistic_regression,
-              sparse_array_fn=sparse_array_fn)
+              sparse_array_fn=sparse_array_fn, only_these_fn=only_these_fn)
 
 
 def main(vectors_fn, classes_fn, property_names, training_size, file_name, lowest_count, largest_count):
     SVM(vectors_fn, classes_fn, property_names, lowest_count=lowest_count,
         training_size=training_size, file_name=file_name, largest_count=largest_count)
+
+
 
 """
 data_type = "newsgroups"

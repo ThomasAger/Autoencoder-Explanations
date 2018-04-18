@@ -4,17 +4,12 @@ import pydotplus as pydot
 import math
 from sklearn import tree
 from sklearn.metrics import f1_score, accuracy_score
-from inspect import getmembers
-from sklearn.pipeline import Pipeline
-from sklearn.grid_search import GridSearchCV
-from sklearn.model_selection import train_test_split
 import jsbeautifier
-from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import cross_val_predict
 from sklearn.model_selection import KFold
 import random
 from sklearn.externals import joblib
 from sklearn.metrics import precision_recall_fscore_support
+import graphviz
 
 class DecisionTree:
     clf = None
@@ -61,24 +56,26 @@ class DecisionTree:
 
 
         vectors = np.asarray(dt.import2dArray(features_fn))
+        if data_type =="sentiment":
+            labels = np.asarray(dt.import1dArray(classes_fn, "i"))
+        else:
+            labels = np.asarray(dt.import2dArray(classes_fn, "i"))
 
-        labels = np.asarray(dt.import2dArray(classes_fn, "i"))
+            print("vectors", len(vectors), len(vectors[0]))
+            print("labels", len(labels), len(labels[0]))
 
-        print("vectors", len(vectors), len(vectors[0]))
-        print("labels", len(labels), len(labels[0]))
-
-        if len(vectors) != len(labels) and len(labels) > len(labels[0]):
+        if data_type == "sentiment" or len(vectors) != len(labels[0]):
             vectors = vectors.transpose()
 
         print("vectors", len(vectors), len(vectors[0]))
         cluster_names = dt.import2dArray(cluster_names_fn, "s")
         clusters = dt.import2dArray(clusters_fn, "f")
         original_vectors = vectors
-        if limit_entities is False and data_type != "newsgroups":
+        if limit_entities is False and data_type != "newsgroups" and data_type != "sentiment":
             vector_names = dt.import1dArray(vector_names_fn)
             limited_labels = dt.import1dArray(limited_label_fn)
             vectors = np.asarray(dt.match_entities(vectors, limited_labels, vector_names))
-
+        print("Past limit entities")
 
 
         for l in range(len(label_names)):
@@ -93,7 +90,7 @@ class DecisionTree:
         params  = []
 
 
-        if not multi_label:
+        if not multi_label and data_type != "sentiment":
             labels = labels.transpose()
             print("labels transposed")
             print("labels", len(labels), len(labels[0]))
@@ -107,6 +104,7 @@ class DecisionTree:
 
         all_y_test = []
         all_predictions = []
+        print("At label prediction")
         for l in range(len(labels)):
             """
             pipeline = Pipeline([('clf', tree.DecisionTreeClassifier(criterion=criterion, random_state=20000, class_weight=balance))])
@@ -151,7 +149,7 @@ class DecisionTree:
             else:
                 kf = KFold(n_splits=cv_splits, shuffle=False, random_state=None)
             c = 0
-            if data_type != "newsgroups":
+            if data_type != "newsgroups" and data_type != "sentiment":
                 for train, test in kf.split(vectors):
                     if split_to_use > -1:
                         if c != split_to_use:
@@ -166,13 +164,20 @@ class DecisionTree:
                     c += 1
                     if cv_splits == 1:
                         break
-            else:
+            elif data_type == "newsgroups":
                 ac_x_train =  [vectors[:int(11314 *0.8)]]
                 ac_y_train =  [labels[l][:int(11314 *0.8)]]
                 ac_x_test = [vectors[11314:]]
                 ac_y_test = [labels[l][11314:]]
                 ac_x_dev =  [vectors[int(11314 *0.8):11314]]
                 ac_y_dev =  [labels[l][int(11314 *0.8):11314]]
+            elif data_type == "sentiment":
+                ac_x_train =  [vectors[:int(25000 *0.8)]]
+                ac_y_train =  [labels[l][:int(25000 *0.8)]]
+                ac_x_test = [vectors[25000:]]
+                ac_y_test = [labels[l][25000:]]
+                ac_x_dev =  [vectors[int(25000 *0.8):25000]]
+                ac_y_dev =  [labels[l][int(25000 *0.8):25000]]
             predictions = []
 
             if development:

@@ -221,7 +221,12 @@ def main(data_type, clf, min, max, depth, rewrite_files):
 
     #Get MDS
 
+    tf = dt.import2dArray(term_frequency_fn).transpose()
+    pca = createSVD(tf, depth)
+    dt.write2dArray(pca, pca_fn)
 
+
+    """
     if dt.allFnsAlreadyExist([dm_fn]) and not rewrite_files:
         dm = dt.import2dArray(dm_fn)
         print("read dm")
@@ -230,7 +235,7 @@ def main(data_type, clf, min, max, depth, rewrite_files):
         dm = getDsimMatrix(tf)
         dt.write2dArray(dm, dm_fn)
         print("wrote dm")
-
+    """
     """ Pretty sure none of this works
     if dt.allFnsAlreadyExist([mds_fn]) and not rewrite_files:
         mds = dt.import2dArray(mds_fn)
@@ -272,8 +277,8 @@ def main(data_type, clf, min, max, depth, rewrite_files):
 data_type = "sentiment"
 clf = "all"
 
-min=20
-max=37370
+min=0
+max=None
 depth = 100
 
 rewrite_files = True

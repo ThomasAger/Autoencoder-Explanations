@@ -15,21 +15,23 @@ np.random.seed(1337)
 # Get frequencies, PPMI's, classes. Everything needed for directions
 skip_top = 0
 lowest_amt = skip_top
-highest_amt = None
+highest_amt = 0
 index_from = 2
-(x_train, y_train), (x_test, y_test) = imdb.load_data(num_words=highest_amt, skip_top=skip_top, index_from=index_from)
+classification = "all"
+bigrams = True
+
+if bigrams is False:
+    (x_train, y_train), (x_test, y_test) = imdb.load_data(num_words=highest_amt, skip_top=skip_top, index_from=index_from)
+else:
+    (x_train, y_train), (x_test, y_test) = imdb.load_data(num_words=0, skip_top=0, index_from=index_from)
 
 train_len = len(x_train)
 test_len = len(y_train)
 
 vectors = np.concatenate((x_train, x_test), axis=0)
 classes = np.concatenate((y_train, y_test), axis=0)
-
-
-print(len(vectors))
-print(len(classes))
-
-classification = "all"
+    #vectors = x_train[:int(len(x_train) * 0.8)]
+    #classes = y_train[:int(len(y_train) * 0.8)]
 
 
 word_to_id = imdb.get_word_index()
@@ -39,13 +41,56 @@ word_to_id["<START>"] = 1
 word_to_id["<OOV>"] = 2
 id_to_word = {value:key for key,value in word_to_id.items()}
 
-for id in x_train[0]:
-    print(id, end=' ')
-print("")
-for id in x_train[0]:
-    print(id_to_word[id], end=' ')
-print("")
+word_vectors = np.empty(shape=(len(vectors)), dtype=np.object) # Have to recreate original word vectors
+for s in range(len(vectors)):
+    word_sentence = []
+    for w in range(len(vectors[s])):
+        word_sentence.append(id_to_word[vectors[s][w]])
+    word_vectors[s] = word_sentence
 
+np.save("../data/raw/sentiment/corpus.npy", word_vectors)
+exit()
+import gensim.models.phrases
+
+phrases = gensim.models.Phrases(word_vectors)
+bigram = gensim.models.phrases.Phraser(phrases)
+phrase_vectors = [bigram[sentence] for sentence in word_vectors]
+
+from gensim import corpora
+dictionary = corpora.Dictionary(phrase_vectors)
+dictionary.filter_extremes(no_below=highest_amt)
+
+dfs_list = []
+words = []
+for i in range(len(dictionary.keys())):
+    words.append(dictionary[i])
+    dfs_list.append(dictionary.dfs[i])
+dt.write1dArray(words, "../data/sentiment/bow/names/" + str(lowest_amt) + "-" + str(highest_amt) + "-" + classification + ".txt")
+dt.write1dArray(dfs_list, "../data/sentiment/bow/frequency/global/" + str(lowest_amt) + "-" + str(highest_amt) + "-" + classification + ".txt")
+corpus = [dictionary.doc2bow(text) for text in phrase_vectors]
+exit()
+all_fn = "../data/sentiment/bow/frequency/phrases/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-" + classification
+all_fn_binary = "../data/sentiment/bow/binary/phrases/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-" + classification
+
+import gensim.matutils
+
+corpus = gensim.matutils.corpus2csc(corpus)
+
+sp.save_npz(all_fn, corpus)
+
+"""
+#all_fn = "../data/sentiment/bow/frequency/phrases/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-" + classification
+#corpus = sp.load_npz(all_fn + ".npz")
+print("saving")
+
+ppmi = mt.convertPPMI( corpus)
+
+ppmi_sparse = sp.csr_matrix(ppmi)
+
+ppmi_fn = "../data/sentiment/bow/ppmi/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-" + classification
+sp.save_npz(ppmi_fn, ppmi_sparse)
+"""
+"""
 for key,val in id_to_word.items():
     if val == "that":
         print(key)
@@ -72,6 +117,7 @@ for i in range(skip_top):
 for w in word_list:
     new_word_list.append(w)
 """
+"""
 for x in x_train:
     run = False
     for n in range(len(x)):
@@ -91,6 +137,7 @@ for x in x_train:
         except KeyError:
             print("fail")
     break
+"""
 """
 import codecs
 decoding_table = (
@@ -268,7 +315,7 @@ decoding_table = (
     '\xab'     #  0xAB -> LEFT-POINTING DOUBLE ANGLE QUOTATION MARK
     '\xac'     #  0xAC -> NOT SIGN
     '\xad'     #  0xAD -> SOFT HYPHEN
-    '\xae'     #  0xAE -> REGISTERED SIGN
+    '\xae'     #  0xAE -> REGISTEREvectorsD SIGN
     '\xaf'     #  0xAF -> MACRON
     '\xb0'     #  0xB0 -> DEGREE SIGN
     '\xb1'     #  0xB1 -> PLUS-MINUS SIGN
@@ -352,6 +399,7 @@ decoding_table = (
     '\xff'     #  0xFF -> LATIN SMALL LETTER Y WITH DIAERESIS
 )
 
+
 import collections
 
 encoding_table=codecs.charmap_build(decoding_table)
@@ -390,36 +438,39 @@ print("transposing")
 tf = np.asarray(tf, dtype="int").transpose()
 tf_binary = np.asarray(tf_binary, dtype="int").transpose()
 
+tf_sparse = sp.csr_matrix(tf)
+tf_binary_sparse = sp.csr_matrix(tf_binary)
+
+sp.save_npz(all_fn_binary, tf_binary_sparse)
+sp.save_npz(all_fn, tf_sparse)
+
 print("saving")
-#dt.write2dArray(tf_binary, all_fn_binary)
-dt.write2dArray(tf, all_fn)
 
 #mt.printIndividualFromAll("sentiment",  "frequency/phrases", lowest_amt, highest_amt, classification, all_fn=all_fn, names_array=word_list)
 #mt.printIndividualFromAll("sentiment",  "binary/phrases", lowest_amt, highest_amt, classification, all_fn=all_fn_binary, names_array=word_list)
 
 ppmi_fn = "../data/sentiment/bow/ppmi/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-" + classification
 #if dt.fileExists(ppmi_fn) is False:
-tf = sp.csr_matrix(tf)
-ppmi = mt.convertPPMI( tf)
+
+ppmi = mt.convertPPMI( tf_sparse)
+
+ppmi_sparse = sp.csr_matrix(ppmi)
+
+sp.save_npz(ppmi_fn, ppmi_sparse)
 dt.write2dArray(ppmi, ppmi_fn)
 #mt.printIndividualFromAll("sentiment",  "ppmi", lowest_amt, highest_amt, classification, all_fn=all_fn, names_array=word_list)
+dt.write2dArray(tf_binary, all_fn_binary)
+dt.write2dArray(tf, all_fn)
 
 """
+
 print("1")
 classes = np.asarray(classes, dtype=np.int32)
 print(2)
-classes_dense = np.zeros(shape=(len(classes), np.amax(classes)+1 ), dtype=np.int8)
 print(3)
-for c in range(len(classes)):
-    classes_dense[c][classes[c]] = 1
 print(4)
-names = list(sentiment_train.target_names)
+names = ["sentiment"]
 dt.write1dArray(names, "../data/sentiment/classify/sentiment/names.txt")
-classes_dense = classes_dense.transpose()
-for c in range(len(classes_dense)):
-    dt.write1dArray(classes_dense[c], "../data/sentiment/classify/sentiment/class-" + names[c])
-classes_dense = classes_dense.transpose()
-
-dt.write2dArray(classes_dense,"../data/sentiment/classify/sentiment/class-all")
-
-"""
+dt.write1dArray(classes, "../data/sentiment/classify/sentiment/class-" + "sentiment")
+dt.write1dArray(classes,"../data/sentiment/classify/sentiment/class-all")
+dt.write1dArray(list(range(len(classes))), "../data/sentiment/classify/sentiment/available_entities.txt")
