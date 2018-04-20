@@ -48,8 +48,8 @@ for s in range(len(vectors)):
         word_sentence.append(id_to_word[vectors[s][w]])
     word_vectors[s] = word_sentence
 
-np.save("../data/raw/sentiment/corpus.npy", word_vectors)
-exit()
+
+
 import gensim.models.phrases
 
 phrases = gensim.models.Phrases(word_vectors)

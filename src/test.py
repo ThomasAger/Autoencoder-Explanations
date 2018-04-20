@@ -10,75 +10,92 @@ Results on IMDB datasets with uni and bi-gram embeddings:
 from __future__ import print_function
 import numpy as np
 
-from keras.preprocessing import sequence
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers import GlobalAveragePooling1D
-from keras.datasets import imdb
 from keras.layers import Conv1D, Embedding,Dropout
 from keras.models import Model
-
-def create_ngram_set(input_list, ngram_value=2):
-    """
-    Extract a set of n-grams from a list of integers.
-    >>> create_ngram_set([1, 4, 9, 4, 1, 4], ngram_value=2)
-    {(4, 9), (4, 1), (1, 4), (9, 4)}
-    >>> create_ngram_set([1, 4, 9, 4, 1, 4], ngram_value=3)
-    [(1, 4, 9), (4, 9, 4), (9, 4, 1), (4, 1, 4)]
-    """
-    return set(zip(*[input_list[i:] for i in range(ngram_value)]))
+from keras.metrics import categorical_accuracy
+from keras.callbacks import TensorBoard
+from keras.models import load_model
+import os
+import loaddata
 
 
-def add_ngram(sequences, token_indice, ngram_range=2):
-    """
-    Augment the input list of list (sequences) by appending n-grams values.
-    Example: adding bi-gram
-    >>> sequences = [[1, 3, 4, 5], [1, 3, 7, 9, 2]]
-    >>> token_indice = {(1, 3): 1337, (9, 2): 42, (4, 5): 2017}
-    >>> add_ngram(sequences, token_indice, ngram_range=2)
-    [[1, 3, 4, 5, 1337, 2017], [1, 3, 7, 9, 2, 1337, 42]]
-    Example: adding tri-gram
-    >>> sequences = [[1, 3, 4, 5], [1, 3, 7, 9, 2]]
-    >>> token_indice = {(1, 3): 1337, (9, 2): 42, (4, 5): 2017, (7, 9, 2): 2018}
-    >>> add_ngram(sequences, token_indice, ngram_range=3)
-    [[1, 3, 4, 5, 1337, 2017], [1, 3, 7, 9, 2, 1337, 42, 2018]]
-    """
-    new_sequences = []
-    for input_list in sequences:
-        new_list = input_list[:]
-        for ngram_value in range(2, ngram_range + 1):
-            for i in range(len(new_list) - ngram_value + 1):
-                ngram = tuple(new_list[i:i + ngram_value])
-                if ngram in token_indice:
-                    new_list.append(token_indice[ngram])
-        new_sequences.append(new_list)
-
-    return new_sequences
-
+data_type = "newsgroups"
 # Set parameters:
 # ngram_range = 2 will add bi-grams features
-ngram_range = 2
-max_features = 20000
-maxlen = 400
-batch_size = 32
-embedding_dims = 50
-epochs = 5
-dropout = 0.8
-filters = 0
-kernel = 5
-test = False
+if data_type == "sentiment":
+    ngram_range = 1
+    max_features = 20000
+    maxlen = 400
+    batch_size = 32
+    embedding_dims = 50
+    epochs = 20
+    top_n = 5
+    test = False
+    use_pretrained_vectors = False
+else:
+    ngram_range = 1
+    max_features = 20000
+    maxlen = 200
+    batch_size = 32
+    embedding_dims = 300
+    epochs = 20
+    top_n = 5
+    test = False
+    use_pretrained_vectors = True
 
+embedding_matrix = None
+if use_pretrained_vectors:
+    matrix_fn =  "../../Interpretable LSTM/data/"+data_type+"/matrix/google_news_no_bigram_IMDB_words.npy"
+    embedding_matrix = np.load(matrix_fn)
+    max_features = len(embedding_matrix)
+    embedding_matrix = [embedding_matrix]
+    embedding_dims = 300
 
-file_name = "fastText D" + str(dropout) + " F" + str(filters) + " K" + str(kernel)
-
-data_type = "sentiment"
-
+file_name = "fastText E" + str(embedding_dims) + " ML" + str(maxlen) + " MF" + str(max_features) + " E" + str(epochs) + " NG" + str(ngram_range) + " PRE" + str(use_pretrained_vectors)
 
 print(file_name)
 
+folder_name = "../data/raw/" + data_type + "/"
 
-print('Loading data...')
-(x_train, y_train), (x_test, y_test) = imdb.load_data(num_words=max_features)
+
+if data_type == "sentiment":
+    file_name = folder_name + "MF " + str(max_features) + " NG" + str(ngram_range) + " ML" + str(
+        maxlen) + " Test" + str(test)
+    x_train_fn = file_name + " x_train.npy"
+    x_test_fn = file_name + " x_train.npy"
+    x_dev_fn = file_name + " x_train.npy"
+    y_train_fn = file_name + " x_train.npy"
+    y_test_fn = file_name + " x_train.npy"
+    y_dev_fn = file_name + " x_train.npy"
+    if os.path.exists(x_train_fn) is False:
+        x_train, x_test, y_train, y_test = loaddata.getIMDBSequences(max_features, ngram_range, maxlen)
+        np.save(x_train_fn, x_train)
+        np.save(y_train_fn, y_train)
+        np.save(x_test_fn, x_test)
+        np.save(y_test_fn, y_test)
+    else:
+        x_train = np.load(x_train_fn)
+        x_test = np.load(x_test_fn)
+        y_train = np.load(y_train_fn)
+        y_test = np.load(y_test_fn)
+    output_size = 1
+    output_activation = "sigmoid"
+    metric = 'accuracy'
+    loss = 'binary_crossentropy'
+else:
+    x_train = np.load(folder_name + "x_train.npy")
+    x_test = np.load(folder_name + "x_test.npy")
+    y_train = np.load(folder_name + "y_train.npy")
+    y_test = np.load(folder_name + "y_test.npy")
+    x_train, x_test = loaddata.limitCorpus(x_train, x_test, ngram_range, max_features, maxlen)
+    output_size = 20
+    output_activation = "softmax"
+    metric = categorical_accuracy
+    loss = 'categorical_crossentropy'
+
 if test:
     x_train = x_train[:100]
     x_test = x_test[:100]
@@ -90,93 +107,47 @@ y_dev = y_train[int(len(y_train) * 0.8):]
 x_train = x_train[:int(len(x_train) * 0.8)]
 y_train = y_train[:int(len(y_train) * 0.8)]
 
-print(len(x_train), 'train sequences')
-print(len(x_test), 'test sequences')
-print(len(x_dev), 'test sequences')
-print('Average train sequence length: {}'.format(np.mean(list(map(len, x_train)), dtype=int)))
-print('Average test sequence length: {}'.format(np.mean(list(map(len, x_test)), dtype=int)))
-print('Average dev sequence length: {}'.format(np.mean(list(map(len, x_dev)), dtype=int)))
 
-if ngram_range > 1:
-    print('Adding {}-gram features'.format(ngram_range))
-    # Create set of unique n-gram from the training set.
-    ngram_set = set()
-    for input_list in x_train:
-        for i in range(2, ngram_range + 1):
-            set_of_ngram = create_ngram_set(input_list, ngram_value=i)
-            ngram_set.update(set_of_ngram)
+model_fn = "../data/"+data_type+"/fastText/model/" + file_name + ".model"
+score_fn = "../data/"+data_type+"/fastText/score/" + file_name + ".txt"
 
-    # Dictionary mapping n-gram token to a unique integer.
-    # Integer values are greater than max_features in order
-    # to avoid collision with existing features.
-    start_index = max_features + 1
-    token_indice = {v: k + start_index for k, v in enumerate(ngram_set)}
-    indice_token = {token_indice[k]: k for k in token_indice}
+if os.path.exists(model_fn) is False:
 
-    # max_features is the highest integer that could be found in the dataset.
-    max_features = np.max(list(indice_token.keys())) + 1
+    tensorboard = TensorBoard(log_dir='/home/tom/Desktop/Logs/'+str(data_type)+"/"+file_name+'/', histogram_freq=0,
+                                  write_graph=True, write_images=True)
 
-    # Augmenting x_train and x_test with n-grams features
-    x_train = add_ngram(x_train, token_indice, ngram_range)
-    x_test = add_ngram(x_test, token_indice, ngram_range)
-    x_dev = add_ngram(x_dev, token_indice, ngram_range)
-    print('Average train sequence length: {}'.format(np.mean(list(map(len, x_train)), dtype=int)))
-    print('Average test sequence length: {}'.format(np.mean(list(map(len, x_test)), dtype=int)))
-    print('Average dev sequence length: {}'.format(np.mean(list(map(len, x_dev)), dtype=int)))
+    model = Sequential()
 
 
-print('Pad sequences (samples x time)')
-x_train = sequence.pad_sequences(x_train, maxlen=maxlen)
-x_test = sequence.pad_sequences(x_test, maxlen=maxlen)
-x_dev = sequence.pad_sequences(x_dev, maxlen=maxlen)
+    # we start off with an efficient embedding layer which maps
+    # our vocab indices into embedding_dims dimensions
+    model.add(Embedding(max_features, embedding_dims, weights=embedding_matrix, input_length=maxlen, trainable=True))
 
+    # we add a GlobalAveragePooling1D, which will average the embeddings
+    # of all words in the document
+    model.add(GlobalAveragePooling1D())
 
+    # We project onto a single unit output layer, and squash it with a sigmoid:
+    model.add(Dense(output_size, activation=output_activation))
 
-print('x_train shape:', x_train.shape)
-print('x_test shape:', x_test.shape)
-print('x_dev shape:', x_dev.shape)
+    model.compile(loss=loss,
+                  optimizer='adam',
+                  metrics=[metric])
 
-print('Build model...')
-model = Sequential()
+    model.fit(x_train, y_train,
+              batch_size=batch_size,
+              epochs=epochs,
+              validation_data=(x_dev, y_dev), callbacks=[tensorboard])
+    scores = model.evaluate(x_dev, y_dev, batch_size=batch_size)
+    model.save(model_fn)
+    np.savetxt(score_fn, scores)
+    print(scores)
 
-# we start off with an efficient embedding layer which maps
-# our vocab indices into embedding_dims dimensions
-model.add(Embedding(max_features,
-                    embedding_dims,
-                    input_length=maxlen))
-
-if dropout > 0.0:
-    model.add(Dropout(0.8))
-
-if filters > 0:
-    model.add(Conv1D(16, 5, padding='valid', activation='relu', strides=1))
-# we add a GlobalAveragePooling1D, which will average the embeddings
-# of all words in the document
-model.add(GlobalAveragePooling1D())
-
-# We project onto a single unit output layer, and squash it with a sigmoid:
-model.add(Dense(1, activation='sigmoid'))
-
-model.compile(loss='binary_crossentropy',
-              optimizer='adam',
-              metrics=['accuracy'])
-
-model.fit(x_train, y_train,
-          batch_size=batch_size,
-          epochs=epochs,
-          validation_data=(x_dev, y_dev))
-
-scores = model.evaluate(x_dev, y_dev, batch_size=batch_size)
-
-print("scores")
-print(scores)
-
-model.save("../data/"+data_type+"/fastText/model/" + file_name + ".model")
-np.savetxt("../data/"+data_type+"/fastText/score/" + file_name + ".txt", scores)
-
-print("vectors")
-target_layer = model.layers[-2]
-outputs = target_layer(target_layer.input)
-m = Model(model.input, outputs)
-hidden_state = m.predict(np.concatenate((x_train, x_dev, x_test), axis=0))
-np.save("../data/"+data_type+"/fastText/vectors/" + file_name + ".npy", hidden_state)
+vector_path = "../data/"+data_type+"/fastText/vectors/" + file_name + ".npy"
+if os.path.exists(vector_path) is False:
+    model = load_model(model_fn)
+    target_layer = model.layers[-2]
+    outputs = target_layer(target_layer.input)
+    m = Model(model.input, outputs)
+    hidden_state = m.predict(np.concatenate((x_train, x_dev, x_test), axis=0))
+    np.save(vector_path, hidden_state)

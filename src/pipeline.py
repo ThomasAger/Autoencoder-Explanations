@@ -538,7 +538,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                      dissim, min_score, data_type, rewrite_files=rewrite_files,
                                                          half_kappa_half_ndcg=half_ndcg_half_kappa, dont_cluster=dont_cluster)
                                 else:
-                                    ms.saveClusters(directions_fn, scores_fn, names_fn, file_name, amount_to_start, data_type, rewrite_files=True)
+                                    ms.saveClusters(directions_fn, scores_fn, names_fn, file_name, amount_to_start, data_type, rewrite_files=rewrite_files)
 
                             #save_fn = ""
 
@@ -603,7 +603,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
 
                             tree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_dict_fn, file_name + " " + classification_task, 10000,
                                       max_depth=max_depth, balance="balanced", criterion="entropy", save_details=True, cv_splits=cv_splits, split_to_use=splits,
-                                      data_type=data_type, csv_fn=csv_name, rewrite_files=True, development=dt_dev, limit_entities=limit_entities,
+                                      data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files, development=dt_dev, limit_entities=limit_entities,
                                               limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn = clusters_fn,
                                               cluster_duplicates = cluster_duplicates, save_results_so_far=save_results_so_far,
                                               multi_label=multi_label)
@@ -611,7 +611,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
 
                             tree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_dict_fn, file_name  + " " + classification_task+ "None", 10000,
                                                   max_depth=None, balance="balanced", criterion="entropy", save_details=True,
-                                              data_type=data_type, csv_fn=csv_name, rewrite_files=True,
+                                              data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
                                               cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
                                               limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn = clusters_fn,
                                               cluster_duplicates=cluster_duplicates, save_results_so_far=save_results_so_far,
@@ -762,8 +762,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
 
                                     """ FINETUNING """
 
-                                    if is_identity:
-                                        file_name = file_name + " NT" + str(amount_of_finetune) + identity_activation
+
+                                    file_name = file_name + " NT" + str(amount_of_finetune) + identity_activation
 
                                     epochs = epochs
                                     file_name = file_name + str(epochs)
@@ -785,13 +785,11 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                     identity_swap = False
                                     randomize_finetune_weights = False
                                     from_ae = True
-                                    finetune_size = int(cluster_amt/2)
 
                                     loss = ft_loss
                                     optimizer_name = ft_optimizer
-
+                                    finetune_size = deep_size[0]
                                     hidden_layer_size = finetune_size
-
                                     past_model_weights_fn = [loc + data_type + "/nnet/weights/" + new_file_names[x] + ".txt"]
                                     past_model_bias_fn = [loc + data_type + "/nnet/bias/" + new_file_names[x] + ".txt"]
 
@@ -838,7 +836,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                     randomize_finetune_weights=randomize_finetune_weights, dropout_noise=dropout_noise,
                                                     vector_path=init_vector_path, hidden_layer_size=hidden_layer_size, class_path=class_path,
                                                     identity_swap=identity_swap, amount_of_finetune=amount_of_finetune,
-                                                    hidden_activation=hidden_activation, output_activation=output_activation, epochs=epochs,
+                                                    hidden_activation=hidden_activation, output_activation="linear", epochs=epochs,
                                                     learn_rate=learn_rate, is_identity=is_identity, batch_size=batch_size,
                                                     past_model_weights_fn=past_model_weights_fn, loss=loss, rewrite_files=rewrite_files,
                                                     file_name=file_name, from_ae=from_ae, finetune_size=finetune_size, data_type=data_type,
@@ -848,7 +846,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                         ft_vector_path = loc + data_type + "/nnet/spaces/" + file_name + "L0.txt"
                                         ft_directions = loc + data_type + "/svm/directions/" + file_name + ".txt"
                                         #new_file_names[x] = file_name
-                                        """"""
+                                        """
                                         svm.createSVM(ft_vector_path, bow_path, property_names_fn, file_name,
                                                       lowest_count=lowest_amt,
                                                       highest_count=highest_count, data_type=data_type,
@@ -869,12 +867,12 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                      rewrite_files=rewrite_files,
                                                      highest_count=highest_count,
                                                      classification=new_classification_task)
-                                        """"""
+                                        """
 
                                             #"n100mdsCV1S0 SFT0 allL030kappa23232 Breakoff CA1161650 MC1 MS0.4 ATS2000 DS2323300 OMS FMSFT NTlinear[100] NT[100]100linearS6040V1.1L1"
 
                                         print("got to trees, who dis?")
-                                        """"""
+
                                         tree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_dict_fn, file_name + " " + classification_task, 10000,
                                                               max_depth=max_depth, balance="balanced", criterion="entropy", save_details=True,
                                                           data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
@@ -888,8 +886,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                           cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
                                                           limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn=clusters_fn,
                                               cluster_duplicates=cluster_duplicates, multi_label=multi_label)
-                                        """"""
-
+                                        """
+                                        
                                         ft_directions_fn = "../data/"+data_type+"/nnet/weights/" + file_name + "L1.txt"
 
                                         file_name = file_name + "cluster_ft_dir"
@@ -927,6 +925,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                               vector_names_fn=vector_names_fn, clusters_fn=clusters_fn,
                                                               cluster_duplicates=cluster_duplicates)
                                         """
+                                        """
                                         wekatree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn,
                                                               cluster_dict_fn, file_name,
                                                               save_details=True, data_type=data_type,
@@ -937,12 +936,10 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                               vector_names_fn=vector_names_fn)
                                         """
 
+
                                 current_fn = file_name
 
-
-
-
-
+                                """
                                 #SVM Classification
                                 if svm_classify:
                                     for c in classes:
@@ -961,9 +958,10 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                   rewrite_files=rewrite_files,
                                                   classification=classification, lowest_amt=lowest_amt, chunk_amt=chunk_amt,
                                                   chunk_id=chunk_id)
+                                """
 
                                 file_name = current_fn
-                                """"""
+                                """
                                 rank.getAllRankings(clusters_fn, vector_path, cluster_names_fn, vector_names_fn, 0.2, 1, False,
                                                     file_name,
                                                     False, data_type=data_type, rewrite_files=rewrite_files)
@@ -984,7 +982,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
 
                             if len(new_file_names) > 1:
                                 init_vector_path = vector_path
-                    """
+
                     if len(deep_size) > 1:
                         init_vector_path = loc + data_type + "/nnet/spaces/" + new_file_names[0] + "L0.txt"
                         deep_size = deep_size[1:]
@@ -1067,19 +1065,19 @@ if classification_task[0] == "us-ratings":
 else:
     deep_size = [200]
 """
-"""
+
 data_type = "newsgroups"
 classification_task = ["newsgroups"]
 #arrange_name = arrange_name + classification_task[0]
 skip_nn = True
 if skip_nn is False:
-    file_name = "lstm128C"
+    file_name = "doc2vec"
 else:
-    file_name = "lstm128C"
+    file_name = "doc2vec"
 lowest_amt = 30
 highest_amt = 18836
 
-space_name = "wvMFTraFAdr1337mse2 10000 ML1000 BS32 FBTrue DO0.2 RDO0.1 E64 ES300LS128 UAFalse SFFalse iLFalse rTFalse lrFalse sA1000  FState.npy"
+space_name = "0-0Doc2Vecdoc2vec.npy"
 
 init_vector_path = loc+data_type+"/nnet/spaces/"+space_name
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/"+space_name
@@ -1087,9 +1085,9 @@ vector_path_replacement =  loc+data_type+"/nnet/spaces/"+space_name
 #init_vector_path = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
 #get_nnet_vectors_path = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
 #vector_path_replacement = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
-deep_size = [128]
+deep_size = [300]
 limit_entities = [False]
-"""
+
 
 """
 data_type = "placetypes"
@@ -1112,7 +1110,7 @@ vector_path_replacement = loc+data_type+"/nnet/spaces/places"+str(places_size)+"
 get_nnet_vectors_path = loc + data_type + "/nnet/spaces/places"+str(places_size)+".txt"
 deep_size = [places_size]
 """
-
+"""
 data_type = "sentiment"
 classification_task = ["sentiment"]
 #arrange_name = arrange_name + classification_task[0]
@@ -1122,13 +1120,13 @@ lstm_dim = 50
 iLSTM = False
 sA = 1
 
-space_name = "wvTrain300MFTraFAdr1337mse0 10000 ML300 BS16 FBTrue DO0.0 RDO0.0 E8 ES300LS50 UAFalse SFFalse iLFalse rTFalse lrFalse sA1.0 wvTr 0.8 0.0 DFalse F16 KS5 PS4 NP all FState"
+space_name = "fastText D0.0 F0 K5"#"wvTrain300MFTraFAdr1337mse0 10000 ML300 BS16 FBTrue DO0.0 RDO0.0 E8 ES300LS50 UAFalse SFFalse iLFalse rTFalse lrFalse sA1.0 wvTr 0.8 0.0 DFalse F16 KS5 PS4 NP all FState"
 
 if skip_nn is False:
     file_name = "FULL"+str(lstm_dim)+"10kNN"#""#
 else:
     if not iLSTM:
-        file_name = "FULLCstate"+str(lstm_dim)+"10k"#
+        file_name = "fastText"+str(lstm_dim)+"20k"#
     else:
         file_name = "FULL"+str(sA)+"Cstate"+str(lstm_dim)+"ATS1000" + "10k"#
 lowest_amt = 0
@@ -1138,7 +1136,7 @@ init_vector_path = loc+data_type+"/nnet/spaces/"+space_name+".npy"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/"+space_name+".npy"
 vector_path_replacement =  loc+data_type+"/nnet/spaces/"+space_name+".npy"
 deep_size = [50]
-
+"""
 """
 data_type = "sst"
 classification_task = ["binary"]
@@ -1232,12 +1230,12 @@ sim_t = 1.0#1.0
 min_score = 0.4
 largest_cluster = 1
 dissim = 0.0
-dissim_amt = [1]
+dissim_amt = [2]
 breakoff = [False] # This now
 score_limit = [0.9] #23232 val to use for all terms
-amount_to_start = [50]
-cluster_multiplier = [1]#50 #23233  val to use for all terms
-score_type = [ "kappa"] #accuracy, kappa or nd
+amount_to_start = [2000]
+cluster_multiplier = [0.3333, 0.5, 1]#50 #23233  val to use for all terms
+score_type = ["kappa", "accuracy", "ndcg"] #accuracy, kappa or nd
 use_breakoff_dissim = [False]
 mean_shift = False
 get_all = [False]
@@ -1245,7 +1243,7 @@ half_ndcg_half_kappa = [False]
 add_all_terms = [False]
 find_most_similar = True#False
 only_most_similar = [True]
-dont_cluster = [0]
+dont_cluster = [0, 2000]
 save_results_so_far = False
 
 ppmi_only = [0] #amt of ppmi to test
@@ -1259,7 +1257,7 @@ bag_of_clusters = [True]
 finetune_ppmi = [False]
 average_nopav_ppmi_a = [False]
 boc_average = [ False]
-identity_activation = ["linear"]
+identity_activation = ["tanh"]
 
 top_dt_clusters = [False]
 top_dt_clusters = [False]
@@ -1271,7 +1269,7 @@ repeat_finetune = [0]
 
 multi_label = [False] #Currently broken
 
-epochs=[300]
+epochs=[100,300,600,1200]
 
 """
 sim_t = 0.0#1.0

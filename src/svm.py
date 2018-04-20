@@ -14,6 +14,41 @@ from functools import partial
 from multiprocessing.dummy import Pool as ThreadPool
 from sys import exit
 import scipy.sparse as sp
+
+
+def perf_measure(y_actual, y_hat):
+    TP = 0
+    FP = 0
+    TN = 0
+    FN = 0
+
+    for i in range(len(y_hat)):
+        if y_actual[i] == 1 and y_hat[i] == 1:
+            TP += 1
+        if y_hat[i] == 1 and y_actual[i] == 0:
+            FP += 1
+        if y_actual[i] == 0 and y_hat[i] == 0:
+            TN += 1
+        if y_hat[i] == 0 and y_actual[i] == 1:
+            FN += 1
+
+    return TP, FP, TN, FN
+
+def LinearSVMScore(x_train, y_train, x_test, y_test):
+    clf = svm.LinearSVC(class_weight="balanced", dual=False)
+    clf.fit(x_train, y_train)
+    y_pred = clf.predict(x_test)
+    y_pred = y_pred.tolist()
+    if len(y_pred) == len(x_train): # If y_pred is one dimensional
+        average = "binary"
+    else:
+        average = "macro"
+    f1 = f1_score(y_test, y_pred, average=average)
+    acc = accuracy_score(y_test, y_pred)
+    TP, FP, TN, FN = perf_measure(y_test, y_pred)
+    return (f1, acc, TP, FP, TN, FN)
+
+
 class SVM:
 
     def runGaussianSVM(self, y_test, y_train, x_train, x_test, get_kappa, get_f1):

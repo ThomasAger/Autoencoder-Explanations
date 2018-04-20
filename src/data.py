@@ -279,14 +279,7 @@ def write2dArray(array, name):
             file.write("\n")
         file.close()
     except FileNotFoundError:
-        print("FAILURE, TRYING FAILSAFE")
-        name = "//?/" + name
-        file = open(name, "w")
-        for i in range(len(array)):
-            for n in range(len(array[i])):
-                file.write(str(array[i][n]) + " ")
-            file.write("\n")
-        file.close()
+        print("FAILURE")
     try:
         if name[-4:] == ".txt":
             name = name[:-4]
@@ -500,11 +493,7 @@ def write1dArray(array, name):
             file.write(str(array[i]) + "\n")
         file.close()
     except FileNotFoundError:
-        name = "//?/" + name
-        file = open(name, "w")
-        for i in range(len(array)):
-            file.write(str(array[i]) + "\n")
-        file.close()
+        print("Failed")
 
 import io
 def write1dLinux(array, name):
@@ -1225,8 +1214,24 @@ def getWordVectors(vector_save_fn, words_fn, wvn, wv_amt, svm_dir_fn=None):
     else:
         print("Already got word vectors", vector_save_fn)
 
+"""
+lines = import2dArray("../data/output.txt", "s")
 
+kappa = []
+f1 = []
+acc = []
+for i in range(len(lines)):
+    kappa.append(lines[i][4])
+    f1.append(lines[i][6])
+    acc.append(lines[i][8])
 
+file_name = "fastTextCV1S0 SFT0 allL03018836 LR "
+
+st = "../data/newsgroups/svm/"
+write1dArray(kappa, st + "kappa/" + file_name)
+write1dArray(acc, st + "acc/" + file_name)
+write1dArray(f1, st + "f1/" + file_name)
+"""
 """
 space = np.load("../data/newsgroups/nnet/spaces/MF5000 ML200 BS32 FBTrue DO0.3 RDO0.05 E64 ES16LS32 L1.txt.npy")
 
