@@ -12,6 +12,7 @@ import scipy.sparse as sp
 def getSplits(vectors, classes, dev=0.8):
     if len(vectors) != 18846 or len(classes) != 18846:
         print("This is not the standard size of 20NG, expected 18846")
+        return False
     x_train = vectors[:11314]
     x_test = vectors[11314:]
     y_train = classes[:11314]

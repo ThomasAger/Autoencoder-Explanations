@@ -4,7 +4,7 @@ from sklearn import linear_model
 import numpy as np
 from sklearn.metrics import cohen_kappa_score, mean_squared_error, f1_score, accuracy_score
 import data as dt
-
+from keras.metrics import categorical_accuracy
 from sklearn.cross_validation import train_test_split
 
 from sklearn.model_selection import cross_val_score
@@ -14,6 +14,7 @@ from functools import partial
 from multiprocessing.dummy import Pool as ThreadPool
 from sys import exit
 import scipy.sparse as sp
+from sklearn.multiclass import OneVsRestClassifier
 
 
 def perf_measure(y_actual, y_hat):
@@ -33,17 +34,21 @@ def perf_measure(y_actual, y_hat):
             FN += 1
 
     return TP, FP, TN, FN
+import tensorflow as tf
+def multiClassLinearSVM(x_train, y_train, x_test, y_test):
+    clf = OneVsRestClassifier(svm.LinearSVC(class_weight="balanced", dual=False))
+    clf.fit(x_train, y_train)
+    y_pred = clf.predict(x_test)
+    f1 = f1_score(y_test, y_pred, average="micro")
+    f12 = f1_score(y_test, y_pred, average="macro")
+    acc = accuracy_score(y_test, y_pred)
+    return (f1, acc, f12, 0, 0, 0)
 
-def LinearSVMScore(x_train, y_train, x_test, y_test):
+def linearSVMScore(x_train, y_train, x_test, y_test):
     clf = svm.LinearSVC(class_weight="balanced", dual=False)
     clf.fit(x_train, y_train)
     y_pred = clf.predict(x_test)
-    y_pred = y_pred.tolist()
-    if len(y_pred) == len(x_train): # If y_pred is one dimensional
-        average = "binary"
-    else:
-        average = "macro"
-    f1 = f1_score(y_test, y_pred, average=average)
+    f1 = f1_score(y_test, y_pred)
     acc = accuracy_score(y_test, y_pred)
     TP, FP, TN, FN = perf_measure(y_test, y_pred)
     return (f1, acc, TP, FP, TN, FN)

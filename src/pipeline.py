@@ -1065,7 +1065,7 @@ if classification_task[0] == "us-ratings":
 else:
     deep_size = [200]
 """
-
+"""
 data_type = "newsgroups"
 classification_task = ["newsgroups"]
 #arrange_name = arrange_name + classification_task[0]
@@ -1077,7 +1077,7 @@ else:
 lowest_amt = 30
 highest_amt = 18836
 
-space_name = "0-0Doc2Vecdoc2vec.npy"
+space_name = "Doc2Vec VS300 WS15 MC1 ST1e-05 NS5 TE400 DM0 WC10.npy"
 
 init_vector_path = loc+data_type+"/nnet/spaces/"+space_name
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/"+space_name
@@ -1087,7 +1087,7 @@ vector_path_replacement =  loc+data_type+"/nnet/spaces/"+space_name
 #vector_path_replacement = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
 deep_size = [300]
 limit_entities = [False]
-
+"""
 
 """
 data_type = "placetypes"
@@ -1110,7 +1110,7 @@ vector_path_replacement = loc+data_type+"/nnet/spaces/places"+str(places_size)+"
 get_nnet_vectors_path = loc + data_type + "/nnet/spaces/places"+str(places_size)+".txt"
 deep_size = [places_size]
 """
-"""
+
 data_type = "sentiment"
 classification_task = ["sentiment"]
 #arrange_name = arrange_name + classification_task[0]
@@ -1120,13 +1120,13 @@ lstm_dim = 50
 iLSTM = False
 sA = 1
 
-space_name = "fastText D0.0 F0 K5"#"wvTrain300MFTraFAdr1337mse0 10000 ML300 BS16 FBTrue DO0.0 RDO0.0 E8 ES300LS50 UAFalse SFFalse iLFalse rTFalse lrFalse sA1.0 wvTr 0.8 0.0 DFalse F16 KS5 PS4 NP all FState"
+space_name = "Doc2Vec VS300 WS15 MC1 ST1e-05 NS5 TE400 DM0 WC10"#"wvTrain300MFTraFAdr1337mse0 10000 ML300 BS16 FBTrue DO0.0 RDO0.0 E8 ES300LS50 UAFalse SFFalse iLFalse rTFalse lrFalse sA1.0 wvTr 0.8 0.0 DFalse F16 KS5 PS4 NP all FState"
 
 if skip_nn is False:
     file_name = "FULL"+str(lstm_dim)+"10kNN"#""#
 else:
     if not iLSTM:
-        file_name = "fastText"+str(lstm_dim)+"20k"#
+        file_name = "doc2vec400"+str(lstm_dim)+"20k"#
     else:
         file_name = "FULL"+str(sA)+"Cstate"+str(lstm_dim)+"ATS1000" + "10k"#
 lowest_amt = 0
@@ -1136,7 +1136,7 @@ init_vector_path = loc+data_type+"/nnet/spaces/"+space_name+".npy"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/"+space_name+".npy"
 vector_path_replacement =  loc+data_type+"/nnet/spaces/"+space_name+".npy"
 deep_size = [50]
-"""
+
 """
 data_type = "sst"
 classification_task = ["binary"]
