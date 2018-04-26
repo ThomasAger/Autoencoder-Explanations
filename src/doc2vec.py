@@ -25,9 +25,9 @@ def main(data_type, vector_size, window_size, min_count, sampling_threshold, neg
                                train_epoch, dm, worker_count):
     file_name = "Doc2Vec" + " VS" + str(vector_size) + " WS" + str(window_size) + " MC" + str(min_count) + " ST" + str(
         sampling_threshold) + \
-                " NS" + str(negative_size) + " TE" + str(train_epoch) + " DM" + str(dm) + " WC" + str(worker_count)
+                " NS" + str(negative_size) + " TE" + str(train_epoch) + " DM" + str(dm) + " WC" + str(worker_count) + "spacy"
 
-    corpus_fn = "../data/raw/" + data_type + "/corpus_processed.txt"
+    corpus_fn = "../data/raw/" + data_type + "/corpus_processed(spacy).txt"
 
     if os.path.exists(corpus_fn) is False:
         x_train = np.load("../data/raw/" + data_type + "/x_train_w.npy")
@@ -78,50 +78,11 @@ def main(data_type, vector_size, window_size, min_count, sampling_threshold, neg
 vector_size = 300
 window_size = 15
 min_count = 1
-sampling_threshold = 1e-4
+sampling_threshold = 1e-5
 negative_size = 5
-train_epoch = 300
+train_epoch = 400
 dm = 0
 worker_count = 10
-data_type = "newsgroups"
-
-if  __name__ =='__main__':main(data_type, vector_size, window_size, min_count, sampling_threshold, negative_size,
-                               train_epoch, dm, worker_count)
-
-data_type = "sentiment"
-
-if  __name__ =='__main__':main(data_type, vector_size, window_size, min_count, sampling_threshold, negative_size,
-                               train_epoch, dm, worker_count)
-
-train_epoch = 40
-
-if  __name__ =='__main__':main(data_type, vector_size, window_size, min_count, sampling_threshold, negative_size,
-                               train_epoch, dm, worker_count)
-
-
-data_type = "newsgroups"
-
-if  __name__ =='__main__':main(data_type, vector_size, window_size, min_count, sampling_threshold, negative_size,
-                               train_epoch, dm, worker_count)
-
-train_epoch = 400
-
-if  __name__ =='__main__':main(data_type, vector_size, window_size, min_count, sampling_threshold, negative_size,
-                               train_epoch, dm, worker_count)
-
-
-data_type = "sentiment"
-
-if  __name__ =='__main__':main(data_type, vector_size, window_size, min_count, sampling_threshold, negative_size,
-                               train_epoch, dm, worker_count)
-
-
-train_epoch = 100
-
-if  __name__ =='__main__':main(data_type, vector_size, window_size, min_count, sampling_threshold, negative_size,
-                               train_epoch, dm, worker_count)
-
-
 data_type = "newsgroups"
 
 if  __name__ =='__main__':main(data_type, vector_size, window_size, min_count, sampling_threshold, negative_size,
