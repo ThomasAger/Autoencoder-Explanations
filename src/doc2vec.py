@@ -11,23 +11,23 @@ import sentiment
 from sklearn.datasets import fetch_20newsgroups
 
 def doc2Vec(embedding_fn, corpus_fn, vector_size, window_size, min_count, sampling_threshold,
-                negative_size, train_epoch, dm, worker_count):
+                negative_size, train_epoch, dm, worker_count, train_wv, concatenate_wv, use_hierarchical_softmax):
 
     logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
     docs = g.doc2vec.TaggedLineDocument(corpus_fn) #
     model = g.Doc2Vec(docs, size=vector_size,window=window_size, iter=train_epoch, min_count=min_count,
                         sample=sampling_threshold,negative=negative_size,
-                      workers=worker_count, hs=0, dm=dm, dbow_words=1, dm_concat=1,
+                      workers=worker_count, hs=use_hierarchical_softmax, dm=dm, dbow_words=train_wv, dm_concat=concatenate_wv,
                       pretrained_emb=embedding_fn)
     return model
 
 def main(data_type, vector_size, window_size, min_count, sampling_threshold, negative_size,
-                               train_epoch, dm, worker_count):
+                               train_epoch, dm, worker_count, train_wv, concatenate_wv, use_hierarchical_softmax):
     file_name = "Doc2Vec" + " VS" + str(vector_size) + " WS" + str(window_size) + " MC" + str(min_count) + " ST" + str(
         sampling_threshold) + \
                 " NS" + str(negative_size) + " TE" + str(train_epoch) + " DM" + str(dm) + " WC" + str(worker_count) + "spacy"
 
-    corpus_fn = "../data/raw/" + data_type + "/corpus_processed(spacy).txt"
+    corpus_fn = "../data/raw/" + data_type + "/corpus_processed.txt"
 
     if os.path.exists(corpus_fn) is False:
         x_train = np.load("../data/raw/" + data_type + "/x_train_w.npy")
@@ -50,7 +50,7 @@ def main(data_type, vector_size, window_size, min_count, sampling_threshold, neg
         model = g.utils.SaveLoad.load(model_fn)
     elif file_name[:7] == "Doc2Vec":
         model = doc2Vec(embedding_fn, corpus_fn, vector_size, window_size, min_count, sampling_threshold,
-                        negative_size, train_epoch, dm, worker_count)
+                        negative_size, train_epoch, dm, worker_count, train_wv, concatenate_wv, use_hierarchical_softmax)
         model.save(model_fn)
 
     if os.path.exists(vector_fn) is False:
@@ -83,7 +83,10 @@ negative_size = 5
 train_epoch = 400
 dm = 0
 worker_count = 10
+train_wv = 1
+concatenate_wv = 1
+use_hierarchical_softmax = 1
 data_type = "newsgroups"
 
 if  __name__ =='__main__':main(data_type, vector_size, window_size, min_count, sampling_threshold, negative_size,
-                               train_epoch, dm, worker_count)
+                               train_epoch, dm, worker_count, train_wv, concatenate_wv, use_hierarchical_softmax)
