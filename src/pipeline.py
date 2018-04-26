@@ -1044,7 +1044,7 @@ init_vector_path = loc+data_type+"/pca/class-all-50-10-alld100"
 vector_path_replacement = loc+data_type+"/pca/class-all-50-10-alld100"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 """
-"""
+
 data_type = "movies"
 classification_task = ["ratings", "keywords", "genres"] #Run keywords as separate process
 #arrange_name = arrange_name + classification_task[0]
@@ -1052,7 +1052,7 @@ skip_nn = True
 if skip_nn is False:
     file_name = "f200ge"
 else:
-    file_name = "films200-genres"
+    file_name = "f200gePRIMAL"
 lowest_amt = 100
 highest_amt = 10
 init_vector_path = loc+data_type+"/nnet/spaces/films200-genres.txt"
@@ -1064,7 +1064,7 @@ if classification_task[0] == "us-ratings":
     deep_size = [200]
 else:
     deep_size = [200]
-"""
+
 """
 data_type = "newsgroups"
 classification_task = ["newsgroups"]
@@ -1110,7 +1110,7 @@ vector_path_replacement = loc+data_type+"/nnet/spaces/places"+str(places_size)+"
 get_nnet_vectors_path = loc + data_type + "/nnet/spaces/places"+str(places_size)+".txt"
 deep_size = [places_size]
 """
-
+"""
 data_type = "sentiment"
 classification_task = ["sentiment"]
 #arrange_name = arrange_name + classification_task[0]
@@ -1136,7 +1136,7 @@ init_vector_path = loc+data_type+"/nnet/spaces/"+space_name+".npy"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/"+space_name+".npy"
 vector_path_replacement =  loc+data_type+"/nnet/spaces/"+space_name+".npy"
 deep_size = [50]
-
+"""
 """
 data_type = "sst"
 classification_task = ["binary"]

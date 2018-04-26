@@ -42,6 +42,8 @@ def createPCA(tf, depth):
     pos = pca.fit_transform(tf)
     return pos
 
+
+
 def getDissimilarityMatrix(tf):
     tf = tf.transpose().astype(np.float32).toarray()
     docs_len = tf.shape[0]
@@ -222,7 +224,7 @@ def main(data_type, clf, min, max, depth, rewrite_files):
     #Get MDS
 
     tf = dt.import2dArray(term_frequency_fn).transpose()
-    pca = createSVD(tf, depth)
+    pca = sparseSVD(tf, depth)
     dt.write2dArray(pca, pca_fn)
 
 
