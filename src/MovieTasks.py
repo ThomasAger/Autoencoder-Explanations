@@ -5,8 +5,8 @@ import numpy as np
 import string
 from collections import defaultdict
 import random
-import theano
-from theano.tensor.shared_randomstreams import RandomStreams
+#import theano
+#from theano.tensor.shared_randomstreams import RandomStreams
 import pandas as pd
 import scipy.sparse as sp
 def  getVectors(input_folder, file_names_fn, extension, output_folder, only_words_in_x_entities,
@@ -592,7 +592,7 @@ def parseTree(tree_fn, output_fn, entity_names_fn):
         sorted_value_names.append(found_arrays[i])
     value_indexes = []
     # Convert values to indexes
-    for v in range(len(sorted_value_names)):
+    for v in range(len(sorted_vaentity_name_fnlue_names)):
         value_index = []
         for g in range(len(sorted_value_names[v])):
             for e in range(len(found_entities)):
@@ -1080,7 +1080,7 @@ additional_name = ""
 make_individual = False
 sparse_matrix = False
 print("??")
-"""
+
 class_type = "movies"
 classification = "all"
 raw_fn = "../data/raw/previous work/movievectors/tokens/"
@@ -1095,7 +1095,7 @@ max=10
 
 if  __name__ =='__main__':main(min, max, class_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn, use_all_files,
                                sparse_matrix, word_count_amt, classification)
-
+"""
 
 class_type = "wines"
 classification = "types"
@@ -1112,7 +1112,7 @@ max=10
 if  __name__ =='__main__':main(min, max, class_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn, use_all_files,
                                sparse_matrix, word_count_amt, classification)
 """
-
+"""
 class_type = "placetypes"
 classification = "all"
 raw_fn = "../data/raw/previous work/placevectors/"
@@ -1123,7 +1123,7 @@ use_all_files = None#""
 word_count_amt = 0
 min=10
 max=1
-
+"""
 
 if  __name__ =='__main__':main(min, max, class_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn, use_all_files,
                                sparse_matrix, word_count_amt, classification)

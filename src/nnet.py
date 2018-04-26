@@ -18,6 +18,7 @@ import ndcg
 from sklearn.model_selection import KFold
 from sklearn.preprocessing import MultiLabelBinarizer
 from keras.layers.noise import GaussianNoise
+from keras.callbacks import TensorBoard
 
 class NeuralNetwork:
 
@@ -470,18 +471,23 @@ class NeuralNetwork:
 
     def fineTuneNetwork(self):
         print("FINETUNER")
+        """
+        tensorboard = TensorBoard(log_dir='/home/tom/Desktop/Logs/' + str(self.data_type) + "/" + file_name + '/',
+                                  histogram_freq=0,
+                                  write_graph=True, write_images=True)
+        """   
         model = Sequential()
         print(self.input_size, self.hidden_layer_size, self.finetune_size, self.output_size)
 
+        finetune_size = len(self.fine_tune_weights[0][0])
         #self.model.add(GaussianNoise(0.0, input_shape=(input_size,)))
-
+        """
         # If we want to swap the identity layer to before the hidden layer
         if self.identity_swap:
             print("Identity swapped layer", self.input_size, self.hidden_layer_size, self.identity_activation)
             for a in range(len(self.amount_of_finetune)):
                 model.add(Dense(output_dim=self.amount_of_finetune[a], activation= self.identity_activation, init = self.layer_init))
 
-        finetune_size = len(self.fine_tune_weights[0][0])
         if self.from_ae:
             for p in range(len(self.past_weights)):
                 print(p, "Past AE layer", self.input_size, self.hidden_layer_size,  self.identity_activation)
@@ -492,8 +498,8 @@ class NeuralNetwork:
 
                 model.add(Dense(output_dim=self.hidden_layer_size, input_dim=self.input_size, activation= self.identity_activation,
                                      weights=self.past_weights[p], W_regularizer=l2(self.reg)))
-
-
+        """
+        """
         # Add an identity layer that has equal values to the input space to find some more nonlinear relationships
         if self.is_identity:
             for a in range(len(self.amount_of_finetune)):
@@ -511,9 +517,9 @@ class NeuralNetwork:
                     if self.dropout_noise is not None and self.dropout_noise != 0.0:
                         print("Dropout layer")
                         model.add(Dropout(self.dropout_noise))
+        """
 
-
-
+        """
         if self.randomize_finetune_weights:
             print("Randomize finetune weights", self.hidden_layer_size, finetune_size, "linear")
             model.add(Dense(output_dim=finetune_size, input_dim=self.hidden_layer_size, activation="linear",
@@ -523,24 +529,25 @@ class NeuralNetwork:
             model.add(Dense(output_dim=finetune_size, input_dim=self.hidden_layer_size, activation="linear",
                                  weights=self.fine_tune_weights))
         else:
-            print("Fine tune weights", self.hidden_layer_size, finetune_size, "linear")
-            if not self.from_ae:
-                model.add(Dense(output_dim=finetune_size, input_dim=self.hidden_layer_size, activation="linear",
-                                     weights=self.fine_tune_weights))#
-            else:
-                model.add(Dense(output_dim=finetune_size, input_dim=self.hidden_layer_size, activation="linear",
-                                     weights=self.fine_tune_weights))#
+            
+        """
+        print("Fine tune weights", self.hidden_layer_size, finetune_size, "linear")
+        model.add(Dense(output_dim=finetune_size, input_dim=self.hidden_layer_size, activation=self.identity_activation,
+                             weights=self.fine_tune_weights))#
 
+        #model.add(Dropout(self.dropout_noise))
+        """
         if self.get_scores:
             if self.randomize_finetune_weights or self.corrupt_finetune_weights or len(self.fine_tune_weights_fn) > 0:
                 print("Class outputs", finetune_size, self.output_size, self.output_activation)
-                model.add(
-                    Dense(output_dim=self.output_size, input_dim=finetune_size, activation=self.output_activation,
-                          init=self.layer_init))
-
+        """
+        print("Output", self.output_size, self.finetune_size, self.output_activation, self.layer_init)
+        model.add(Dense(output_dim=self.output_size, input_dim=finetune_size, activation=self.output_activation,
+                  init=self.layer_init))
+        """
         if self.lock_weights_and_redo:
             model.layers[len(model.layers)-1].trainable = False
-
+        """
         print("Compiling")
         model.compile(loss=self.loss, optimizer=self.optimizer)
 

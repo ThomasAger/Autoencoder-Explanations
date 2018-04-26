@@ -24,7 +24,7 @@ import random
 import sys
 from itertools import product
 import time
-
+import mean_shift as ms
 #jvm.start(max_heap_size="512m")
 
 def main(data_type, classification_task_a, file_name, init_vector_path, hidden_activation, is_identity_a, amount_of_finetune_a,
@@ -36,7 +36,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
          sim_t, one_for_all, ft_loss_a, ft_optimizer_a, bag_of_clusters_a, just_output, arrange_name, only_most_similar_a,
          dont_cluster_a, top_dt_clusters_a, by_class_finetune_a, cluster_duplicates_a, repeat_finetune_a, save_results_so_far,
          finetune_ppmi_a, average_nopav_ppmi_a, boc_average_a, identity_activation_a, ppmi_only_a, boc_only_a, pav_only_a,
-         multi_label_a ,use_dropout_in_finetune_a, lock_weights_and_redo_a):
+         multi_label_a ,use_dropout_in_finetune_a, lock_weights_and_redo_a, logistic_regression, mean_shift, word_vectors_a):
 
 
     prune_val = 2
@@ -82,6 +82,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
             use_dropout_in_finetune_a = dt.stringToArray((use_dropout_in_finetune_a))[0]
             lock_weights_and_redo_a = dt.stringToArray(lock_weights_and_redo_a)[0]
             dropout_noise_a = dt.stringToArray(dropout_noise_a)[0]
+            word_vectors_a = dt.stringToArray(word_vectors_a)[0]
         else:
             dissim_amt_a = dt.stringToArray(dissim_amt_a)
             breakoff_a = dt.stringToArray(breakoff_a)
@@ -121,6 +122,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
             use_dropout_in_finetune_a = dt.stringToArray(use_dropout_in_finetune_a)
             lock_weights_and_redo_a = dt.stringToArray(lock_weights_and_redo_a)
             dropout_noise_a = dt.stringToArray(dropout_noise_a)
+            word_vectors_a = dt.stringToArray(word_vectors_a)
 
         ep = int(ep)
         cross_val = int(cross_val)
@@ -192,12 +194,13 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
         use_dropout_in_finetune_a = [use_dropout_in_finetune_a[0]]
         lock_weights_and_redo_a = [lock_weights_and_redo_a[0]]
         dropout_noise_a = [dropout_noise_a[0]]
+        word_vectors_a = [word_vectors_a[0]]
 
     variables_to_execute = list(product(dissim_amt_a,breakoff_a,score_limit_a, amount_to_start_a,cluster_multiplier_a,
                                    kappa_a,classification_task_a,use_breakoff_dissim_a,get_all_a,half_ndcg_half_kappa_a,
                                    limit_entities_a,add_all_terms_a,only_most_similar_a,dont_cluster_a,
                                    top_dt_clusters_a,by_class_finetune_a, cluster_duplicates_a, repeat_finetune_a, max_depth_a,
-                                        multi_label_a, dropout_noise_a))
+                                        multi_label_a, dropout_noise_a, word_vectors_a))
     all_csv_fns = []
     original_fn = []
     for vt in variables_to_execute:
@@ -223,6 +226,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
         max_depth = vt[18]
         multi_label = vt[19]
         dropout_noise = vt[20]
+        word_vectors = vt[21]
         class_task_index = 0
 
         for c in range(len(classification_task_a)):
@@ -367,16 +371,21 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                         breakoff = breakoff
                         score_type = score_type
 
-                        file_name = file_name + str(lowest_amt)
+                        file_name = file_name + str(lowest_amt)+ str(highest_amt)
+
+                        if logistic_regression:
+                            file_name = file_name + " LR "
+                        #else:
+                        #    file_name += " SVMdf"
 
                         """ Begin Parameters """
                         """ SVM """
                         svm_type = "svm"
                         highest_count = direction_count
-
-                        bow_path = loc + data_type + "/bow/binary/phrases/class-all-"+str(lowest_amt)+"-"+str(highest_count)+"-"+new_classification_task
+                        bow_path = loc + data_type + "/bow/frequency/phrases/class-all-"+str(lowest_amt)+"-"+str(highest_count)+"-"+new_classification_task + ".npz"
                         property_names_fn = loc + data_type + "/bow/names/" + str(lowest_amt) + "-" +str(highest_count)+"-"+ new_classification_task +".txt"
-                        directions_fn = loc + data_type + "/svm/directions/" + file_name + ".txt"
+                        if word_vectors is not "all":
+                            directions_fn = loc + data_type + "/svm/directions/" + file_name + ".txt"
 
 
                         """ DIRECTION RANKINGS """
@@ -385,9 +394,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
 
                         cluster_amt = deep_size[x] * cluster_multiplier
 
-                        if dont_cluster > 0:
-                            cluster_amt = dont_cluster
-                            amount_to_start = dont_cluster
+
                         """ Begin Methods """
                         print(file_name)
                         """ CLUSTERING """
@@ -396,32 +403,34 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                         names_fn = property_names_fn
 
                         print(file_name)
+                        if word_vectors is not "all":
+                            #file_name += "only thesekappa"
+                            #only_these_fn = "../data/sentiment/bow/names/top_kappa.txt"
+                            svm.createSVM(vector_path, bow_path, property_names_fn, file_name, lowest_count=lowest_amt,
+                              highest_count=highest_count, data_type=data_type, get_kappa=score_type,
+                              get_f1=False, svm_type=svm_type, getting_directions=True, threads=threads, rewrite_files=rewrite_files,
+                                          classification=new_classification_task, lowest_amt=lowest_amt, chunk_amt=chunk_amt, chunk_id=chunk_id,
+                                          logistic_regression=logistic_regression, sparse_array_fn=bow_path)
 
-                        svm.createSVM(vector_path, bow_path, property_names_fn, file_name, lowest_count=lowest_amt,
-                          highest_count=highest_count, data_type=data_type, get_kappa=score_type,
-                          get_f1=False, svm_type=svm_type, getting_directions=True, threads=threads, rewrite_files=rewrite_files,
-                                      classification=new_classification_task, lowest_amt=lowest_amt, chunk_amt=chunk_amt, chunk_id=chunk_id)
+                            if chunk_amt > 0:
+                                if chunk_id == chunk_amt-1:
+                                    dt.compileSVMResults(file_name, chunk_amt, data_type)
 
-
-                        if chunk_amt > 0:
-                            if chunk_id == chunk_amt-1:
-                                dt.compileSVMResults(file_name, chunk_amt, data_type)
-
-                            else:
-                                if d != len(deep_fns)-1:
-                                    randomcount = 0
-                                    while not False: #NOTE, REWRITE THIS, ADD A TEMP MARKER FOR WHEN THE PROCESS RETURNS HERE, PREVIOUSLY USED EXISTENCE OF FN
-                                        randomcount += 1
-                                    print(randomcount)
-                                    time.sleep(10)
                                 else:
-                                    print("exit")
                                     if d != len(deep_fns)-1:
-                                        while not dt.fileExists(loc+data_type+"/nnet/spaces/"+deep_fns[d+1]+".txt"):
-                                            time.sleep(10)
+                                        randomcount = 0
+                                        while not False: #NOTE, REWRITE THIS, ADD A TEMP MARKER FOR WHEN THE PROCESS RETURNS HERE, PREVIOUSLY USED EXISTENCE OF FN
+                                            randomcount += 1
+                                        print(randomcount)
+                                        time.sleep(10)
+                                    else:
+                                        print("exit")
+                                        if d != len(deep_fns)-1:
+                                            while not dt.fileExists(loc+data_type+"/nnet/spaces/"+deep_fns[d+1]+".txt"):
+                                                time.sleep(10)
 
                         if chunk_id == chunk_amt -1 or chunk_amt <= 0:
-                            if score_type is not "kappa":
+                            if score_type is "ndcg":
                                 rank.getAllPhraseRankings(directions_fn, vector_path, class_names_fn, vector_names_fn, file_name,
                                               data_type=data_type, rewrite_files=rewrite_files)
                                 ndcg.getNDCG(loc + data_type + "/rank/numeric/" + file_name + "ALL.txt", file_name,
@@ -438,9 +447,29 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                             elif score_type is "kappa":
                                 scores_fn = loc + data_type + "/svm/kappa/" + file_name + ".txt"
                                 file_name = file_name + "kappa"
+                            elif score_type is "accuracy":
+                                scores_fn = loc + data_type + "/svm/acc/" + file_name + ".txt"
+                                file_name = file_name + "acc"
                             elif score_type is "spearman":
                                 scores_fn = loc + data_type + "/svm/spearman/" + file_name + ".txt"
                                 file_name = file_name + "spearman"
+                            elif score_type is "f1":
+                                scores_fn = loc + data_type + "/svm/f1/" + file_name + ".txt"
+                                file_name = file_name + "f1"
+
+                            if word_vectors is "all":
+                                file_name = file_name + " wv "
+                                directions_fn = loc + data_type + "/word_vectors/" + file_name + ".txt"
+                                property_names_fn = dt.getWordVectors(vector_save_fn, property_names_fn, wvn, wv_amt, svm_directions_fn)
+                            elif word_vectors is "half":
+                                svm_directions_fn = directions_fn
+                                file_name = file_name + " wvhalf "
+                                wv_amt = 50
+                                wvn = property_names_fn[:-4] + "wv" + str(wv_amt) + ".txt"
+                                vsf_fn = loc + data_type + "/word_vectors/" + file_name + ".txt"
+                                vector_save_fn = vsf_fn[:-4] + "wv" + str(wv_amt) + ".txt"
+                                dt.getWordVectors(vector_save_fn, property_names_fn, wvn, wv_amt, svm_directions_fn)
+                                property_names_fn = wvn
 
                             """ CLUSTERING """
                             # Choosing the score-type
@@ -461,14 +490,18 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                 dissim_amt = 0
                                 cluster_multiplier = 2000000
                             file_name = file_name + " CA" +  str(cluster_amt)
-                            dissim_amt = cluster_amt * 2
+                            dissim_amt = cluster_amt * dissim_amt
                             file_name = file_name + " MC" + str(min_size) + " MS" + str(min_score)
                             names_fn = property_names_fn
                             file_name = file_name + " ATS" + str(amount_to_start) + " DS" + str(dissim_amt)
 
+                            amount_to_start = int(amount_to_start)
+                            cluster_amt = int(cluster_amt)
 
                             if dont_cluster:
                                 file_name = file_name + " DC" +str(dont_cluster)
+                            if mean_shift:
+                                file_name = file_name + " meanSh"
                             if breakoff:
                                 if only_most_similar:
                                     file_name = file_name + " OMS"
@@ -500,18 +533,21 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                 ft_score_fn = dt.getScores(ft_names_fn, scores_fn, names_fn, file_name, data_type)
 
                             else:
-
-                                cluster.getClusters(directions_fn, scores_fn, names_fn, False, dissim_amt, amount_to_start, file_name, cluster_amt,
-                                                    dissim, min_score, data_type, rewrite_files=rewrite_files,
+                                if not mean_shift:
+                                    cluster.getClusters(directions_fn, scores_fn, names_fn, False, int(dissim_amt), amount_to_start, file_name, cluster_amt,
+                                                     dissim, min_score, data_type, rewrite_files=rewrite_files,
                                                          half_kappa_half_ndcg=half_ndcg_half_kappa, dont_cluster=dont_cluster)
+                                else:
+                                    ms.saveClusters(directions_fn, scores_fn, names_fn, file_name, amount_to_start, data_type, rewrite_files=rewrite_files)
 
+                            #save_fn = ""
 
-
+                            #dt.saveTop(array, score, file_name, save_fn)
 
                             ranking_fn = loc + data_type + "/rank/numeric/" + file_name + ".txt"
-
-                            rank.getAllRankings(clusters_fn, vector_path, cluster_names_fn , vector_names_fn, 0.2, 1, False, file_name,
-                                                False, data_type=data_type, rewrite_files=rewrite_files)
+                            if word_vectors is None:
+                                rank.getAllRankings(clusters_fn, vector_path, cluster_names_fn , vector_names_fn, 0.2, 1, False, file_name,
+                                                    False, data_type=data_type, rewrite_files=rewrite_files)
                             if skip_nn:
                                 file_name = file_name
 
@@ -519,7 +555,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                 file_name = file_name + " tdev"
 
 
-                            csv_name = loc + data_type + "/rules/tree_csv/" + file_name + " " + classification_task + " " + str(max_depth) + ".csv"
+                            csv_name = loc + data_type + "/rules/tree_csv/" + file_name + " " + classification_task + ".csv"
 
                             csv_fns_dt[counter] = csv_name
                             if cv_splits == 0:
@@ -534,9 +570,37 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
 
                             if multi_label:
                                 file_name = file_name + "ML"
+                            """ iLSTM investigating cluster stuff
+                            if logistic_regression:
+                                fto.logisticRegression(cluster_dict_fn, ranking_fn, file_name, data_type=data_type,
+                                                       rewrite_files=True,
+                                                       classification=classification, lowest_amt=lowest_amt,
+                                                       limit_entities=limit_entities, highest_amt=highest_count, sparse_freqs_fn=bow_path,
+                                                       bow_names_fn=property_names_fn)
+
+                                boc_fn = "../data/"+data_type+"/bow/boc/" + file_name + ".txt"
+
+                                svm.createSVM(vector_path, boc_fn, cluster_names_fn, file_name,
+                                              lowest_count=lowest_amt,
+                                              highest_count=highest_count, data_type=data_type, get_kappa=True,
+                                              get_f1=False, single_class=True, svm_type=svm_type, getting_directions=True,
+                                              threads=threads,
+                                              rewrite_files=rewrite_files,
+                                              classification=classification, lowest_amt=lowest_amt, chunk_amt=chunk_amt,
+                                              chunk_id=chunk_id, logistic_regression=logistic_regression, sparse_array_fn=boc_fn)
+
+                                clusters_fn = loc+data_type+"/svm/directions/" + file_name + ".txt"
+
+                                ranking_fn = loc + data_type + "/rank/numeric/" + file_name + ".txt"
+
+                                rank.getAllRankings(clusters_fn, vector_path, cluster_names_fn, vector_names_fn, 0.2, 1,
+                                                    False, file_name,
+                                                    False, data_type=data_type, rewrite_files=True)
+                            """
 
                             #file_name = "NMF 200"
                             #ranking_fn = "../data/movies/NMF/all-100-10frob.txt"
+
                             tree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_dict_fn, file_name + " " + classification_task, 10000,
                                       max_depth=max_depth, balance="balanced", criterion="entropy", save_details=True, cv_splits=cv_splits, split_to_use=splits,
                                       data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files, development=dt_dev, limit_entities=limit_entities,
@@ -559,8 +623,9 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                               limited_label_fn=limited_label_fn, rewrite_files=rewrite_files,
                                csv_fn=csv_name, cv_splits=cv_splits, limit_entities=limit_entities, vector_names_fn=vector_names_fn, save_results_so_far=save_results_so_far)
                             """
-                            variables_to_execute_a = []
 
+                            variables_to_execute_a = []
+                            
                             variables_to_execute_a = list(
                                 product(learn_rate_a, ft_loss_a, ft_optimizer_a, is_identity_a,
                                         amount_of_finetune_a,
@@ -615,7 +680,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                   get_f1=True, single_class=True,svm_type=svm_type, getting_directions=False, threads=1,
                                                   rewrite_files=rewrite_files,
                                                   classification=classification, lowest_amt=lowest_amt, chunk_amt=chunk_amt,
-                                                  chunk_id=chunk_id)
+                                                  chunk_id=chunk_id, logistic_regression=logistic_regression)
 
 
                                 file_name = current_fn
@@ -661,6 +726,10 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                     elif boc_average:
                                         file_name = file_name + " BOCPPMI"
                                         class_path = loc + data_type + "/finetune/boc/" + file_name + ".txt"
+                                    elif logistic_regression:
+                                        file_name = file_name + " LR"
+                                        class_path = loc + data_type + "/finetune/boc/" + file_name + ".txt"
+
                                     else:
                                         class_path = loc + data_type + "/finetune/" + file_name + ".txt"
                                     if boc_only:
@@ -684,14 +753,17 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                     elif boc_average:
                                         fto.bagOfClusters(cluster_dict_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=rewrite_files,
                                                     classification=classification, lowest_amt=lowest_amt, limit_entities=limit_entities,highest_amt=highest_count)
+                                    elif logistic_regression:
+                                        fto.logisticRegression(cluster_dict_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=rewrite_files,
+                                                    classification=classification, lowest_amt=lowest_amt, limit_entities=limit_entities,highest_amt=highest_count)
                                     else:
                                         fto.pavPPMI(cluster_dict_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=rewrite_files,
                                                     classification=classification, lowest_amt=lowest_amt, limit_entities=limit_entities,highest_amt=highest_count)
 
                                     """ FINETUNING """
 
-                                    if is_identity:
-                                        file_name = file_name + " NT" + str(amount_of_finetune) + identity_activation
+
+                                    file_name = file_name + " NT" + str(amount_of_finetune) + identity_activation
 
                                     epochs = epochs
                                     file_name = file_name + str(epochs)
@@ -713,13 +785,11 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                     identity_swap = False
                                     randomize_finetune_weights = False
                                     from_ae = True
-                                    finetune_size = int(cluster_amt/2)
 
                                     loss = ft_loss
                                     optimizer_name = ft_optimizer
-
+                                    finetune_size = deep_size[0]
                                     hidden_layer_size = finetune_size
-
                                     past_model_weights_fn = [loc + data_type + "/nnet/weights/" + new_file_names[x] + ".txt"]
                                     past_model_bias_fn = [loc + data_type + "/nnet/bias/" + new_file_names[x] + ".txt"]
 
@@ -748,7 +818,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                         clusters_fn = class_path
                                         cluster_dict_fn = name_fn
 
-                                    csv_name = loc + data_type + "/rules/tree_csv/" + file_name + " " + classification_task + " " + str(max_depth) +   ".csv"
+                                    csv_name = loc + data_type + "/rules/tree_csv/" + file_name + str(max_depth) + " " + classification_task +   ".csv"
                                     if cv_splits == 0:
                                         all_csv_fns.append(csv_name)
                                     else:
@@ -766,7 +836,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                     randomize_finetune_weights=randomize_finetune_weights, dropout_noise=dropout_noise,
                                                     vector_path=init_vector_path, hidden_layer_size=hidden_layer_size, class_path=class_path,
                                                     identity_swap=identity_swap, amount_of_finetune=amount_of_finetune,
-                                                    hidden_activation=hidden_activation, output_activation=output_activation, epochs=epochs,
+                                                    hidden_activation=hidden_activation, output_activation="linear", epochs=epochs,
                                                     learn_rate=learn_rate, is_identity=is_identity, batch_size=batch_size,
                                                     past_model_weights_fn=past_model_weights_fn, loss=loss, rewrite_files=rewrite_files,
                                                     file_name=file_name, from_ae=from_ae, finetune_size=finetune_size, data_type=data_type,
@@ -816,8 +886,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                           cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
                                                           limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn=clusters_fn,
                                               cluster_duplicates=cluster_duplicates, multi_label=multi_label)
-
-
+                                        """
+                                        
                                         ft_directions_fn = "../data/"+data_type+"/nnet/weights/" + file_name + "L1.txt"
 
                                         file_name = file_name + "cluster_ft_dir"
@@ -855,6 +925,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                               vector_names_fn=vector_names_fn, clusters_fn=clusters_fn,
                                                               cluster_duplicates=cluster_duplicates)
                                         """
+                                        """
                                         wekatree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn,
                                                               cluster_dict_fn, file_name,
                                                               save_details=True, data_type=data_type,
@@ -865,12 +936,10 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                               vector_names_fn=vector_names_fn)
                                         """
 
+
                                 current_fn = file_name
 
-
-
-
-
+                                """
                                 #SVM Classification
                                 if svm_classify:
                                     for c in classes:
@@ -889,6 +958,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                   rewrite_files=rewrite_files,
                                                   classification=classification, lowest_amt=lowest_amt, chunk_amt=chunk_amt,
                                                   chunk_id=chunk_id)
+                                """
 
                                 file_name = current_fn
                                 """
@@ -906,19 +976,17 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                       save_details=True, data_type=data_type,split_to_use=splits, rewrite_files=rewrite_files,
                                                       csv_fn=csv_name, cv_splits=cv_splits, limit_entities=limit_entities,
                                                       limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn)
-                                    """
+                    """
                                 file_name = orig_fn
 
 
                             if len(new_file_names) > 1:
                                 init_vector_path = vector_path
 
-
-
                     if len(deep_size) > 1:
                         init_vector_path = loc + data_type + "/nnet/spaces/" + new_file_names[0] + "L0.txt"
                         deep_size = deep_size[1:]
-            """
+
                 print("GETTING FNS")
                 for a in range(len(csv_fns_dt)):
                     csv_fns_dt_a[a].append(csv_fns_dt[a])
@@ -928,7 +996,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
 
             for a in range(len(csv_fns_dt_a)):
                 dt.averageCSVs(csv_fns_dt_a[a])
-            """
+
             #if not skip_nn:
             #    for a in range(len(csv_fns_nn_a)):
             #        dt.averageCSVs(csv_fns_nn_a[a])
@@ -938,17 +1006,15 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
         avg_fn = fn[:-4] +"AVG.csv"
         fn = fn.split("/")[len(fn.split("/"))-1]
         try:
-            print("Trying")
             fns_to_add = dt.getCSVsToAverage("../data/"+data_type+"/rules/tree_csv/",fn)
         except IndexError:
-            print("Index error")
-            fns_to_add = dt.getCSVsToAverage("../data/" + data_type + "/rules/tree_csv/", fn[:-4] + " " + str(max_depth) + ".csv")
+            fns_to_add = dt.getCSVsToAverage("../data/" + data_type + "/rules/tree_csv/", fn[:-4] + str(max_depth) + ".csv")
         all_csv_fns.append(fns_to_add)
 
     dt.arrangeByScore(
         np.unique(
             np.asarray(all_csv_fns))
-        ,loc + " " + arrange_name + file_name[:50] + " " + classification_task + " "  + str(max_depth) + " " +  str(len(all_csv_fns)) + ".csv")
+        ,loc + " " + arrange_name + file_name[:50] + " " + classification_task + " " +  str(len(all_csv_fns)) + ".csv")
     #jvm.stop()
 
 print("Begin top of parameters")
@@ -960,7 +1026,6 @@ if arcca:
 else:
     loc = "../data/"
 
-limit_entities = [False]
 
 """
 data_type = "wines"
@@ -979,7 +1044,7 @@ init_vector_path = loc+data_type+"/pca/class-all-50-10-alld100"
 vector_path_replacement = loc+data_type+"/pca/class-all-50-10-alld100"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 """
-"""
+
 data_type = "movies"
 classification_task = ["ratings", "keywords", "genres"] #Run keywords as separate process
 #arrange_name = arrange_name + classification_task[0]
@@ -987,7 +1052,7 @@ skip_nn = True
 if skip_nn is False:
     file_name = "f200ge"
 else:
-    file_name = "films200-genres"
+    file_name = "f200gePRIMAL"
 lowest_amt = 100
 highest_amt = 10
 init_vector_path = loc+data_type+"/nnet/spaces/films200-genres.txt"
@@ -999,25 +1064,30 @@ if classification_task[0] == "us-ratings":
     deep_size = [200]
 else:
     deep_size = [200]
-"""
+
 """
 data_type = "newsgroups"
 classification_task = ["newsgroups"]
 #arrange_name = arrange_name + classification_task[0]
 skip_nn = True
 if skip_nn is False:
-    file_name = "n100mds2nnet"
+    file_name = "doc2vec"
 else:
-    file_name = "n100mds2"
+    file_name = "doc2vec"
 lowest_amt = 30
 highest_amt = 18836
-init_vector_path = loc+data_type+"/nnet/spaces/mds.txt"
-get_nnet_vectors_path = loc+data_type+"/nnet/spaces/mds.txt"
-vector_path_replacement =  loc+data_type+"/nnet/spaces/mds.txt"
+
+space_name = "Doc2Vec VS300 WS15 MC1 ST1e-05 NS5 TE400 DM0 WC10.npy"
+
+init_vector_path = loc+data_type+"/nnet/spaces/"+space_name
+get_nnet_vectors_path = loc+data_type+"/nnet/spaces/"+space_name
+vector_path_replacement =  loc+data_type+"/nnet/spaces/"+space_name
 #init_vector_path = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
 #get_nnet_vectors_path = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
 #vector_path_replacement = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
-deep_size = [100]
+deep_size = [300]
+limit_entities = [False]
+"""
 
 """
 data_type = "placetypes"
@@ -1039,7 +1109,63 @@ else:
 vector_path_replacement = loc+data_type+"/nnet/spaces/places"+str(places_size)+".txt"
 get_nnet_vectors_path = loc + data_type + "/nnet/spaces/places"+str(places_size)+".txt"
 deep_size = [places_size]
+"""
+"""
+data_type = "sentiment"
+classification_task = ["sentiment"]
+#arrange_name = arrange_name + classification_task[0]
+skip_nn = True
 
+lstm_dim = 50
+iLSTM = False
+sA = 1
+
+space_name = "Doc2Vec VS300 WS15 MC1 ST1e-05 NS5 TE400 DM0 WC10"#"wvTrain300MFTraFAdr1337mse0 10000 ML300 BS16 FBTrue DO0.0 RDO0.0 E8 ES300LS50 UAFalse SFFalse iLFalse rTFalse lrFalse sA1.0 wvTr 0.8 0.0 DFalse F16 KS5 PS4 NP all FState"
+
+if skip_nn is False:
+    file_name = "FULL"+str(lstm_dim)+"10kNN"#""#
+else:
+    if not iLSTM:
+        file_name = "doc2vec400"+str(lstm_dim)+"20k"#
+    else:
+        file_name = "FULL"+str(sA)+"Cstate"+str(lstm_dim)+"ATS1000" + "10k"#
+lowest_amt = 0
+highest_amt = 100
+limit_entities = [False]
+init_vector_path = loc+data_type+"/nnet/spaces/"+space_name+".npy"
+get_nnet_vectors_path = loc+data_type+"/nnet/spaces/"+space_name+".npy"
+vector_path_replacement =  loc+data_type+"/nnet/spaces/"+space_name+".npy"
+deep_size = [50]
+"""
+"""
+data_type = "sst"
+classification_task = ["binary"]
+#arrange_name = arrange_name + classification_task[0]
+skip_nn = True
+
+lstm_dim = 50
+iLSTM = False
+sA = 100
+
+space_name = "wvMFTraFAdr1337mse1 10000 ML50 BS32 FBTrue DO0.2 RDO0.1 E16 ES300LS10 UAFalse SFFalse iLFalse rTFalse lrFalse sA1000  FState"#"class-all-0-None-alld100"#
+
+if skip_nn is False:
+    #file_name = "PCANN5k30032"#"LSTMFstateNN5k30032"#
+    file_name = "wiki300LSTMCstate"+str(lstm_dim)+"10kNN"#""#
+else:
+    if not iLSTM:
+    #file_name = "PCAppmi0None20k"#
+        file_name = "wiki300LSTMCstate"+str(lstm_dim)+"10k"#
+    else:
+        file_name = "wiki300iLSTMs"+str(sA)+"Cstate"+str(lstm_dim)+"10k"#
+lowest_amt = 0
+highest_amt = 5
+limit_entities = [False]
+init_vector_path = loc+data_type+"/nnet/spaces/"+space_name+".npy"
+get_nnet_vectors_path = loc+data_type+"/nnet/spaces/"+space_name+".npy"
+vector_path_replacement =  loc+data_type+"/nnet/spaces/"+space_name+".npy"
+deep_size = [50]
+"""
 if classification_task[0] == "geonames" or classification_task[0] == "foursquare" or classification_task[0] == "newsgroups" :
     hidden_activation = "tanh"
     dropout_noise = [0.0]
@@ -1065,7 +1191,9 @@ else:
     else:
         ep = 600
     lr = 0.01
+
 """
+    vector_save_fn = vector_save_fn[:-4] + "wv"+str(wv_amt)+".txt"
 
 hidden_activation = "tanh"
 dropout_noise = 0.2
@@ -1090,7 +1218,7 @@ cutoff_start = 0.2
 use_dropout_in_finetune = [False]
 
 is_identity = [False]
-amount_of_finetune = [[places_size] ]
+amount_of_finetune = [deep_size ]
 ft_loss = ["mse"]
 ft_optimizer = ["adagrad"]
 min_size = 1
@@ -1103,30 +1231,33 @@ min_score = 0.4
 largest_cluster = 1
 dissim = 0.0
 dissim_amt = [2]
-breakoff = [False]
+breakoff = [False] # This now
 score_limit = [0.9] #23232 val to use for all terms
 amount_to_start = [2000]
-cluster_multiplier = [2]#50 #23233  val to use for all terms
-score_type = ["ndcg"]
+cluster_multiplier = [0.3333, 0.5, 1]#50 #23233  val to use for all terms
+score_type = ["kappa", "accuracy", "ndcg"] #accuracy, kappa or nd
 use_breakoff_dissim = [False]
+mean_shift = False
 get_all = [False]
 half_ndcg_half_kappa = [False]
 add_all_terms = [False]
 find_most_similar = True#False
 only_most_similar = [True]
-dont_cluster = [0]
+dont_cluster = [0, 2000]
 save_results_so_far = False
 
 ppmi_only = [0] #amt of ppmi to test
 boc_only = [False]
 pav_only = [False]
 
+word_vectors = [None] # "all" "half" or None
+
 average_ppmi = [False]
 bag_of_clusters = [True]
 finetune_ppmi = [False]
 average_nopav_ppmi_a = [False]
 boc_average = [ False]
-identity_activation = ["linear"]
+identity_activation = ["tanh"]
 
 top_dt_clusters = [False]
 top_dt_clusters = [False]
@@ -1138,7 +1269,7 @@ repeat_finetune = [0]
 
 multi_label = [False] #Currently broken
 
-epochs=[300]
+epochs=[100,300,600,1200]
 
 """
 sim_t = 0.0#1.0
@@ -1151,14 +1282,16 @@ hp_opt = True
 dt_dev = True
 svm_classify = False
 rewrite_files = False
-max_depth = [2]
+max_depth = [3]
 
-cross_val = 5
+cross_val = 1
 one_for_all = False
+
+logistic_regression = True
 
 arrange_name = "cluster ratings BCS" + str(max_depth) + str(dt_dev)
 
-threads=1
+threads=30
 chunk_amt = 0
 chunk_id = 0
 for c in range(chunk_amt):
@@ -1297,4 +1430,5 @@ if  __name__ =='__main__':
                                        half_ndcg_half_kappa, sim_t, one_for_all, ft_loss, ft_optimizer, bag_of_clusters, just_output,
                                        arrange_name, only_most_similar, dont_cluster, top_dt_clusters, by_class_finetune, cluster_duplicates,
                                        repeat_finetune, save_results_so_far, finetune_ppmi, average_nopav_ppmi_a, boc_average, identity_activation,
-                                       ppmi_only, boc_only, pav_only, multi_label, use_dropout_in_finetune, lock_weights_and_redo)
+                                       ppmi_only, boc_only, pav_only, multi_label, use_dropout_in_finetune, lock_weights_and_redo, logistic_regression, mean_shift,
+             word_vectors)

@@ -10,20 +10,7 @@ from sklearn.preprocessing import MinMaxScaler
 DATA IMPORTING TASKS
 
 """
-def getWordVectors():
-    file = open("../data/wikipedia/word_vectors/glove.6B.50d.txt", encoding="utf8")
-    lines = file.readlines()
-    wv = []
-    wvn = []
-    # Create an array of word vectors from the text file
-    for l in lines:
-        l = l.split()
-        wvn.append(l[0])
-        del l[0]
-        for i in range(len(l)):
-            l[i] = float(l[i])
-        wv.append(l)
-    return wv, wvn
+
 
 def stripPunctuation(text):
     punctutation_cats = set(['Pc', 'Pd', 'Ps', 'Pe', 'Pi', 'Pf', 'Po'])
@@ -39,18 +26,20 @@ def importNumpyVectors(numpy_vector_path=None):
 def convertLine(line):
     line = list(map(float, line.strip().split()))
     return line
+
 def import1dArray(file_name, file_type="s"):
-    with open(file_name, "r") as infile:
+    with open(file_name, "r", encoding="cp1252") as infile:
         if file_type == "f":
             array = []
             lines = infile.readlines()
             for line in lines:
                 array.append(float(line.strip()))
         elif file_type == "i":
-            array = [int(line.strip()) for line in infile]
+            array = [int(float(line.strip())) for line in infile]
         else:
             array = [line.strip() for line in infile]
     return np.asarray(array)
+
 def balanceClasses(movie_vectors, class_array):
     count = 0
     count2 = 0
@@ -72,23 +61,32 @@ def balanceClasses(movie_vectors, class_array):
 
     return movie_vectors, class_array
 
-
-
-def import2dArray(file_name, file_type="f"):
-    with open(file_name, "r") as infile:
-        if file_type == "i":
-            array = [list(map(int, line.strip().split())) for line in infile]
-        elif file_type == "f":
-            array = [list(map(float, line.strip().split())) for line in infile]
-        elif file_type == "discrete":
-            array = [list(line.strip().split()) for line in infile]
-            for dv in array:
-                for v in range(len(dv)):
-                    dv[v] = int(dv[v][:-1])
-        else:
-            array = [list(line.strip().split()) for line in infile]
+import scipy.sparse as sp
+def import2dArray(file_name, file_type="f", return_sparse=False):
+    if file_name[-4:] == ".npz":
+        print("Loading sparse array")
+        array = sp.load_npz(file_name)
+        if return_sparse is False:
+            array = array.toarray()
+    elif file_name[-4:] == ".npy":
+        print("Loading numpy array")
+        array = np.load(file_name)#
+    else:
+        with open(file_name, "r") as infile:
+            if file_type == "i":
+                array = [list(map(int, line.strip().split())) for line in infile]
+            elif file_type == "f":
+                array = [list(map(float, line.strip().split())) for line in infile]
+            elif file_type == "discrete":
+                array = [list(line.strip().split()) for line in infile]
+                for dv in array:
+                    for v in range(len(dv)):
+                        dv[v] = int(dv[v][:-1])
+            else:
+                array = np.asarray([list(line.strip().split()) for line in infile])
+        array = np.asarray(array)
     print("successful import", file_name)
-    return np.asarray(array)
+    return array
 
 
 
@@ -274,19 +272,21 @@ def allFnsAlreadyExist(all_fns):
 def write2dArray(array, name):
     try:
         file = open(name, "w")
+        print("starting array")
         for i in range(len(array)):
             for n in range(len(array[i])):
                 file.write(str(array[i][n]) + " ")
             file.write("\n")
         file.close()
     except FileNotFoundError:
-        name = "//?/" + name
-        file = open(name, "w")
-        for i in range(len(array)):
-            for n in range(len(array[i])):
-                file.write(str(array[i][n]) + " ")
-            file.write("\n")
-        file.close()
+        print("FAILURE")
+    try:
+        if name[-4:] == ".txt":
+            name = name[:-4]
+        array = np.asarray(array)
+        np.save(name, array)
+    except FileNotFoundError:
+        print("failed")
     print("successful write", name)
 """
 a = import2dArray("D:\Eclipse\MDS/class-all-30-18836-alldm", "f")
@@ -343,11 +343,12 @@ def write_csv(csv_fn, col_names, cols_to_add, key):
     df = pd.DataFrame(d, index=key)
     df.to_csv(csv_fn)
 
-
+"""
 csv_fns = []
 for i in range(5):
     csv_fns.append("../data/wines/rules/tree_csv/" +
         "wines ppmi E200 DS[100, 100, 100] DN0.5 HAtanh CV5 S0 SFT0L050 ndcg0.9001100" + ".csv")
+        """
 #average_csv(csv_fns)
 
 def findDifference(string1, string2):
@@ -492,11 +493,7 @@ def write1dArray(array, name):
             file.write(str(array[i]) + "\n")
         file.close()
     except FileNotFoundError:
-        name = "//?/" + name
-        file = open(name, "w")
-        for i in range(len(array)):
-            file.write(str(array[i]) + "\n")
-        file.close()
+        print("Failed")
 
 import io
 def write1dLinux(array, name):
@@ -719,6 +716,7 @@ def convertToPPMI(freq_arrays_fn, term_names_fn):
         write1dArray(ppmi_array, "../data/movies/bow/ppmi/class-" + term_names[t])
     write2dArray(ppmi_arrays, "../data/movies/bow/ppmi/class-all")
 
+#write1dArray(list(range(50000)), "../data/sentiment/nnet/spaces/entitynames.txt")
 def getDifference(array1, array2):
     file1 = open(array1)
     file2 = open(array2)
@@ -1182,6 +1180,63 @@ def arrangeByScore(csv_fns, arra_name):
 
     print("x")
 
+#write1dArray(list(range(20000)), "../data/sentiment/nnet/spaces/entitynames.txt")
+
+from gensim.models.keyedvectors import KeyedVectors
+from gensim.test.utils import datapath, get_tmpfile
+from gensim.scripts.glove2word2vec import glove2word2vec
+def getWordVectors(vector_save_fn, words_fn, wvn, wv_amt, svm_dir_fn=None):
+    if os.path.exists(vector_save_fn) is False:
+        glove_file = datapath('/home/tom/Downloads/glove.6B/glove.6B.'+str(wv_amt)+'d.txt')
+        tmp_file = get_tmpfile("/home/tom/Downloads/glove.6B/test_word2vec.txt")
+        glove2word2vec(glove_file, tmp_file)
+        svm_dir = import2dArray(svm_dir_fn)
+        all_vectors = KeyedVectors.load_word2vec_format(tmp_file)
+        vectors = []
+
+        words = import1dArray(words_fn)
+        for w in range(len(words)):
+            try:
+                if svm_dir_fn is None:
+                    vectors.append(all_vectors.get_vector(words[w]))
+                else:
+                    vectors.append(np.concatenate([all_vectors.get_vector(words[w]), svm_dir[w]]))
+            except KeyError:
+                if svm_dir_fn is None:
+                    vectors.append(np.zeros(wv_amt))
+                else:
+                    vectors.append(np.zeros(wv_amt + len(svm_dir[0])))
+
+        write2dArray(vectors, vector_save_fn)
+
+
+        write1dArray(words, wvn)
+    else:
+        print("Already got word vectors", vector_save_fn)
+
+"""
+lines = import2dArray("../data/output.txt", "s")
+
+kappa = []
+f1 = []
+acc = []
+for i in range(len(lines)):
+    kappa.append(lines[i][4])
+    f1.append(lines[i][6])
+    acc.append(lines[i][8])
+
+file_name = "fastTextCV1S0 SFT0 allL03018836 LR "
+
+st = "../data/newsgroups/svm/"
+write1dArray(kappa, st + "kappa/" + file_name)
+write1dArray(acc, st + "acc/" + file_name)
+write1dArray(f1, st + "f1/" + file_name)
+"""
+"""
+space = np.load("../data/newsgroups/nnet/spaces/MF5000 ML200 BS32 FBTrue DO0.3 RDO0.05 E64 ES16LS32 L1.txt.npy")
+
+write2dArray(space, "../data/sentiment/nnet/spaces/5kdefaultsentDEV.txt")
+"""
 
 """ #REVERSAL """
 """

@@ -197,6 +197,57 @@ def bagOfClusters(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type
     dt.write2dArray(frq, pavPPMI_fn)
     return frq
 
+def getLROnBag(cluster_dict, data_type, lowest_amt, highest_amt, classification, file_name, names, sparse_freqs):
+    bag_of_clusters = []
+    # Note, prior we used the PPMI values directly here somehow...
+    for c in range(len(cluster_dict)):
+        # Remove the colons
+        for f in range(len(cluster_dict[c])):
+            if ":" in cluster_dict[c][f]:
+                cluster_dict[c][f] = cluster_dict[c][f][:-1]
+        # Add all of the frequences together to make a bag-of-clusters
+        name = cluster_dict[c][0]
+        word_array = sparse_freqs[np.where(names == name)].toarray()
+        accum_freqs = np.zeros(shape=len(word_array), dtype=np.int64)
+        # For all the cluster terms
+        for name in cluster_dict[c]:
+            if ":" in name:
+                name = name[:-1]
+            # Import the class
+            class_to_add = sparse_freqs[np.where(names == name)].toarray()
+            # Add the current class to the older one
+            accum_freqs = np.add(accum_freqs, class_to_add)
+        # Append this clusters frequences to the group of them
+        bag_of_clusters.append(accum_freqs)
+    # Convert to binary
+    for c in range(len(bag_of_clusters)):
+        bag_of_clusters[c][bag_of_clusters[c] > 1] = 1
+        bag_of_clusters[c] = bag_of_clusters[c][0] # For some reason the internal arrays are the single element of another array
+    dt.write2dArray(bag_of_clusters, "../data/" + data_type + "/bow/boc/" + file_name + ".txt")
+    return bag_of_clusters
+
+def logisticRegression(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type="movies", rewrite_files=False,limit_entities=False,
+            classification="genres", lowest_amt=0, highest_amt=2147000000, sparse_freqs_fn=None, bow_names_fn=None):
+    lr_fn = "../data/" + data_type + "/finetune/boc/" + file_name + ".txt"
+    all_fns = [lr_fn]
+    if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
+        print("Skipping task", bagOfClusters.__name__)
+        return
+    else:
+        print("Running task", bagOfClusters.__name__)
+
+    if limit_entities is False:
+        classification = "all"
+
+    cluster_names = dt.import2dArray(cluster_names_fn, "s")
+    bow_names = dt.import1dArray(bow_names_fn, "s")
+    sparse_freqs = dt.import2dArray(sparse_freqs_fn, return_sparse=True)
+
+    frq = getLROnBag(cluster_names, data_type, lowest_amt, highest_amt, classification, file_name, bow_names, sparse_freqs)
+
+    dt.write2dArray(frq, lr_fn)
+    return frq
+
 def pavPPMIAverage(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type="movies", rewrite_files=False,
             classification="genres", lowest_amt=0, highest_amt=2147000000, limit_entities=False, save_results_so_far=False):
     pavPPMI_fn = "../data/" + data_type + "/finetune/" + file_name + ".txt"

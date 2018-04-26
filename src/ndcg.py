@@ -179,6 +179,8 @@ def ndcg_from_ranking(y_true, ranking):
     return dcg / best
 import linecache
 def getNDCG(rankings_fn, fn, data_type, lowest_count, rewrite_files=False, highest_count = 0, classification = ""):
+
+    # Check if the NDCG scores have already been calculated, if they have then skip.
     ndcg_fn = "../data/" + data_type + "/ndcg/"+fn+".txt"
     spearman_fn = "../data/" + data_type + "/spearman/"+fn+".txt"
     all_fns = [ndcg_fn, spearman_fn]
@@ -187,37 +189,40 @@ def getNDCG(rankings_fn, fn, data_type, lowest_count, rewrite_files=False, highe
         return
     else:
         print("Running task", getNDCG.__name__)
+
+    # Get the file names for the PPMI values for every word and a list of words ("names")
     ppmi_fn = "../data/" + data_type + "/bow/ppmi/class-all-"+str(lowest_count)+"-" + str(highest_count)+"-" +classification
     names = dt.import1dArray("../data/" + data_type + "/bow/names/"+str(lowest_count)+"-" + str(highest_count)+"-" +classification+".txt")
+
+    # Process the rankings and the PPMI line-by-line so as to not run out of memory
     ndcg_a = []
-    spearman_a = []
-    map_a = []
-    kendall_a = []
-    r = 0
+    #spearman_a = []
     with open(rankings_fn) as rankings, open(ppmi_fn) as ppmi:
         r = 0
         for lr in rankings:
                 for lp in ppmi:
+                    # Get the plain-number ranking of the rankings, e.g. "1, 4, 3, 50"
                     sorted_indices = np.argsort(list(map(float, lr.strip().split())))[::-1]
+                    # Convert PPMI scores to floats
                     ppmi_scores = list(map(float, lp.strip().split()))
-                    ppmi_indices = np.argsort(np.asarray(ppmi_scores))
+                    # Get the NDCG score for the PPMI score, which is a valuation, compared to the indice of the rank
                     ndcg = ndcg_from_ranking(ppmi_scores, sorted_indices)
+
+                    # Add to array and print
                     ndcg_a.append(ndcg)
                     print("ndcg", ndcg, names[r], r)
+                    """
                     smr = spearmanr(ppmi_indices, sorted_indices)[1]
                     spearman_a.append(smr)
                     print("spearman", smr, names[r], r)
-
+                    """
                     r+=1
                     break
+    # Save NDCG
     dt.write1dArray(ndcg_a, ndcg_fn)
-    dt.write1dArray(spearman_a, spearman_fn)
+    #dt.write1dArray(spearman_a, spearman_fn)
 
 
-
-class Gini:
-    def __init__(self, rankings_fn, ppmi_fn, fn):
-        getNDCG(rankings_fn, ppmi_fn, fn)
 
 def main(rankings_fn, ppmi_fn,  fn):
     """
@@ -228,5 +233,3 @@ def main(rankings_fn, ppmi_fn,  fn):
     fn = "films 100, 75 L1"
     """
     getNDCG(rankings_fn, fn)
-
-#getNDCG("../data/movies/rank/numeric/films100ALL.txt","films100")

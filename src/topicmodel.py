@@ -65,7 +65,7 @@ def main(data_type, class_labels_fn, class_names_fn, ft_names_fn, max_depth, lim
         topic_word_prior = vt[1]
         n_topics = vt[2]
         file_names.append(file_name + "DTP" + str(doc_topic_prior) + "TWP" + str(topic_word_prior) + "NT" + str(n_topics))
-    final_csv_fn = "../data/"+data_type+"/rules/tree_csv/"+ file_name + final_csv_name + str(max_depth) + ".csv"
+    final_csv_fn = "../data/"+data_type+"/rules/tree_csv/"+ file_name + final_csv_name + ".csv"
     for vt in range(len(variables_to_execute)):
         doc_topic_prior = variables_to_execute[vt][0]
         topic_word_prior = variables_to_execute[vt][1]
@@ -83,8 +83,9 @@ def main(data_type, class_labels_fn, class_names_fn, ft_names_fn, max_depth, lim
         og_fn = file_name
         for c in range(cross_val):
             file_name = og_fn + " " + str(cross_val) + "CV " + str(c) + classify + "Dev" + str(dt_dev)
-            csv_name = "../data/" + data_type + "/rules/tree_csv/" + file_name + str(max_depth) + ".csv"
+            csv_name = "../data/" + data_type + "/rules/tree_csv/" + file_name + ".csv"
             cv_fns.append(csv_name)
+
 
             tree.DecisionTree(topic_model_fn, class_labels_fn, class_names_fn, dimension_names_fn, file_name, 10000,
                               max_depth=max_depth, balance="balanced", criterion="entropy", save_details=True, cv_splits=cross_val,
@@ -102,26 +103,34 @@ def main(data_type, class_labels_fn, class_names_fn, ft_names_fn, max_depth, lim
 
         dt.averageCSVs(cv_fns)
         file_name = og_fn + " " + str(cross_val) + "CV " + str(0) + classify + "Dev" + str(dt_dev)
-        csvs.append("../data/" + data_type + "/rules/tree_csv/" + file_name + str(max_depth) + "AVG.csv")
+        csvs.append("../data/" + data_type + "/rules/tree_csv/" + file_name + "AVG.csv")
     dt.arrangeByScore(np.unique(np.asarray(csvs)), final_csv_fn)
-data_type = "placetypes"
-high_amt = 50
-low_amt = 10
+data_type = "newsgroups"
+high_amt = 30
+low_amt = 18836
 
-classify = ["geonames", "foursquare", "opencyc"]
+#all-30-18836DTP0.001TWP0.1NT200
+
+#all-100-10DTP0.1TWP0.001NT400 1CV 0genresDevTrueAVG.csv
+#all-100-10DTP0.1TWP0.001NT400 1CV 0keywordsDevTrueAVG.csv
+
+#all-100-10DTP0.1TWP0.01NT100 1CV 0ratingsDevTrueAVG.csv
 
 
-max_depth = 2
+
+classify = ["newsgroups"]
+
+max_depth = 3
 limit_entities = False
-dt_dev = True
+dt_dev = False
 vector_names_fn = "../data/" + data_type + "/nnet/spaces/entitynames.txt"
 feature_names_fn = "../data/" + data_type + "/bow/names/"+str(high_amt)+"-"+str(low_amt)+"-all.txt"
-rewrite_files = False
+rewrite_files = True
 cross_val = 1
 
-doc_topic_prior = [ 0.001, 0.01, 0.1]
-topic_word_prior = [0.001, 0.01, 0.1]
-n_topics = [10,30,50,100,200]
+doc_topic_prior = [ 0.001]
+topic_word_prior = [ 0.1]
+n_topics = [200]
 for c in classify:
     file_name = "all-" + str(high_amt) + "-" + str(low_amt)
     final_csv_name = "final" + c + str(dt_dev)
