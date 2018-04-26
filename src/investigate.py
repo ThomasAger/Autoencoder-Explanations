@@ -39,9 +39,9 @@ def getTopEntitiesOnRanking(ranking, entity_names, cluster_names, cluster_length
         top_entities.append(top_cluster_entities)
         top_rankings.append(top_cluster_rankings)
         if output:
-            print("Cluster:", cluster_names[c], "Max/min", max(ranking[c]), min(ranking[c]),  "Entites", top_cluster_entities)
-            print("Cluster:", cluster_names[c], "Max/min", max(ranking[c]), min(ranking[c]), "Entites", top_cluster_rankings)
-    return top_entities, top_rankings
+            print("Cluster:", str(cluster_names[c])[1:-1],  "Top 5 Entities", str(top_cluster_entities)[1:-1])
+            #print("Cluster:", cluster_names[c], "Max/min", max(ranking[c]), min(ranking[c]), "Entites", top_cluster_rankings)
+    return top_entities
 
 """
 data_type = "placetypes"
@@ -149,10 +149,11 @@ def compareTopEntitiesOnRanking(ranking_1, ranking_2, cluster_names, cluster_len
 
 
 def compareEntityOnCluster(ranking1, ranking2, clusters,  entity_names, entity_name="", entity_id=-1, cluster_name="", cluster_id=-1):
-    for c in range(len(clusters)):
-        if cluster_name in clusters[c]:
-            cluster_id = c
-            break
+    if cluster_name != "":
+        for c in range(len(clusters)):
+            if cluster_name in clusters[c]:
+                cluster_id = c
+                break
     to_compare1 = None
     to_compare2 = None
     if cluster_id != -1:
@@ -208,30 +209,32 @@ def getSimilarClusters(cluster_dict_1, cluster_dict_2, trim_amt, file_name, data
         lines.append(line)
     dt.write1dArray(lines, "../data/" + data_type + "/investigate/" + file_name + str(trim_amt) + ".txt")
 
-data_type = "movies"
-file_name = "films200-genresCV1S0 SFT0 allL0100kappa KMeans CA400 MC1 MS0.4 ATS2000 DS800"
+data_type = "placetypes"
+file_name = "places NONNET50CV5S0 SFT0 allL050kappa KMeans CA100 MC1 MS0.4 ATS2000 DS200"
 cluster_names = np.asarray(dt.import2dArray("../data/" + data_type + "/cluster/dict/" + file_name + ".txt","s"))
-topic_model_names = np.asarray(dt.import2dArray("../data/" + data_type + "/LDA/names/" + "all-100-10DTP0.001TWP0.001NT400.txt", "s"))
+#topic_model_names = np.asarray(dt.import2dArray("../data/" + data_type + "/LDA/names/" + "all-100-10DTP0.001TWP0.001NT400.txt", "s"))
 trim_amt = 5
-getSimilarClusters(cluster_names, topic_model_names, trim_amt, file_name, data_type)
+#getSimilarClusters(cluster_names, topic_model_names, trim_amt, file_name, data_type)
 
 ranking1 = dt.import2dArray("../data/" + data_type + "/rank/numeric/" + file_name + ".txt")
 entity_names = dt.import1dArray("../data/" + data_type + "/nnet/spaces/entitynames.txt")
-top_x = 5
-cluster_length = 3
+top_x = 1383
+cluster_length = 200
 cluster_ids = None
 #Reverse = False: How far certain moves in A have fallen after being in B
 #Reverse = True: How high certain movies have grown in A after being in B
 reverse = False
 from_top = 100
 
-file_name = "places NONNETCV5S0 SFT0 allL050kappa KMeans CA200 MC1 MS0.4 ATS2000 DS400 foursquareFT BOCFi NTtanh1 NT1300linear"
+file_name = "places NONNET50CV5S0 SFT0 allL050kappa KMeans CA100 MC1 MS0.4 ATS2000 DS200FT BOCFi NT[50]tanh300V1.2"
 ranking2 = dt.import2dArray("../data/" + data_type + "/nnet/clusters/" + file_name + ".txt")
 
 #compareTopEntitiesOnRanking(ranking1, ranking2, cluster_names, cluster_length, top_x, output=True, reverse=reverse, from_top=from_top)
 
-compareEntityOnCluster(ranking1, ranking2, cluster_names,  entity_names, entity_name="house", cluster_name="classical")
+#compareEntityOnCluster(ranking1, ranking2, cluster_names,  entity_names, entity_name="house", cluster_name="classical")
 
+normal_top_entities = getTopEntitiesOnRanking(ranking1, entity_names, cluster_names, cluster_length, top_x, cluster_ids)
+dt.write2dArray(normal_top_entities, "../data/" + data_type + "/investigate/" + file_name + "NO FINETUNE all entities")
 """
 data_type = "movies"
 classify = "genres"

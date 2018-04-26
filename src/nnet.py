@@ -524,13 +524,12 @@ class NeuralNetwork:
                                  weights=self.fine_tune_weights))
         else:
             print("Fine tune weights", self.hidden_layer_size, finetune_size, "linear")
-
-        if not self.from_ae:
-            model.add(Dense(output_dim=finetune_size, input_dim=self.hidden_layer_size, activation="linear",
-                                 weights=self.fine_tune_weights))#
-        else:
-            model.add(Dense(output_dim=finetune_size, input_dim=self.hidden_layer_size, activation="linear",
-                                 weights=self.fine_tune_weights))#
+            if not self.from_ae:
+                model.add(Dense(output_dim=finetune_size, input_dim=self.hidden_layer_size, activation="linear",
+                                     weights=self.fine_tune_weights))#
+            else:
+                model.add(Dense(output_dim=finetune_size, input_dim=self.hidden_layer_size, activation="linear",
+                                     weights=self.fine_tune_weights))#
 
         if self.get_scores:
             if self.randomize_finetune_weights or self.corrupt_finetune_weights or len(self.fine_tune_weights_fn) > 0:

@@ -519,7 +519,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                 file_name = file_name + " tdev"
 
 
-                            csv_name = loc + data_type + "/rules/tree_csv/" + file_name + " " + classification_task + ".csv"
+                            csv_name = loc + data_type + "/rules/tree_csv/" + file_name + " " + classification_task + " " + str(max_depth) + ".csv"
 
                             csv_fns_dt[counter] = csv_name
                             if cv_splits == 0:
@@ -748,7 +748,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                         clusters_fn = class_path
                                         cluster_dict_fn = name_fn
 
-                                    csv_name = loc + data_type + "/rules/tree_csv/" + file_name + str(max_depth) + " " + classification_task +   ".csv"
+                                    csv_name = loc + data_type + "/rules/tree_csv/" + file_name + " " + classification_task + " " + str(max_depth) +   ".csv"
                                     if cv_splits == 0:
                                         all_csv_fns.append(csv_name)
                                     else:
@@ -938,15 +938,17 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
         avg_fn = fn[:-4] +"AVG.csv"
         fn = fn.split("/")[len(fn.split("/"))-1]
         try:
+            print("Trying")
             fns_to_add = dt.getCSVsToAverage("../data/"+data_type+"/rules/tree_csv/",fn)
         except IndexError:
-            fns_to_add = dt.getCSVsToAverage("../data/" + data_type + "/rules/tree_csv/", fn[:-4] + str(max_depth) + ".csv")
+            print("Index error")
+            fns_to_add = dt.getCSVsToAverage("../data/" + data_type + "/rules/tree_csv/", fn[:-4] + " " + str(max_depth) + ".csv")
         all_csv_fns.append(fns_to_add)
 
     dt.arrangeByScore(
         np.unique(
             np.asarray(all_csv_fns))
-        ,loc + " " + arrange_name + file_name[:50] + " " + classification_task + " " +  str(len(all_csv_fns)) + ".csv")
+        ,loc + " " + arrange_name + file_name[:50] + " " + classification_task + " "  + str(max_depth) + " " +  str(len(all_csv_fns)) + ".csv")
     #jvm.stop()
 
 print("Begin top of parameters")
@@ -1119,7 +1121,6 @@ ppmi_only = [0] #amt of ppmi to test
 boc_only = [False]
 pav_only = [False]
 
-
 average_ppmi = [False]
 bag_of_clusters = [True]
 finetune_ppmi = [False]
@@ -1147,10 +1148,10 @@ score_limit = [0.0]
 """
 hp_opt = True
 
-dt_dev = False
+dt_dev = True
 svm_classify = False
 rewrite_files = False
-max_depth = [3]
+max_depth = [2]
 
 cross_val = 5
 one_for_all = False
