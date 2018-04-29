@@ -25,7 +25,10 @@ def main(data_type, vector_size, window_size, min_count, sampling_threshold, neg
                                train_epoch, dm, worker_count, train_wv, concatenate_wv, use_hierarchical_softmax):
     file_name = "Doc2Vec" + " VS" + str(vector_size) + " WS" + str(window_size) + " MC" + str(min_count) + " ST" + str(
         sampling_threshold) + \
-                " NS" + str(negative_size) + " TE" + str(train_epoch) + " DM" + str(dm) + " WC" + str(worker_count) + "spacy"
+                " NS" + str(negative_size) + " TE" + str(train_epoch) + " DM" + str(dm) + " WC" + str(
+        worker_count) + "spacy"
+    " NS" + str(negative_size) + " TE" + str(train_epoch) + " DM" + str(dm) + " WC" + str(worker_count) + \
+    " TW" + str(train_wv) + " CW" + str(concatenate_wv) + " HS" + str(use_hierarchical_softmax)
 
     corpus_fn = "../data/raw/" + data_type + "/corpus_processed.txt"
 
