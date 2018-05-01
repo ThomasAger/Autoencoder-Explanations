@@ -111,10 +111,6 @@ def ngrams(tokenized_corpus):  # Increase the gram amount by 1
     return processed_corpus, gram_corpus, tokenized_ids, vocab
 
 
-def bow(tokenized_corpus):
-    print("")
-
-
 def main(data_type, output_folder, grams):
     if data_type == "newsgroups":
         newsgroups = fetch_20newsgroups(subset='all', shuffle=False, remove=("headers", "footers", "quotes"))
