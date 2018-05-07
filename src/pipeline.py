@@ -36,7 +36,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
          sim_t, one_for_all, ft_loss_a, ft_optimizer_a, bag_of_clusters_a, just_output, arrange_name, only_most_similar_a,
          dont_cluster_a, top_dt_clusters_a, by_class_finetune_a, cluster_duplicates_a, repeat_finetune_a, save_results_so_far,
          finetune_ppmi_a, average_nopav_ppmi_a, boc_average_a, identity_activation_a, ppmi_only_a, boc_only_a, pav_only_a,
-         multi_label_a ,use_dropout_in_finetune_a, lock_weights_and_redo_a, logistic_regression, mean_shift, word_vectors_a):
+         multi_label_a ,use_dropout_in_finetune_a, lock_weights_and_redo_a, logistic_regression, mean_shift, word_vectors_a,
+         bow_path_fn, bow_names_fn):
 
 
     prune_val = 2
@@ -382,8 +383,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                         """ SVM """
                         svm_type = "svm"
                         highest_count = direction_count
-                        bow_path = loc + data_type + "/bow/frequency/phrases/class-all-"+str(lowest_amt)+"-"+str(highest_count)+"-"+new_classification_task + ".npz"
-                        property_names_fn = loc + data_type + "/bow/names/" + str(lowest_amt) + "-" +str(highest_count)+"-"+ new_classification_task +".txt"
+                        bow_path = loc + data_type + "/bow/frequency/phrases/" + bow_path_fn
+                        property_names_fn = loc + data_type + "/bow/names/" + bow_names_fn
                         if word_vectors is not "all":
                             directions_fn = loc + data_type + "/svm/directions/" + file_name + ".txt"
 
@@ -1026,7 +1027,6 @@ if arcca:
 else:
     loc = "../data/"
 
-
 """
 data_type = "wines"
 classification_task = ["types"]
@@ -1043,8 +1043,9 @@ limit_entities = [True]
 init_vector_path = loc+data_type+"/pca/class-all-50-10-alld100"
 vector_path_replacement = loc+data_type+"/pca/class-all-50-10-alld100"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
+bow_path_fn = "class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+new_classification_task + ".npz"
 """
-
+"""
 data_type = "movies"
 classification_task = ["ratings", "keywords", "genres"] #Run keywords as separate process
 #arrange_name = arrange_name + classification_task[0]
@@ -1064,20 +1065,22 @@ if classification_task[0] == "us-ratings":
     deep_size = [200]
 else:
     deep_size = [200]
+bow_path_fn = "class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+new_classification_task + ".npz"
 
 """
 data_type = "newsgroups"
 classification_task = ["newsgroups"]
 #arrange_name = arrange_name + classification_task[0]
 skip_nn = True
+fn_orig = "simple_stopwords_ppmi 2-gram50-0.99"
 if skip_nn is False:
-    file_name = "doc2vec"
+    file_name = fn_orig + "PCA"
 else:
-    file_name = "doc2vec"
+    file_name = fn_orig + "PCA"
 lowest_amt = 30
 highest_amt = 18836
 
-space_name = "Doc2Vec VS300 WS15 MC1 ST1e-05 NS5 TE400 DM0 WC10.npy"
+space_name = "simplestopwords_ppmi 2-gram50-0.99-all.npy"
 
 init_vector_path = loc+data_type+"/nnet/spaces/"+space_name
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/"+space_name
@@ -1085,9 +1088,10 @@ vector_path_replacement =  loc+data_type+"/nnet/spaces/"+space_name
 #init_vector_path = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
 #get_nnet_vectors_path = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
 #vector_path_replacement = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
-deep_size = [300]
+deep_size = [100]
 limit_entities = [False]
-"""
+bow_path_fn = "simple_stopwords_bow 2-gram50-0.99" + "-all.npz"
+bow_names_fn = "simple_stopwords_words 2-gram50-0.99-all.txt"
 
 """
 data_type = "placetypes"
@@ -1109,6 +1113,7 @@ else:
 vector_path_replacement = loc+data_type+"/nnet/spaces/places"+str(places_size)+".txt"
 get_nnet_vectors_path = loc + data_type + "/nnet/spaces/places"+str(places_size)+".txt"
 deep_size = [places_size]
+bow_path_fn = "class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+new_classification_task + ".npz"
 """
 """
 data_type = "sentiment"
@@ -1136,6 +1141,7 @@ init_vector_path = loc+data_type+"/nnet/spaces/"+space_name+".npy"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/"+space_name+".npy"
 vector_path_replacement =  loc+data_type+"/nnet/spaces/"+space_name+".npy"
 deep_size = [50]
+bow_path_fn = "class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+new_classification_task + ".npz"
 """
 """
 data_type = "sst"
@@ -1165,6 +1171,7 @@ init_vector_path = loc+data_type+"/nnet/spaces/"+space_name+".npy"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/"+space_name+".npy"
 vector_path_replacement =  loc+data_type+"/nnet/spaces/"+space_name+".npy"
 deep_size = [50]
+bow_path_fn = "class-all-"+str(lowest_amt)+"-"+str(highest_count)+"-"+new_classification_task + ".npz"
 """
 if classification_task[0] == "geonames" or classification_task[0] == "foursquare" or classification_task[0] == "newsgroups" :
     hidden_activation = "tanh"
@@ -1306,7 +1313,8 @@ for c in range(chunk_amt):
                  skip_nn, dissim, dissim_amt, hp_opt, find_most_similar, use_breakoff_dissim, get_all, half_ndcg_half_kappa, sim_t,
                  one_for_all, bag_of_clusters, arrange_name, only_most_similar, dont_cluster, top_dt_clusters, by_class_finetune,
                  cluster_duplicates, repeat_finetune, save_results_so_far, finetune_ppmi, average_nopav_ppmi_a, boc_average,
-                 identity_activation, ppmi_only, boc_only, pav_only, multi_label, use_dropout_in_finetune, lock_weights_and_redo]
+                 identity_activation, ppmi_only, boc_only, pav_only, multi_label, use_dropout_in_finetune, lock_weights_and_redo,
+                 bow_path_fn, bow_names_fn]
 
     sys.stdout.write("python pipeline.py ")
     variable_string = "python $SRCPATH/pipeline.py "
@@ -1415,6 +1423,7 @@ if len(args) > 0:
     multi_label = args[69]
     use_dropout_in_finetune = args[70]
     lock_weights_and_redo = args[71]
+    bow_path_fn = args[72]
 if  __name__ =='__main__':
     print("begin main")
     for c in classification_task:
@@ -1431,4 +1440,4 @@ if  __name__ =='__main__':
                                        arrange_name, only_most_similar, dont_cluster, top_dt_clusters, by_class_finetune, cluster_duplicates,
                                        repeat_finetune, save_results_so_far, finetune_ppmi, average_nopav_ppmi_a, boc_average, identity_activation,
                                        ppmi_only, boc_only, pav_only, multi_label, use_dropout_in_finetune, lock_weights_and_redo, logistic_regression, mean_shift,
-             word_vectors)
+             word_vectors, bow_path_fn, bow_names_fn)

@@ -76,18 +76,3 @@ def getIMDBSequences(max_features, ngram_range, maxlen):
     x_train, x_test = limitCorpus(x_train, x_test, ngram_range, max_features, maxlen)
     return x_train, x_test, y_train, y_test
 
-def limitCorpus(x_train, x_test, ngram_range, max_features, maxlen):
-
-    # Add limitation to max_features here
-
-    if ngram_range > 1:
-        x_test, max_features = ngram_corpus(x_test, max_features, ngram_range)
-        x_train, max_features = ngram_corpus(x_train, max_features, ngram_range)
-
-    print('Pad sequences (samples x time)')
-    x_train = sequence.pad_sequences(x_train, maxlen=maxlen)
-    x_test = sequence.pad_sequences(x_test, maxlen=maxlen)
-    print('x_train shape:', x_train.shape)
-    print('x_test shape:', x_test.shape)
-
-    return x_train, x_test

@@ -19,8 +19,9 @@ from keras.metrics import categorical_accuracy
 from keras.callbacks import TensorBoard
 from keras.models import load_model
 import os
-import loaddata
-
+import prepare_data
+import newsgroups
+from keras.preprocessing import sequence
 
 data_type = "newsgroups"
 # Set parameters:
@@ -54,7 +55,10 @@ if use_pretrained_vectors:
     embedding_matrix = [embedding_matrix]
     embedding_dims = 300
 
-file_name = "fastText E" + str(embedding_dims) + " ML" + str(maxlen) + " MF" + str(max_features) + " E" + str(epochs) + " NG" + str(ngram_range) + " PRE" + str(use_pretrained_vectors)
+corpus_type = "simple_stopwords" # simple_stopwords_corpus
+gram = " 2-gram" # " 2-gram", " 3-gram"
+
+file_name = "fastText " + corpus_type + gram + " E" + str(embedding_dims) + " ML" + str(maxlen) + " MF" + str(max_features) + " E" + str(epochs) + " NG" + str(ngram_range) + " PRE" + str(use_pretrained_vectors)
 
 print(file_name)
 
@@ -71,7 +75,7 @@ if data_type == "sentiment":
     y_test_fn = file_name + " x_train.npy"
     y_dev_fn = file_name + " x_train.npy"
     if os.path.exists(x_train_fn) is False:
-        x_train, x_test, y_train, y_test = loaddata.getIMDBSequences(max_features, ngram_range, maxlen)
+        x_train, x_test, y_train, y_test = prepare_data.getIMDBSequences(max_features, ngram_range, maxlen)
         np.save(x_train_fn, x_train)
         np.save(y_train_fn, y_train)
         np.save(x_test_fn, x_test)
@@ -86,12 +90,13 @@ if data_type == "sentiment":
     metric = 'accuracy'
     loss = 'binary_crossentropy'
 else:
-    x_train = np.load(folder_name + "x_train.npy")
-    x_test = np.load(folder_name + "x_test.npy")
-    y_train = np.load(folder_name + "y_train.npy")
-    y_test = np.load(folder_name + "y_test.npy")
-    x_train, x_test = loaddata.limitCorpus(x_train, x_test, ngram_range, max_features, maxlen)
-    output_size = 20
+    print("Loaded corpus", corpus_type + "_tokenized_corpus" + gram + ".npy")
+    print("Loaded classes", corpus_type + "_classes_categorical.npy")
+    corpus = np.load(folder_name + corpus_type + "_tokenized_corpus" + gram + ".npy")
+    classes = np.load(folder_name + corpus_type + "_classes_categorical.npy")
+    corpus = sequence.pad_sequences(corpus, maxlen=maxlen)
+    x_train, y_train, x_test, y_test, x_dev, y_dev = newsgroups.getSplits(corpus, classes)
+    output_size = len(y_test[0])
     output_activation = "softmax"
     metric = categorical_accuracy
     loss = 'categorical_crossentropy'
@@ -102,16 +107,10 @@ if test:
     y_train = y_train[:100]
     y_test = y_test[:100]
 
-x_dev = x_train[int(len(x_train) * 0.8):]
-y_dev = y_train[int(len(y_train) * 0.8):]
-x_train = x_train[:int(len(x_train) * 0.8)]
-y_train = y_train[:int(len(y_train) * 0.8)]
-
-
 model_fn = "../data/"+data_type+"/fastText/model/" + file_name + ".model"
 score_fn = "../data/"+data_type+"/fastText/score/" + file_name + ".txt"
 
-if os.path.exists(model_fn) is False:
+if os.path.exists(model_fn) is True:
 
     tensorboard = TensorBoard(log_dir='/home/tom/Desktop/Logs/'+str(data_type)+"/"+file_name+'/', histogram_freq=0,
                                   write_graph=True, write_images=True)
@@ -144,7 +143,7 @@ if os.path.exists(model_fn) is False:
     print(scores)
 
 vector_path = "../data/"+data_type+"/fastText/vectors/" + file_name + ".npy"
-if os.path.exists(vector_path) is False:
+if os.path.exists(vector_path) is True:
     model = load_model(model_fn)
     target_layer = model.layers[-2]
     outputs = target_layer(target_layer.input)

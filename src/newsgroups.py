@@ -10,24 +10,25 @@ import scipy.sparse as sp
 
 
 def getSplits(vectors, classes, dev=0.8):
-    if len(vectors) != 18846 or len(classes) != 18846:
+    if len(vectors) > 18846:
         print("This is not the standard size of 20NG, expected 18846")
         return False
     x_train = vectors[:11314]
-    x_test = vectors[11314:]
     y_train = classes[:11314]
+    x_test = vectors[11314:]
     y_test = classes[11314:]
-    if dev > 0:
-        print("Returning development splits", dev)
-        x_test = x_train[int(len(x_train) * 0.8):]
-        y_test = y_train[int(len(y_train) * 0.8):]
-        x_train = x_train[:int(len(x_train) * 0.8)]
-        y_train = y_train[:int(len(y_train) * 0.8)]
+    print("Returning development splits", dev)
+    x_dev = x_train[int(len(x_train) * 0.8):]
+    y_dev = y_train[int(len(y_train) * 0.8):]
+    x_train = x_train[:int(len(x_train) * 0.8)]
+    y_train = y_train[:int(len(y_train) * 0.8)]
     print(len(x_test), len(x_test[0]), "x_test")
     print(len(y_test), len(y_test[0]), "y_test")
+    print(len(x_dev), len(x_dev[0]), "x_dev")
+    print(len(y_dev), len(y_dev[0]), "y_dev")
     print(len(x_train), len(x_train[0]), "x_train")
     print(len(y_train), len(y_train[0]), "y_train")
-    return x_train, y_train, x_test, y_test
+    return x_train, y_train, x_test, y_test, x_dev, y_dev
 def regularNewsgroupsStuff(): # Rename later
     classification = "all"
     highest_amt = 18836

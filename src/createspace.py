@@ -33,7 +33,7 @@ def createMDS(dm, depth):
     return npos
 
 def createSVD(tf, depth):
-    svd = TruncatedSVD(n_components=depth)
+    svd = TruncatedSVD(n_components=depth, algorithm="arpack") # use the scipy algorithm "arpack"
     pos = svd.fit_transform(tf)
     return pos
 

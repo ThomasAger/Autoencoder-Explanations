@@ -1214,7 +1214,19 @@ def getWordVectors(vector_save_fn, words_fn, wvn, wv_amt, svm_dir_fn=None):
     else:
         print("Already got word vectors", vector_save_fn)
 
+id_1 = np.load("../data/raw/newsgroups/simple_remove.npy")
+id_2 = np.load("../data/raw/newsgroups/simple_stopwords_remove.npy")
+space = import2dArray("../data/newsgroups/nnet/spaces/fastText E300 ML200 MF158248 E20 NG1 PRETrue.npy")
+
+space = np.delete(space, id_1, axis=0)
+space = np.delete(space, id_2, axis=0)
+
+np.save("../data/newsgroups/nnet/spaces/fastText E300 ML200 MF158248 E20 NG1 PRETrue.npy", space)
+
 """
+space = import2dArray("../data/newsgroups/bow/frequency/phrases/simple_stopwords_bow 2-gram50-0.99-all.npz")
+print("hi")
+
 lines = import2dArray("../data/output.txt", "s")
 
 kappa = []
