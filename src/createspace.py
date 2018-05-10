@@ -88,7 +88,6 @@ def getDissimilarityMatrixSparse(tf_transposed):
     tf_transposed = sp.csr_matrix(tf_transposed)
     tf = sp.csr_matrix.transpose(tf_transposed)
     tf = sp.csr_matrix(tf)
-    #flat_tf = tf.toarray()
     docs_len = tf.shape[0]
 
     dm = np.zeros([docs_len, docs_len], dtype="float64")
@@ -98,14 +97,10 @@ def getDissimilarityMatrixSparse(tf_transposed):
 
     #Calculate norms
     for ei in range(docs_len):
-        #norms[ei] = np.linalg.norm(flat_tf[ei])
         s_norms[ei] = sp.linalg.norm(tf[ei])
-        #print("norm", ei, norms[ei])
-        #print("s_norm", ei, s_norms[ei]
         if ei %100 == 0:
             print(ei)
 
-    #dot_product = np.zeros([docs_len, docs_len], dtype="float64")
     s_dot_product = np.zeros([docs_len, docs_len], dtype="float64")
 
     #Calculate dot products
@@ -115,18 +110,14 @@ def getDissimilarityMatrixSparse(tf_transposed):
             if len(s_dp.data) != 0:
                 s_dot_product[ei][ej] = s_dp.data[0]
             print("dp", ej)
-            #print("dp", ei, docs_len, ej, dot_product[ei][ej])
-            #print("s_dp", ei, docs_len, ej, s_dot_product[ei][ej])
         print("dp", ei)
 
     norm_multiplied = np.zeros([docs_len, docs_len], dtype="float64")
 
-    # Calculate dot products
     for ei in range(docs_len):
         for ej in range(docs_len):
             norm_multiplied[ei][ej] = s_norms[ei] * s_norms[ej]
         print("norms", ei)
-
 
     norm_multiplied = dt.shortenFloatsNoFn(norm_multiplied)
     s_dot_product = dt.shortenFloatsNoFn(s_dot_product)
@@ -138,6 +129,8 @@ def getDissimilarityMatrixSparse(tf_transposed):
             dm[ei][ej] = ang
         print(ei)
     return dm
+
+dt.write2dArray(getDissimilarityMatrix(dt.import2dArray("../data/newsgroups/bow/ppmi/simple_numeric_stopwords_ppmi 3-all.npz", return_sparse=False).transpose()), "../data/newsgroups/mds/simple_numeric_stopwords_ppmi 2-all")
 
 def calcAngSparse(e1, e2, e2_transposed, norm_1, norm_2):
     dp = 0

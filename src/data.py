@@ -722,17 +722,29 @@ def getDifference(array1, array2):
     file2 = open(array2)
     for line1 in file1:
         line1 = line1.split()
-        line1 = [float(line1[v]) for v in range(len(line1))]
+        line1 = [str(line1[v]) for v in range(len(line1))]
         print(line1)
         for line2 in file2:
             line2 = line2.split()
-            line2 = [float(line2[v]) for v in range(len(line2))]
+            line2 = [str(line2[v]) for v in range(len(line2))]
             print(line2)
             break
         break
 
-original_ppmi = "../data/movies/bow/ppmi/class-all"
-library_ppmi = "../data/movies/bow/ppmi/class-all-l"
+def getDifference(array1, array2):
+    file2 = import1dArray(array1)
+    file1 = import1dArray(array2)
+    for line1 in file1:
+        found = False
+        for line2 in file2:
+            if line2 == line1:
+                found = True
+                break
+        if not found:
+            print(line1)
+
+original_ppmi = "../data/newsgroups/bow/names/simple_numeric_stopwords_words 29-0.999-all.txt"
+library_ppmi = "../data/newsgroups/bow/names/30-18836-all.txt"
 
 #getDifference(original_ppmi, library_ppmi)
 
@@ -1213,7 +1225,7 @@ def getWordVectors(vector_save_fn, words_fn, wvn, wv_amt, svm_dir_fn=None):
         write1dArray(words, wvn)
     else:
         print("Already got word vectors", vector_save_fn)
-
+"""
 id_1 = np.load("../data/raw/newsgroups/simple_remove.npy")
 id_2 = np.load("../data/raw/newsgroups/simple_stopwords_remove.npy")
 space = import2dArray("../data/newsgroups/nnet/spaces/fastText E300 ML200 MF158248 E20 NG1 PRETrue.npy")
@@ -1222,7 +1234,7 @@ space = np.delete(space, id_1, axis=0)
 space = np.delete(space, id_2, axis=0)
 
 np.save("../data/newsgroups/nnet/spaces/fastText E300 ML200 MF158248 E20 NG1 PRETrue.npy", space)
-
+"""
 """
 space = import2dArray("../data/newsgroups/bow/frequency/phrases/simple_stopwords_bow 2-gram50-0.99-all.npz")
 print("hi")

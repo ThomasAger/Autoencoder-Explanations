@@ -30,13 +30,13 @@ def testAll(name_array, rep_array, class_array, data_type):
         writer.writerows(csv_rows)
 
 if __name__ == '__main__':
-
+    fn = "../data/newsgroups/bow/ppmi/class-all-"+str(30)+"-"+str(18836)+"-" + "all.npz"
+    print("Testing", fn)
     testAll([ "ppmi"],
             [
-             dt.import2dArray("../data/newsgroups/bow/frequency/phrases/simple_stopwords_bow30-0.999-all.npz").transpose()],
+             dt.import2dArray(fn).transpose()],
             [
-             np.load("../data/raw/newsgroups/" + "simple_stopwords" + "_classes_categorical.npy")], "newsgroups")
+                dt.import2dArray("../data/newsgroups/classify/newsgroups/class-all", "i")
+             #np.load("../data/raw/newsgroups/" + "simple_numeric_stopwords" + "_classes_categorical.npy")
+            ], "newsgroups")
 
-
-    ppmi_fn = "../data/newsgroups/bow/ppmi/simple_stopwords_ppmi 2-gram50-0.99-all.npz"
-    freq_fn = "../data/newsgroups/bow/frequency/phrases/simple_stopwords_bow 2-gram50-0.99-all.npz"

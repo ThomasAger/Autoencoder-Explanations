@@ -14,22 +14,29 @@ def convertPPMISparse(mat):
     rowTotals = mat.sum(axis=1).T
     N = np.sum(rowTotals)
     rowMatSparse = np.zeros(nrows, dtype=np.float)
+    print("Creating row totals")
     for i in range(nrows):
         if rowTotals[0, i] != 0:
             rowMatSparse[i] = 1.0 / rowTotals[0, i]
     colMatSparse = np.zeros(ncols, dtype=np.float)
+    print("Creating col totals")
     for j in range(ncols):
         if colTotals[0, j] != 0:
             colMatSparse[j] = 1.0 / colTotals[0, j]
+    print("Multiplying")
     P = N * mat
     P = P.astype(np.float64)
     for i in range(len(rowMatSparse)):
         P[i] *= rowMatSparse[i]
     for i in range(len(colMatSparse)):
         P[:,i] *= colMatSparse[i]
+    print("Final step")
     cx = sp.coo_matrix(P)
     for i, j, v in zip(cx.row, cx.col, cx.data):
-        P[i, j] = 0 if v <= 0 else P[i,j] = max(math.log(v), 0)
+        if v <= 0:
+            P[i, j] = 0
+        else:
+            P[i,j] = max(math.log(v), 0)
     return P
 
 
@@ -87,4 +94,5 @@ def test():
         if broke is False:
             print("Clear")
 
-test()
+if __name__ == '__main__':
+    test()

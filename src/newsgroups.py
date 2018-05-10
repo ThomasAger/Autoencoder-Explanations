@@ -37,7 +37,7 @@ def regularNewsgroupsStuff(): # Rename later
     all_fn = "../data/newsgroups/bow/frequency/phrases/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-" + classification
     #newsgroups_train = fetch_20newsgroups(subset='train', shuffle=False, remove=("headers", "footers", "quotes"))
     #newsgroups_test = fetch_20newsgroups(subset='test', shuffle=False, remove=("headers", "footers", "quotes"))
-    """
+
     all = fetch_20newsgroups(subset='all', shuffle=False, remove=("headers", "footers", "quotes"))
     
     train_len = len(all.data)
@@ -111,8 +111,7 @@ def regularNewsgroupsStuff(): # Rename later
     classes_dense = classes_dense.transpose()
     
     dt.write2dArray(classes_dense,"../data/newsgroups/classify/newsgroups/class-all")
-    
-    """
+
     feature_names = dt.import1dArray("../data/newsgroups/bow/names/"+str(lowest_amt)+"-"+str(highest_amt)+"-all.txt")
 
     freq = dt.import2dArray(all_fn)
@@ -129,3 +128,5 @@ def regularNewsgroupsStuff(): # Rename later
 
     #mt.printIndividualFromAll("newsgroups",  "binary/phrases", lowest_amt, highest_amt, classification, all_fn=all_fn, names_array=feature_names)
     #ppmi_fn = "../data/newsgroups/bow/ppmi/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-" + classification
+
+#regularNewsgroupsStuff()

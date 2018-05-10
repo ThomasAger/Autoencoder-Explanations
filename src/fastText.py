@@ -55,8 +55,8 @@ if use_pretrained_vectors:
     embedding_matrix = [embedding_matrix]
     embedding_dims = 300
 
-corpus_type = "simple_stopwords" # simple_stopwords_corpus
-gram = " 2-gram" # " 2-gram", " 3-gram"
+corpus_type = "simple_numeric_stopwords" # simple_stopwords_corpus
+gram = "" # " 2-gram", " 3-gram"
 
 file_name = "fastText " + corpus_type + gram + " E" + str(embedding_dims) + " ML" + str(maxlen) + " MF" + str(max_features) + " E" + str(epochs) + " NG" + str(ngram_range) + " PRE" + str(use_pretrained_vectors)
 
@@ -110,7 +110,7 @@ if test:
 model_fn = "../data/"+data_type+"/fastText/model/" + file_name + ".model"
 score_fn = "../data/"+data_type+"/fastText/score/" + file_name + ".txt"
 
-if os.path.exists(model_fn) is True:
+if os.path.exists(model_fn) is False:
 
     tensorboard = TensorBoard(log_dir='/home/tom/Desktop/Logs/'+str(data_type)+"/"+file_name+'/', histogram_freq=0,
                                   write_graph=True, write_images=True)
@@ -143,7 +143,7 @@ if os.path.exists(model_fn) is True:
     print(scores)
 
 vector_path = "../data/"+data_type+"/fastText/vectors/" + file_name + ".npy"
-if os.path.exists(vector_path) is True:
+if os.path.exists(vector_path) is False:
     model = load_model(model_fn)
     target_layer = model.layers[-2]
     outputs = target_layer(target_layer.input)
