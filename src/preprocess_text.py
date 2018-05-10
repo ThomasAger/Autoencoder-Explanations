@@ -22,9 +22,9 @@ import data as dt
 from sklearn.decomposition import TruncatedSVD
 from test_representations import testAll
 import sparse_ppmi
-import nltk
+#import nltk
 from collections import defaultdict
-nltk.download()
+#nltk.download()
 
 # Has batch processing (haven't figured out how to use it yet)
 # Retains punctuation e.g. won't -> "won't"
@@ -173,6 +173,7 @@ def ngrams(tokenized_corpus):  # Increase the gram amount by 1
     return processed_corpus, tokenized_corpus
 
 def getPCA(tf, depth):
+    tf = tf.todense()
     svd = TruncatedSVD(n_components=depth) # use the scipy algorithm "arpack"
     pos = svd.fit_transform(tf)
     return pos
@@ -233,8 +234,8 @@ def main(data_type, output_folder, grams,  no_below, no_above):
 
     filtered_ppmi_fn = "../data/newsgroups/bow/ppmi/" + file_name + "_ppmi " + str(no_below) + "-" + str(
         no_above) + "-all.npz"
-    ppmi_fn = "../data/newsgroups/bow/ppmi/" + file_name + "_ppmi " "2" + "-all.npz"
-    bow_fn = "../data/newsgroups/bow/frequency/phrases/" + file_name + "_bow " "2" + "-all.npz"
+    ppmi_fn = "../data/newsgroups/bow/ppmi/" + file_name + "_ppmi " "3" + "-all.npz"
+    bow_fn = "../data/newsgroups/bow/frequency/phrases/" + file_name + "_bow " "3" + "-all.npz"
     filtered_bow_fn = "../data/newsgroups/bow/frequency/phrases/" + file_name + "_bow "  + str(
         no_below) +  "-" + str(no_above) + "-all.npz"
 
@@ -289,7 +290,6 @@ def main(data_type, output_folder, grams,  no_below, no_above):
     pca_fn = "../data/newsgroups/nnet/spaces/" + file_name + "_ppmi " + str(
         no_below) + "-" + str(
         no_above) + "-all.npy"
-
     PCA_ppmi = getPCA(ppmi_sparse, 100)
 
     print(pca_fn)
@@ -356,6 +356,6 @@ def main(data_type, output_folder, grams,  no_below, no_above):
     filtered_bow = sp.load_npz(filtered_bow_fn)
     """
     # Create averaged word vectors
-    testAll(["ppmi_pca", "freq_bow", "ppmi_bow"], [ PCA_ppmi, filtered_ppmi_sparse.transpose().todense(), filtered_bow.todense()],
-            [to_categorical(classes), to_categorical(classes), to_categorical(classes)], "newsgroups")
+    testAll(["ppmi_pca"], [ PCA_ppmi],
+            [to_categorical(classes)], "newsgroups")
 if __name__ == '__main__': main("newsgroups", "../data/raw/newsgroups/", 0, 30, 0.999)

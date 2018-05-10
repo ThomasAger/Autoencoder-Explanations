@@ -130,7 +130,7 @@ def getDissimilarityMatrixSparse(tf_transposed):
         print(ei)
     return dm
 
-dt.write2dArray(getDissimilarityMatrix(dt.import2dArray("../data/newsgroups/bow/ppmi/simple_numeric_stopwords_ppmi 3-all.npz", return_sparse=False).transpose()), "../data/newsgroups/mds/simple_numeric_stopwords_ppmi 2-all")
+dt.write2dArray(getDissimilarityMatrix(dt.import2dArray("../data/newsgroups/bow/ppmi/simple_numeric_stopwords_ppmi 3-all.npz", return_sparse=True).transpose()), "../data/newsgroups/mds/simple_numeric_stopwords_ppmi 2-all")
 
 def calcAngSparse(e1, e2, e2_transposed, norm_1, norm_2):
     dp = 0
