@@ -71,7 +71,8 @@ class DecisionTree:
         cluster_names = dt.import2dArray(cluster_names_fn, "s")
         clusters = dt.import2dArray(clusters_fn, "f")
         original_vectors = vectors
-        if limit_entities is False and data_type != "newsgroups" and data_type != "sentiment":
+
+        if limit_entities is False and data_type != "newsgroups" and data_type != "sentiment" and "genres" not in classes_fn and "keywords" not in classes_fn:
             vector_names = dt.import1dArray(vector_names_fn)
             limited_labels = dt.import1dArray(limited_label_fn)
             vectors = np.asarray(dt.match_entities(vectors, limited_labels, vector_names))

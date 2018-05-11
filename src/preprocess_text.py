@@ -2,14 +2,14 @@
 from gensim.corpora import Dictionary
 from gensim.utils import deaccent
 import data as dt
-import spacy.attrs
-from spacy.tokenizer import Tokenizer
-from gensim.models import Phrases
+#import spacy.attrs
+#from spacy.tokenizer import Tokenizer
+#from gensim.models import Phrases
 from gensim.models.phrases import Phraser
 from nltk.corpus import stopwords
 import numpy as np
 from keras.utils import to_categorical
-import spacy
+#import spacy
 import os
 import string
 from sklearn.datasets import fetch_20newsgroups
@@ -196,7 +196,7 @@ def main(data_type, output_folder, grams,  no_below, no_above):
         classes = newsgroups.target
 
     file_name = "simple_numeric"
-
+    """
     processed_corpus = preprocess(corpus)
     tokenized_corpus = naiveTokenizer(processed_corpus)
     #vocab, dct = getVocab(tokenized_corpus)
@@ -205,7 +205,7 @@ def main(data_type, output_folder, grams,  no_below, no_above):
     #tokenized_ids = tokensToIds(tokenized_corpus, vocab)
     print(output_folder + file_name + "_remove.npy")
     np.save(output_folder + file_name + "_remove.npy", remove_ind)
-
+    """
     """
     np.save(output_folder + file_name + "_corpus.npy", tokenized_corpus)
     np.save(output_folder + file_name + "_tokenized_corpus.npy", tokenized_ids)
@@ -232,12 +232,13 @@ def main(data_type, output_folder, grams,  no_below, no_above):
 
     file_name += "_stopwords"
 
-    filtered_ppmi_fn = "../data/newsgroups/bow/ppmi/" + file_name + "_ppmi " + str(no_below) + "-" + str(
+    filtered_ppmi_fn = "../data/movies/bow/ppmi/" + file_name + "_ppmi " + str(no_below) + "-" + str(
         no_above) + "-all.npz"
-    ppmi_fn = "../data/newsgroups/bow/ppmi/" + file_name + "_ppmi " "3" + "-all.npz"
-    bow_fn = "../data/newsgroups/bow/frequency/phrases/" + file_name + "_bow " "3" + "-all.npz"
-    filtered_bow_fn = "../data/newsgroups/bow/frequency/phrases/" + file_name + "_bow "  + str(
+    ppmi_fn = "../data/movies/bow/ppmi/" + file_name + "_ppmi " "3" + "-all.npz"
+    bow_fn = "../data/movies/bow/frequency/phrases/" + file_name + "_bow " "3" + "-all.npz"
+    filtered_bow_fn = "../data/movies/bow/frequency/phrases/" + file_name + "_bow "  + str(
         no_below) +  "-" + str(no_above) + "-all.npz"
+    """
 
     tokenized_corpus, processed_corpus = removeStopWords(tokenized_corpus)
     processed_corpus, tokenized_corpus, remove_ind, classes = removeEmpty(processed_corpus, tokenized_corpus, classes)
@@ -278,23 +279,24 @@ def main(data_type, output_folder, grams,  no_below, no_above):
 
     testAll(["filtered_freq_bow", "filtered_ppmi_bow"], [filtered_ppmi_sparse.transpose().todense(), filtered_bow.todense()], [to_categorical(classes), to_categorical(classes)],
             "newsgroups")
-
+    """
     # Create PCA
-    bow = bow.transpose()
+    classes = dt.import2dArray("../data/movies/classify/genres/class-all", "i")
+    bow = sp.csr_matrix(dt.import2dArray("../data/movies/bow/frequency/phrases/class-all-15-5-genres", "i")).transpose()
     ppmi = sparse_ppmi.convertPPMISparse(bow)
     ppmi_sparse = sp.csr_matrix(ppmi)
 
     print(ppmi_fn)
     sp.save_npz(ppmi_fn, ppmi_sparse)
 
-    pca_fn = "../data/newsgroups/nnet/spaces/" + file_name + "_ppmi " + str(
+    pca_fn = "../data/movies/nnet/spaces/" + file_name + "_ppmi " + str(
         no_below) + "-" + str(
         no_above) + "-all.npy"
     PCA_ppmi = getPCA(ppmi_sparse, 100)
 
     print(pca_fn)
     np.save(pca_fn, PCA_ppmi)
-
+    """
     if grams > 0:
         for i in range(2, grams+1):  # Up to 5-length grams
 
@@ -343,6 +345,7 @@ def main(data_type, output_folder, grams,  no_below, no_above):
             np.save(pca_fn, PCA_ppmi)
 
     """
+    """
     file_name += "_stopwords"
     filtered_ppmi_fn = "../data/newsgroups/bow/ppmi/" + file_name + "_ppmi " + str(no_below) + "-" + str(
         no_above) + "-all.npz"
@@ -357,5 +360,5 @@ def main(data_type, output_folder, grams,  no_below, no_above):
     """
     # Create averaged word vectors
     testAll(["ppmi_pca"], [ PCA_ppmi],
-            [to_categorical(classes)], "newsgroups")
+            [classes], "newsgroups")
 if __name__ == '__main__': main("newsgroups", "../data/raw/newsgroups/", 0, 30, 0.999)

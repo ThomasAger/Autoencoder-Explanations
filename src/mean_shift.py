@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.cluster import MeanShift, estimate_bandwidth
 from sklearn.preprocessing import normalize
 from sklearn.cluster import AffinityPropagation
-import hdbscan
+#import hdbscan
 
 def gethdbscan(x, l):
     x = normalize(x)

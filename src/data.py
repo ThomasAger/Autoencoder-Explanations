@@ -1194,9 +1194,9 @@ def arrangeByScore(csv_fns, arra_name):
 
 #write1dArray(list(range(20000)), "../data/sentiment/nnet/spaces/entitynames.txt")
 
-from gensim.models.keyedvectors import KeyedVectors
-from gensim.test.utils import datapath, get_tmpfile
-from gensim.scripts.glove2word2vec import glove2word2vec
+#from gensim.models.keyedvectors import KeyedVectors
+#from gensim.test.utils import datapath, get_tmpfile
+#from gensim.scripts.glove2word2vec import glove2word2vec
 def getWordVectors(vector_save_fn, words_fn, wvn, wv_amt, svm_dir_fn=None):
     if os.path.exists(vector_save_fn) is False:
         glove_file = datapath('/home/tom/Downloads/glove.6B/glove.6B.'+str(wv_amt)+'d.txt')
@@ -1225,6 +1225,55 @@ def getWordVectors(vector_save_fn, words_fn, wvn, wv_amt, svm_dir_fn=None):
         write1dArray(words, wvn)
     else:
         print("Already got word vectors", vector_save_fn)
+
+if __name__ == '__main__':
+
+    data_type = "movies"
+    space = "../data/raw/previous work/filmids.txt"
+    space = import1dArray(space, "i")
+
+    inds_to_del = []
+    for i in range(len(space)):
+        if space[i] == -1:
+            inds_to_del.append(i)
+
+    space = np.delete(space, inds_to_del)
+
+    print(len(space))
+
+    mds = "../data/movies/classify/keywords/class-all"
+    mds = import2dArray(mds, "i")
+
+
+    print(len(mds))
+    space, inds = np.unique(space, axis=0, return_index=True)
+    print(len(space))
+    print(len(inds))
+
+
+    mds = mds[inds]
+    print(len(mds))
+    write2dArray(mds, "../data/movies/classify/keywords/class-all")
+
+"""
+bow_fn = "../data/movies/bow/ppmi/class-all-100-10-all"
+bow = import2dArray(bow_fn, "f").transpose()
+print(len(bow))
+bow = bow[inds]
+print(len(bow))
+bow = sp.csr_matrix(bow)
+sp.save_npz(bow_fn + "-nodupe.npz", bow.transpose())
+
+bow_fn = "../data/movies/bow/frequency/phrases/class-all-100-10-all"
+bow = import2dArray(bow_fn, "i").transpose()
+print(len(bow))
+bow = bow[inds]
+print(len(bow))
+bow = sp.csr_matrix(bow)
+sp.save_npz(bow_fn + "-nodupe.npz", bow.transpose())
+
+"""
+
 """
 id_1 = np.load("../data/raw/newsgroups/simple_remove.npy")
 id_2 = np.load("../data/raw/newsgroups/simple_stopwords_remove.npy")
