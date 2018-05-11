@@ -895,59 +895,6 @@ def convertEntityNamesToIDS(ID_fn, all_names_fn, individual_names_fn, output_fn)
     dt.write1dArray(np.asarray(ID_fn)[indexes], output_fn)
 
 
-
-"""
-
-fns = "../data/movies/classify/genres/class-all"
-remove_indexes([80, 8351, 14985], fns)
-
-fns = "../data/movies/classify/keywords/class-all"
-remove_indexes([80, 8351, 14985], fns)
-"""
-"""
-classification = "types"
-data_type = "wines"
-
-match_entities("../data/"+data_type+"/nnet/spaces/entitynames.txt",
-    "../data/"+data_type+"/classify/"+classification+"/available_entities.txt",
-               "../data/"+data_type+"/nnet/spaces/wines100.txt", classification)
-"""
-
-
-"""
-"""
-"""
-classification = "keywords"
-data_type = "movies"
-
-match_entities("../data/"+data_type+"/nnet/spaces/entitynames.txt", "../data/"+data_type+"/classify/"+classification+"/available_entities.txt",
-               "../data/"+data_type+"/nnet/spaces/films200.txt", classification)
-"""
-"""
-data_type = "wines"
-output_folder = "../data/"+data_type+"/classify/types/"
-folder_name = "../data/raw/previous work/wineclasses/"
-file_names = "../data/"+data_type+"/nnet/spaces/entitynames.txt"
-phrase_names = "../data/"+data_type+"/bow/names/50-10-types.txt"
-writeClassesFromNames(folder_name, file_names, output_folder)
-
-folder_name = "../data/"+data_type+"/bow/binary/phrases/"
-exit()
-"""
-#trimRankings("../data/movies/nnet/spaces/films200.txt", "../data/"+data_type+"/classify/genres/available_indexes.txt", phrase_names, folder_name)
-
-"""
-min=10
-max=1
-class_type = "movies"
-classification = "keywords"
-raw_fn = "../data/raw/previous work/movievectors/tokens/"
-extension = "film"
-cut_first_line = False
-get_all = False
-additional_name = ""
-make_individual = True
-"""
 def main(min, max, data_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn,
          use_all_files, sparse_matrix, word_count_amt, classification):
 
@@ -967,212 +914,264 @@ def main(min, max, data_type, raw_fn, extension, cut_first_line, additional_name
 
     printIndividualFromAll(data_type, "tfidf", min, max,  classification)
 
+if __name__ == '__main__':
+    """
 
-""" ratings conversion to class-all"""
-"""
-start_line = "../data/movies/classify/"
-uk = "uk-ratings/"
-us = "us-ratings/"
-uk_pg = dt.import1dArray(start_line + uk + "class-uk-pg", "i")
-uk_12 = dt.import1dArray(start_line + uk + "class-uk-12-12a", "i")
-uk_15 = dt.import1dArray(start_line + uk + "class-uk-15", "i")
-uk_18 = dt.import1dArray(start_line + uk + "class-uk-18", "i")
-us_pg = dt.import1dArray(start_line + us + "class-usa-pg-pg13", "i")
-us_12 = dt.import1dArray(start_line + us + "class-usa-g", "i")
-us_15 = dt.import1dArray(start_line + us + "class-usa-r", "i")
+    fns = "../data/movies/classify/genres/class-all"
+    remove_indexes([80, 8351, 14985], fns)
 
-class_all_uk = []
-class_all_us = []
+    fns = "../data/movies/classify/keywords/class-all"
+    remove_indexes([80, 8351, 14985], fns)
+    """
 
-class_all_uk.append(uk_pg)
-class_all_uk.append(uk_12)
-class_all_uk.append(uk_15)
-class_all_uk.append(uk_18)
-class_all_us.append(us_pg)
-class_all_us.append(us_12)
-class_all_us.append(us_15)
+    classification = "types"
+    data_type = "wines"
 
-uk_entities = dt.import1dArray(start_line + uk + "available_entities.txt")
-us_entities = dt.import1dArray(start_line + us + "available_entities.txt")
+    match_entities("../data/" + data_type + "/nnet/spaces/entitynames.txt",
+                   "../data/" + data_type + "/classify/" + classification + "/available_entities.txt",
+                   "../data/" + data_type + "/nnet/spaces/wines100.txt", classification)
 
-all_entities = dt.import1dArray("../data/movies/nnet/spaces/entitynames.txt")
+    """
+    """
 
-uk_us_ents = []
+    classification = "keywords"
+    data_type = "movies"
 
-for e in uk_entities:
-    uk_us_ents.append(e)
+    match_entities("../data/" + data_type + "/nnet/spaces/entitynames.txt",
+                   "../data/" + data_type + "/classify/" + classification + "/available_entities.txt",
+                   "../data/" + data_type + "/nnet/spaces/films200.txt", classification)
 
-for e in us_entities:
-    uk_us_ents.append(e)
+    """
+    data_type = "wines"
+    output_folder = "../data/"+data_type+"/classify/types/"
+    folder_name = "../data/raw/previous work/wineclasses/"
+    file_names = "../data/"+data_type+"/nnet/spaces/entitynames.txt"
+    phrase_names = "../data/"+data_type+"/bow/names/50-10-types.txt"
+    writeClassesFromNames(folder_name, file_names, output_folder)
 
-entities_unique = np.unique(uk_us_ents)
+    folder_name = "../data/"+data_type+"/bow/binary/phrases/"
+    exit()
+    """
+    # trimRankings("../data/movies/nnet/spaces/films200.txt", "../data/"+data_type+"/classify/genres/available_indexes.txt", phrase_names, folder_name)
 
-correct_format = []
+    """
+    min=10
+    max=1
+    class_type = "movies"
+    classification = "keywords"
+    raw_fn = "../data/raw/previous work/movievectors/tokens/"
+    extension = "film"
+    cut_first_line = False
+    get_all = False
+    additional_name = ""
+    make_individual = True
+    """
 
-removed_punct = []
+    """ ratings conversion to class-all"""
+    """
+    start_line = "../data/movies/classify/"
+    uk = "uk-ratings/"
+    us = "us-ratings/"
+    uk_pg = dt.import1dArray(start_line + uk + "class-uk-pg", "i")
+    uk_12 = dt.import1dArray(start_line + uk + "class-uk-12-12a", "i")
+    uk_15 = dt.import1dArray(start_line + uk + "class-uk-15", "i")
+    uk_18 = dt.import1dArray(start_line + uk + "class-uk-18", "i")
+    us_pg = dt.import1dArray(start_line + us + "class-usa-pg-pg13", "i")
+    us_12 = dt.import1dArray(start_line + us + "class-usa-g", "i")
+    us_15 = dt.import1dArray(start_line + us + "class-usa-r", "i")
 
-for j in all_entities:
-    removed_punct.append(dt.removeEverythingFromString(j))
+    class_all_uk = []
+    class_all_us = []
 
-for i in entities_unique:
-    i = dt.removeEverythingFromString(i)
-    for j in range(len(all_entities)):
-        if i == removed_punct[j]:
-            correct_format.append(all_entities[j])
-            break
+    class_all_uk.append(uk_pg)
+    class_all_uk.append(uk_12)
+    class_all_uk.append(uk_15)
+    class_all_uk.append(uk_18)
+    class_all_us.append(us_pg)
+    class_all_us.append(us_12)
+    class_all_us.append(us_15)
 
-new_class_all = [[0]*len(entities_unique), [0]*len(entities_unique), [0]*len(entities_unique), [0]*len(entities_unique),
-                 [0] * len(entities_unique), [0]*len(entities_unique), [0]*len(entities_unique)]
+    uk_entities = dt.import1dArray(start_line + uk + "available_entities.txt")
+    us_entities = dt.import1dArray(start_line + us + "available_entities.txt")
 
-clean_ent_unique = []
-clean_uk_ent = []
-clean_us_ent = []
+    all_entities = dt.import1dArray("../data/movies/nnet/spaces/entitynames.txt")
 
-for i in entities_unique:
-    clean_ent_unique.append(dt.removeEverythingFromString(i))
+    uk_us_ents = []
 
-for i in uk_entities:
-    clean_uk_ent.append(dt.removeEverythingFromString(i))
+    for e in uk_entities:
+        uk_us_ents.append(e)
 
-for i in us_entities:
-    clean_us_ent.append(dt.removeEverythingFromString(i))
+    for e in us_entities:
+        uk_us_ents.append(e)
 
-for a in range(len(class_all_uk)):
-    for i in range(len(class_all_uk[a])):
-        print(class_all_uk[a][i], type(class_all_uk[a][i]))
-        if class_all_uk[a][i] == 1:
-            print("1", i)
-            for n in range(len(entities_unique)):
-                if clean_ent_unique[n] == clean_uk_ent[i]:
-                    new_class_all[a][n] = 1
-                    break
+    entities_unique = np.unique(uk_us_ents)
 
-for a in range(len(class_all_us)):
-    for i in range(len(class_all_us[a])):
-        if class_all_us[a][i] == 1:
+    correct_format = []
 
-            print(1, i)
-            for n in range(len(entities_unique)):
-                if clean_ent_unique[n] == clean_us_ent[i]:
-                    new_class_all[a+4][n] = 1
-                    break
+    removed_punct = []
 
-names = ["UK-PG",
-"UK-12-12A",
-"UK-15",
-"UK-18",
-"USA-G",
-"USA-PG-PG13",
-"USA-R"
-]
+    for j in all_entities:
+        removed_punct.append(dt.removeEverythingFromString(j))
 
-for i in range(len(new_class_all)):
-    dt.write1dArray(new_class_all[i], "../data/movies/classify/ratings/class-" + names[i])
+    for i in entities_unique:
+        i = dt.removeEverythingFromString(i)
+        for j in range(len(all_entities)):
+            if i == removed_punct[j]:
+                correct_format.append(all_entities[j])
+                break
 
-new_class_all = np.asarray(new_class_all).transpose()
+    new_class_all = [[0]*len(entities_unique), [0]*len(entities_unique), [0]*len(entities_unique), [0]*len(entities_unique),
+                     [0] * len(entities_unique), [0]*len(entities_unique), [0]*len(entities_unique)]
 
-dt.write2dArray(new_class_all, "../data/movies/classify/ratings/class-all")
-dt.write1dArray(entities_unique, "../data/movies/classify/ratings/available_entities.txt")
-"""
-get_all = False
-additional_name = ""
-#make_individual = True
-make_individual = False
-sparse_matrix = False
-print("??")
+    clean_ent_unique = []
+    clean_uk_ent = []
+    clean_us_ent = []
 
-class_type = "movies"
-classification = "all"
-raw_fn = "../data/raw/previous work/movievectors/tokens/"
-extension = "film"
-cut_first_line = True
-entity_name_fn = "../data/raw/previous work/filmIds.txt"
-use_all_files = None#""
-word_count_amt = 0
-min=100
-max=10
+    for i in entities_unique:
+        clean_ent_unique.append(dt.removeEverythingFromString(i))
 
+    for i in uk_entities:
+        clean_uk_ent.append(dt.removeEverythingFromString(i))
 
-if  __name__ =='__main__':main(min, max, class_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn, use_all_files,
-                               sparse_matrix, word_count_amt, classification)
-"""
+    for i in us_entities:
+        clean_us_ent.append(dt.removeEverythingFromString(i))
 
-class_type = "wines"
-classification = "types"
-raw_fn = "../data/raw/previous work/winevectors/"
-extension = ""
-cut_first_line = True
-use_all_files =  "../data/raw/previous work/winevectors/"
-entity_name_fn = "../data/"+class_type+"/nnet/spaces/entitynames.txt"
-word_count_amt = 1000
-min=50
-max=10
+    for a in range(len(class_all_uk)):
+        for i in range(len(class_all_uk[a])):
+            print(class_all_uk[a][i], type(class_all_uk[a][i]))
+            if class_all_uk[a][i] == 1:
+                print("1", i)
+                for n in range(len(entities_unique)):
+                    if clean_ent_unique[n] == clean_uk_ent[i]:
+                        new_class_all[a][n] = 1
+                        break
 
+    for a in range(len(class_all_us)):
+        for i in range(len(class_all_us[a])):
+            if class_all_us[a][i] == 1:
 
-if  __name__ =='__main__':main(min, max, class_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn, use_all_files,
-                               sparse_matrix, word_count_amt, classification)
-"""
-"""
-class_type = "placetypes"
-classification = "all"
-raw_fn = "../data/raw/previous work/placevectors/"
-extension = "photos"
-cut_first_line = False
-entity_name_fn = "../data/"+class_type+"/nnet/spaces/entitynames.txt"
-use_all_files = None#""
-word_count_amt = 0
-min=10
-max=1
-"""
+                print(1, i)
+                for n in range(len(entities_unique)):
+                    if clean_ent_unique[n] == clean_us_ent[i]:
+                        new_class_all[a+4][n] = 1
+                        break
 
-if  __name__ =='__main__':main(min, max, class_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn, use_all_files,
-                               sparse_matrix, word_count_amt, classification)
+    names = ["UK-PG",
+    "UK-12-12A",
+    "UK-15",
+    "UK-18",
+    "USA-G",
+    "USA-PG-PG13",
+    "USA-R"
+    ]
 
-"""
+    for i in range(len(new_class_all)):
+        dt.write1dArray(new_class_all[i], "../data/movies/classify/ratings/class-" + names[i])
 
-cert_fn = "../data/raw/imdb/certs/certificates.list"
-entity_name_fn = "../data/movies/nnet/spaces/entitynames.txt"
-importCertificates(cert_fn, entity_name_fn)
+    new_class_all = np.asarray(new_class_all).transpose()
 
-convertEntityNamesToIDS("../data/raw/previous work/filmIds.txt", entity_name_fn, "../data/movies/classify/ratings/available_entities.txt",
-                        "../data/movies/classify/ratings/entity_ids.txt")
+    dt.write2dArray(new_class_all, "../data/movies/classify/ratings/class-all")
+    dt.write1dArray(entities_unique, "../data/movies/classify/ratings/available_entities.txt")
+    """
+    get_all = False
+    additional_name = ""
+    #make_individual = True
+    make_individual = False
+    sparse_matrix = False
+    print("??")
 
-
-
-parseTree("../data/raw/previous work/placeclasses/CYCClasses.txt", "../data/placetypes/classify/OpenCYC/",
-          "../data/placetypes/classify/OpenCYC/names.txt")
-
-
-writeFromMultiClass("../data/raw/previous work/placeclasses/GeonamesClasses.txt", "../data/placetypes/classify/Geonames/",
-                    "../data/raw/previous work/placeNames.txt", data_type="placetypes", classify_name="Geonames")
-
-writeFromMultiClass("../data/raw/previous work/placeclasses/Foursquareclasses.txt", "../data/placetypes/classify/Foursquare/",
-                    "../data/raw/previous work/placeNames.txt", data_type="placetypes", classify_name="Foursquare")
-classification = "geonames"
-data_type = "placetypes"
-
-match_entities("../data/"+data_type+"/nnet/spaces/entitynames.txt",
-    "../data/"+data_type+"/classify/"+classification+"/available_entities.txt",
-               "../data/"+data_type+"/rank/numeric/places100projected.txt", classification)
+    class_type = "movies"
+    classification = "all"
+    raw_fn = "../data/raw/previous work/movievectors/tokens/"
+    extension = "film"
+    cut_first_line = True
+    entity_name_fn = "../data/raw/previous work/filmIds.txt"
+    use_all_files = None#""
+    word_count_amt = 0
+    min=100
+    max=10
 
 
+    main(min, max, class_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn, use_all_files,
+                                   sparse_matrix, word_count_amt, classification)
+    """
 
-match_entities("../data/"+data_type+"/nnet/spaces/entitynames.txt",
-    "../data/"+data_type+"/classify/"+classification+"/available_entities.txt",
-               "../data/"+data_type+"/nnet/spaces/films100.txt", classification)
-"""
+    class_type = "wines"
+    classification = "types"
+    raw_fn = "../data/raw/previous work/winevectors/"
+    extension = ""
+    cut_first_line = True
+    use_all_files =  "../data/raw/previous work/winevectors/"
+    entity_name_fn = "../data/"+class_type+"/nnet/spaces/entitynames.txt"
+    word_count_amt = 1000
+    min=50
+    max=10
 
-"""
-dt.write2dArray(convertPPMI( sp.csr_matrix(dt.import2dArray("../data/wines/bow/frequency/phrases/class-all-50"))), "../data/wines/bow/ppmi/class-all-50")
-dt.write2dArray(convertPPMI( sp.csr_matrix(dt.import2dArray("../data/movies/bow/frequency/phrases/class-all-100"))), "../data/movies/bow/ppmi/class-all-100")
-"""
-#convertToTfIDF("wines", 50, "../data/wines/bow/frequency/phrases/class-all-50")
-#convertToTfIDF("movies", 100, "../data/movies/bow/frequency/phrases/class-all-100")
 
-"""
-printIndividualFromAll("placetypes", "tfidf", lowest_count)
-printIndividualFromAll("wines", "ppmi", lowest_count)
-printIndividualFromAll("wines", "tfidf", lowest_count)
-printIndividualFromAll("movies", "ppmi", lowest_count)
-printIndividualFromAll("movies", "tfidf", lowest_count)
-"""
+    if  __name__ =='__main__':main(min, max, class_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn, use_all_files,
+                                   sparse_matrix, word_count_amt, classification)
+    """
+    """
+    class_type = "placetypes"
+    classification = "all"
+    raw_fn = "../data/raw/previous work/placevectors/"
+    extension = "photos"
+    cut_first_line = False
+    entity_name_fn = "../data/"+class_type+"/nnet/spaces/entitynames.txt"
+    use_all_files = None#""
+    word_count_amt = 0
+    min=10
+    max=1
+    """
+
+    main(min, max, class_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn, use_all_files,
+                                   sparse_matrix, word_count_amt, classification)
+
+
+
+    cert_fn = "../data/raw/imdb/certs/certificates.list"
+    entity_name_fn = "../data/movies/nnet/spaces/entitynames.txt"
+    importCertificates(cert_fn, entity_name_fn)
+
+    convertEntityNamesToIDS("../data/raw/previous work/filmIds.txt", entity_name_fn, "../data/movies/classify/ratings/available_entities.txt",
+                            "../data/movies/classify/ratings/entity_ids.txt")
+
+
+
+    parseTree("../data/raw/previous work/placeclasses/CYCClasses.txt", "../data/placetypes/classify/OpenCYC/",
+              "../data/placetypes/classify/OpenCYC/names.txt")
+
+
+    writeFromMultiClass("../data/raw/previous work/placeclasses/GeonamesClasses.txt", "../data/placetypes/classify/Geonames/",
+                        "../data/raw/previous work/placeNames.txt", data_type="placetypes", classify_name="Geonames")
+
+    writeFromMultiClass("../data/raw/previous work/placeclasses/Foursquareclasses.txt", "../data/placetypes/classify/Foursquare/",
+                        "../data/raw/previous work/placeNames.txt", data_type="placetypes", classify_name="Foursquare")
+    classification = "geonames"
+    data_type = "placetypes"
+
+    match_entities("../data/"+data_type+"/nnet/spaces/entitynames.txt",
+        "../data/"+data_type+"/classify/"+classification+"/available_entities.txt",
+                   "../data/"+data_type+"/rank/numeric/places100projected.txt", classification)
+
+
+
+    match_entities("../data/"+data_type+"/nnet/spaces/entitynames.txt",
+        "../data/"+data_type+"/classify/"+classification+"/available_entities.txt",
+                   "../data/"+data_type+"/nnet/spaces/films100.txt", classification)
+
+
+    """
+    dt.write2dArray(convertPPMI( sp.csr_matrix(dt.import2dArray("../data/wines/bow/frequency/phrases/class-all-50"))), "../data/wines/bow/ppmi/class-all-50")
+    dt.write2dArray(convertPPMI( sp.csr_matrix(dt.import2dArray("../data/movies/bow/frequency/phrases/class-all-100"))), "../data/movies/bow/ppmi/class-all-100")
+    """
+    #convertToTfIDF("wines", 50, "../data/wines/bow/frequency/phrases/class-all-50")
+    #convertToTfIDF("movies", 100, "../data/movies/bow/frequency/phrases/class-all-100")
+
+    """
+    printIndividualFromAll("placetypes", "tfidf", lowest_count)
+    printIndividualFromAll("wines", "ppmi", lowest_count)
+    printIndividualFromAll("wines", "tfidf", lowest_count)
+    printIndividualFromAll("movies", "ppmi", lowest_count)
+    printIndividualFromAll("movies", "tfidf", lowest_count)
+    """
