@@ -34,7 +34,7 @@ if __name__ == '__main__':
     print("Testing", fn)
     testAll([ "ppmi"],
             [
-             dt.import2dArray(fn).transpose()],
+             dt.import2dArray("../data/newsgroups/nnet/spaces/simple_numeric_stopwords_ppmi 2-all_mds.txt")],
             [
                 dt.import2dArray("../data/newsgroups/classify/newsgroups/class-all", "i")
              #np.load("../data/raw/newsgroups/" + "simple_numeric_stopwords" + "_classes_categorical.npy")

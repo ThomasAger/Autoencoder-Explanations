@@ -37,7 +37,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
          dont_cluster_a, top_dt_clusters_a, by_class_finetune_a, cluster_duplicates_a, repeat_finetune_a, save_results_so_far,
          finetune_ppmi_a, average_nopav_ppmi_a, boc_average_a, identity_activation_a, ppmi_only_a, boc_only_a, pav_only_a,
          multi_label_a ,use_dropout_in_finetune_a, lock_weights_and_redo_a, logistic_regression, mean_shift, word_vectors_a,
-         bow_path_fn, bow_names_fn):
+         bow_path_fn, bow_names_fn, ppmi_path_fn):
 
 
     prune_val = 2
@@ -384,6 +384,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                         svm_type = "svm"
                         highest_count = direction_count
                         bow_path = loc + data_type + "/bow/frequency/phrases/" + bow_path_fn
+                        ppmi_path = loc + data_type + "/bow/ppmi/" + ppmi_path_fn
                         property_names_fn = loc + data_type + "/bow/names/" + bow_names_fn
                         if word_vectors is not "all":
                             directions_fn = loc + data_type + "/svm/directions/" + file_name + ".txt"
@@ -744,7 +745,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                 classification=classification, lowest_amt=lowest_amt, limit_entities=limit_entities, highest_amt=highest_count)
                                     elif bag_of_clusters:
                                         fto.bagOfClustersPavPPMI(cluster_dict_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=rewrite_files,
-                                                    classification=classification, lowest_amt=lowest_amt, limit_entities=limit_entities,highest_amt=highest_count)
+                                                    classification=classification, lowest_amt=lowest_amt, limit_entities=limit_entities,highest_amt=highest_count,sparse_freqs_fn=ppmi_path,
+                                                       bow_names_fn=property_names_fn)
                                     elif finetune_ppmi:
                                         fto.PPMIFT(cluster_dict_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=rewrite_files,
                                                     classification=classification, lowest_amt=lowest_amt, limit_entities=limit_entities,highest_amt=highest_count)
@@ -756,7 +758,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                     classification=classification, lowest_amt=lowest_amt, limit_entities=limit_entities,highest_amt=highest_count)
                                     elif logistic_regression:
                                         fto.logisticRegression(cluster_dict_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=rewrite_files,
-                                                    classification=classification, lowest_amt=lowest_amt, limit_entities=limit_entities,highest_amt=highest_count)
+                                                    classification=classification, lowest_amt=lowest_amt, limit_entities=limit_entities,highest_amt=highest_count,sparse_freqs_fn=ppmi_path,
+                                                       bow_names_fn=property_names_fn)
                                     else:
                                         fto.pavPPMI(cluster_dict_fn, ranking_fn, file_name, data_type=data_type, rewrite_files=rewrite_files,
                                                     classification=classification, lowest_amt=lowest_amt, limit_entities=limit_entities,highest_amt=highest_count)
@@ -1002,16 +1005,17 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
             #    for a in range(len(csv_fns_nn_a)):
             #        dt.averageCSVs(csv_fns_nn_a[a])
     loc ="../data/"+data_type+"/rules/tree_csv/"
-
-    for fn in original_fn:
-        avg_fn = fn[:-4] +"AVG.csv"
-        fn = fn.split("/")[len(fn.split("/"))-1]
-        try:
-            fns_to_add = dt.getCSVsToAverage("../data/"+data_type+"/rules/tree_csv/",fn)
-        except IndexError:
-            fns_to_add = dt.getCSVsToAverage("../data/" + data_type + "/rules/tree_csv/", fn[:-4] + str(max_depth) + ".csv")
-        all_csv_fns.append(fns_to_add)
-
+    if cross_val != 1:
+        for fn in original_fn:
+            avg_fn = fn[:-4] +"AVG.csv"
+            fn = fn.split("/")[len(fn.split("/"))-1]
+            try:
+                fns_to_add = dt.getCSVsToAverage("../data/"+data_type+"/rules/tree_csv/",fn)
+            except IndexError:
+                fns_to_add = dt.getCSVsToAverage("../data/" + data_type + "/rules/tree_csv/", fn[:-4] + str(max_depth) + ".csv")
+            all_csv_fns.append(fns_to_add)
+    else:
+        all_csv_fns = original_fn
     dt.arrangeByScore(
         np.unique(
             np.asarray(all_csv_fns))
@@ -1072,15 +1076,15 @@ data_type = "newsgroups"
 classification_task = ["newsgroups"]
 #arrange_name = arrange_name + classification_task[0]
 skip_nn = True
-fn_orig = "simple_stopwords_ppmi 2-gram50-0.99"
+fn_orig = "sns_ppmi3"
 if skip_nn is False:
-    file_name = fn_orig + "PCA"
+    file_name = fn_orig + "mdsnew"
 else:
-    file_name = fn_orig + "PCA"
+    file_name = fn_orig + "mdsnew"
 lowest_amt = 30
 highest_amt = 18836
 
-space_name = "simplestopwords_ppmi 2-gram50-0.99-all.npy"
+space_name = "simple_numeric_stopwords_ppmi 2-all_mds.txt"
 
 init_vector_path = loc+data_type+"/nnet/spaces/"+space_name
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/"+space_name
@@ -1090,8 +1094,9 @@ vector_path_replacement =  loc+data_type+"/nnet/spaces/"+space_name
 #vector_path_replacement = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
 deep_size = [100]
 limit_entities = [False]
-bow_path_fn = "simple_stopwords_bow 2-gram50-0.99" + "-all.npz"
-bow_names_fn = "simple_stopwords_words 2-gram50-0.99-all.txt"
+bow_path_fn = "simple_numeric_stopwords_bow 30-0.999-all.npz"
+bow_names_fn = "simple_numeric_stopwords_words 30-0.999-all.txt"
+ppmi_path_fn = "simple_numeric_stopwords_ppmi 30-0.999-all.npz"
 
 """
 data_type = "placetypes"
@@ -1240,9 +1245,9 @@ dissim = 0.0
 dissim_amt = [2]
 breakoff = [False] # This now
 score_limit = [0.9] #23232 val to use for all terms
-amount_to_start = [2000]
-cluster_multiplier = [0.3333, 0.5, 1]#50 #23233  val to use for all terms
-score_type = ["kappa", "accuracy", "ndcg"] #accuracy, kappa or nd
+amount_to_start = [500,2000,4000]
+cluster_multiplier = [0.5,1,2]#50 #23233  val to use for all terms
+score_type = ["ndcg", "kappa", "accuracy"] #accuracy, kappa or nd
 use_breakoff_dissim = [False]
 mean_shift = False
 get_all = [False]
@@ -1276,7 +1281,7 @@ repeat_finetune = [0]
 
 multi_label = [False] #Currently broken
 
-epochs=[100,300,600,1200]
+epochs=[300]
 
 """
 sim_t = 0.0#1.0
@@ -1298,7 +1303,7 @@ logistic_regression = True
 
 arrange_name = "cluster ratings BCS" + str(max_depth) + str(dt_dev)
 
-threads=30
+threads=10
 chunk_amt = 0
 chunk_id = 0
 for c in range(chunk_amt):
@@ -1440,4 +1445,4 @@ if  __name__ =='__main__':
                                        arrange_name, only_most_similar, dont_cluster, top_dt_clusters, by_class_finetune, cluster_duplicates,
                                        repeat_finetune, save_results_so_far, finetune_ppmi, average_nopav_ppmi_a, boc_average, identity_activation,
                                        ppmi_only, boc_only, pav_only, multi_label, use_dropout_in_finetune, lock_weights_and_redo, logistic_regression, mean_shift,
-             word_vectors, bow_path_fn, bow_names_fn)
+             word_vectors, bow_path_fn, bow_names_fn, ppmi_path_fn)

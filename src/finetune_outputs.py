@@ -137,9 +137,10 @@ def PPMIFT(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type="movie
     return frq
 
 def bagOfClustersPavPPMI(cluster_names_fn, ranking_fn, file_name, do_p=False, data_type="movies", rewrite_files=False,limit_entities=False,
-            classification="genres", lowest_amt=0, highest_amt=2147000000):
+            classification="genres", lowest_amt=0, highest_amt=2147000000, sparse_freqs_fn=None, bow_names_fn=None):
+
     pavPPMI_fn = "../data/" + data_type + "/finetune/boc/" + file_name + ".txt"
-    new_fn = "../data/" + data_type + "/bow/ppmi/" + file_name + ".txt"
+    new_fn = "../data/" + data_type + "/bow/boc/" + file_name + ".txt"
     all_fns = [pavPPMI_fn, new_fn]
     if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
         print("Skipping task", bagOfClustersPavPPMI.__name__)
@@ -150,17 +151,19 @@ def bagOfClustersPavPPMI(cluster_names_fn, ranking_fn, file_name, do_p=False, da
     if limit_entities is False:
         classification = "all"
 
+    bow_names = dt.import1dArray(bow_names_fn, "s")
+    sparse_freqs = dt.import2dArray(sparse_freqs_fn, return_sparse=True)
     ranking = dt.import2dArray(ranking_fn)
-    names = dt.import2dArray(cluster_names_fn, "s")
+    cluster_names = dt.import2dArray(cluster_names_fn, "s")
 
-    frq = writeBagOfClusters(names, data_type, lowest_amt, highest_amt, classification, file_name)
+    frq = getLROnBag(cluster_names, data_type, lowest_amt, highest_amt, classification, file_name, bow_names, sparse_freqs)
 
 
 
     pav_classes = []
 
     for f in range(len(frq)):
-        print(names[f])
+        print(cluster_names[f])
         x = np.asarray(frq[f])
         y = ranking[f]
 

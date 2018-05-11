@@ -130,8 +130,6 @@ def getDissimilarityMatrixSparse(tf_transposed):
         print(ei)
     return dm
 
-dt.write2dArray(getDissimilarityMatrix(dt.import2dArray("../data/newsgroups/bow/ppmi/simple_numeric_stopwords_ppmi 3-all.npz", return_sparse=True).transpose()), "../data/newsgroups/mds/simple_numeric_stopwords_ppmi 2-all")
-
 def calcAngSparse(e1, e2, e2_transposed, norm_1, norm_2):
     dp = 0
     s_dp = e1.dot(e2_transposed)
@@ -173,7 +171,7 @@ def calcAng(e1, e2, norm1, norm2):
 
 def getDsimMatrixDense(tf):
     #tf = np.asarray(tf.astype(np.float32).transpose().toarray())
-    tf = tf.transpose()
+    tf = np.asarray(tf.transpose().todense())
     docs_len = tf.shape[0]
     dm = np.zeros([docs_len, docs_len], dtype="float32")
     norms = np.zeros(docs_len, dtype="float32")
@@ -181,18 +179,20 @@ def getDsimMatrixDense(tf):
     # Calculate norms
     for ei in range(docs_len):
         norms[ei] = np.linalg.norm(tf[ei])
-        if ei % 100 == 0:
+        if ei % 1000 == 0:
             print("norms", ei)
     for i in range(docs_len):
         for j in range(docs_len):
             dm[i][j] = calcAng(tf[i], tf[j], norms[i], norms[j])
-            if j %10000 == 0:
-                print("j", j)
+            #if j %1000 == 0:
+            #    print("j", j)
         print("i", i)
     return dm
 
 pithing = 2/pi
 ang = pithing * np.arccos(0.1 / 0.1)
+
+#dt.write2dArray(getDsimMatrixDense(dt.import2dArray("../data/newsgroups/bow/ppmi/simple_numeric_stopwords_ppmi 3-all.npz", return_sparse=True).transpose()), "../data/newsgroups/mds/simple_numeric_stopwords_ppmi 3-all")
 
 
 def main(data_type, clf, min, max, depth, rewrite_files):
