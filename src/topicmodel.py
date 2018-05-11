@@ -6,6 +6,7 @@ import numpy as np
 import tree
 from itertools import product
 from sklearn.externals import joblib
+import scipy.sparse as sp
 
 def print_top_words(model, feature_names):
     names = []
@@ -50,10 +51,10 @@ def LDA(tf, names, components, file_name,   doc_topic_prior, topic_word_prior,  
 
 def main(data_type, class_labels_fn, class_names_fn, ft_names_fn, max_depth, limit_entities,
          limited_label_fn, vector_names_fn, dt_dev, doc_topic_prior, topic_word_prior, n_topics, file_name, final_csv_name,
-         high_amt, low_amt, cross_val, rewrite_files, classify):
+         high_amt, low_amt, cross_val, rewrite_files, classify, tf_fn):
 
     print("importing class all")
-    tf = np.asarray(dt.import2dArray("../data/"+data_type+"/bow/frequency/phrases/class-all-"+str(high_amt)+"-"+str(low_amt)+"-all"))
+    tf = np.asarray(sp.load_npz("../data/"+data_type+"/bow/frequency/phrases/"+tf_fn).todense())
     names = dt.import1dArray(ft_names_fn)
     variables_to_execute = list(product(doc_topic_prior, topic_word_prior, n_topics))
     print("executing", len(variables_to_execute), "variations")
@@ -122,21 +123,22 @@ classify = ["newsgroups"]
 
 max_depth = 3
 limit_entities = False
-dt_dev = False
+dt_dev = True
 vector_names_fn = "../data/" + data_type + "/nnet/spaces/entitynames.txt"
 feature_names_fn = "../data/" + data_type + "/bow/names/"+str(high_amt)+"-"+str(low_amt)+"-all.txt"
 rewrite_files = True
 cross_val = 1
+tf_fn = "simple_numeric_stopwords_bow 30-0.999-all.npz"
 
-doc_topic_prior = [ 0.001]
-topic_word_prior = [ 0.1]
-n_topics = [200]
+doc_topic_prior = [ 0.001, 0.01, 0.1]
+topic_word_prior = [ 0.1, 0.01, 0.1]
+n_topics = [50,100,200]
 for c in classify:
-    file_name = "all-" + str(high_amt) + "-" + str(low_amt)
+    file_name = "simple_numeric_stopwords_bow 30-0.999-all.npz"
     final_csv_name = "final" + c + str(dt_dev)
     class_labels_fn = "../data/" + data_type + "/classify/"+c+"/class-all"
     class_names_fn = "../data/" + data_type + "/classify/"+c+"/names.txt"
     limited_label_fn = "../data/" + data_type + "/classify/" + c + "/available_entities.txt"
     if  __name__ =='__main__':main(data_type, class_labels_fn, class_names_fn, feature_names_fn, max_depth, limit_entities,
              limited_label_fn, vector_names_fn, dt_dev, doc_topic_prior, topic_word_prior, n_topics, file_name, final_csv_name,
-                                   high_amt, low_amt, cross_val, rewrite_files, c)
+                                   high_amt, low_amt, cross_val, rewrite_files, c, tf_fn)
