@@ -32,10 +32,16 @@ def testAll(name_array, rep_array, class_array, data_type):
 if __name__ == '__main__':
     fn = "../data/newsgroups/bow/ppmi/class-all-"+str(30)+"-"+str(18836)+"-" + "all.npz"
     print("Testing", fn)
-    testAll([ "ppmi"],
+    testAll([ "mds", "finetune_space", "mds_rankings", "finetune_rankings"],
             [
-             dt.import2dArray("../data/newsgroups/nnet/spaces/simple_numeric_stopwords_ppmi 2-all_mds.txt")],
+             dt.import2dArray("../data/newsgroups/nnet/spaces/simple_numeric_stopwords_ppmi 2-all_mds.txt"),
+            dt.import2dArray("../data/newsgroups/nnet/spaces/sns_ppmi3mdsnewCV1S0 SFT0 allL03018836 LR kappa KMeans CA200 MC1 MS0.4 ATS2000 DS400 tdevFT BOCFi NT[100]tanh300S6040V1.2L0.npy"),
+            dt.import2dArray("../data/newsgroups/rank/numeric/sns_ppmi3mdsnewCV1S0 SFT0 allL03018836 LR acc KMeans CA100 MC1 MS0.4 ATS500 DS200.npy").transpose(),
+            dt.import2dArray("../data/newsgroups/nnet/clusters/sns_ppmi3mdsnewCV1S0 SFT0 allL03018836 LR kappa KMeans CA200 MC1 MS0.4 ATS2000 DS400 tdevFT BOCFi NT[100]tanh300S6040V1.2.npy").transpose()],
             [
+                dt.import2dArray("../data/newsgroups/classify/newsgroups/class-all", "i"),
+                dt.import2dArray("../data/newsgroups/classify/newsgroups/class-all", "i"),
+                dt.import2dArray("../data/newsgroups/classify/newsgroups/class-all", "i"),
                 dt.import2dArray("../data/newsgroups/classify/newsgroups/class-all", "i")
              #np.load("../data/raw/newsgroups/" + "simple_numeric_stopwords" + "_classes_categorical.npy")
             ], "newsgroups")

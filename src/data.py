@@ -1227,7 +1227,10 @@ def getWordVectors(vector_save_fn, words_fn, wvn, wv_amt, svm_dir_fn=None):
         print("Already got word vectors", vector_save_fn)
 
 if __name__ == '__main__':
+    name = "../data/newsgroups/nnet/spaces/simple_numeric_stopwords_ppmi 2-all_mds200.txt"
+    write2dArray(import2dArray(name, "f").transpose(), name)
 
+    """
     data_type = "movies"
     space = "../data/raw/previous work/filmids.txt"
     space = import1dArray(space, "i")
@@ -1254,6 +1257,7 @@ if __name__ == '__main__':
     mds = mds[inds]
     print(len(mds))
     write2dArray(mds, "../data/movies/classify/keywords/class-all")
+    """
 
 """
 bow_fn = "../data/movies/bow/ppmi/class-all-100-10-all"

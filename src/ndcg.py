@@ -182,8 +182,8 @@ def getNDCG(rankings_fn, fn, data_type, lowest_count, rewrite_files=False, highe
 
     # Check if the NDCG scores have already been calculated, if they have then skip.
     ndcg_fn = "../data/" + data_type + "/ndcg/"+fn+".txt"
-    spearman_fn = "../data/" + data_type + "/spearman/"+fn+".txt"
-    all_fns = [ndcg_fn, spearman_fn]
+
+    all_fns = [ndcg_fn]
     if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
         print("Skipping task", getNDCG.__name__)
         return
