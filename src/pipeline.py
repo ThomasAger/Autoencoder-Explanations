@@ -1068,30 +1068,35 @@ vector_path_replacement = loc+data_type+"/pca/class-all-50-10-alld100"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 bow_path_fn = "class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+new_classification_task + ".npz"
 """
-"""
+
 data_type = "movies"
-classification_task = ["ratings", "keywords", "genres"] #Run keywords as separate process
+classification_task = ["genres", "keywords"] #Run keywords as separate process
 #arrange_name = arrange_name + classification_task[0]
 skip_nn = True
 if skip_nn is False:
     file_name = "f200ge"
 else:
-    file_name = "f200gePRIMAL"
+    file_name = "mds-nodupe"
 lowest_amt = 100
 highest_amt = 10
-init_vector_path = loc+data_type+"/nnet/spaces/films200-genres.txt"
+
+deep_size = [200]
+
+limit_entities = [False]
+
+init_vector_path = loc+data_type+"/nnet/spaces/films"+str(deep_size[0])+"-genres.txt"
 #init_vector_path = loc+data_type+"/nnet/spaces/films200-"+classification_task+".txt"
 #file_name = "films200-genres100ndcg0.85200 tdev3004FTL0"
-get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films200-genres.txt"
-vector_path_replacement = loc+data_type+"/nnet/spaces/films200-genres.txt"
-if classification_task[0] == "us-ratings":
-    deep_size = [200]
-else:
-    deep_size = [200]
-bow_path_fn = "class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+new_classification_task + ".npz"
+get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films"+str(deep_size[0])+"-genres.txt"
+vector_path_replacement = loc+data_type+"/nnet/spaces/films"+str(deep_size[0])+"-genres.txt"
+
+bow_path_fn = "class-all-100-10-all-nodupe.npz"
+bow_names_fn = "100-10-all.txtmds-nodupeCV1S0 SFT0 allL010010 LR .txt"
+ppmi_path_fn = "class-all-100-10-all-nodupe.npz"
+
+
 
 """
-
 data_type = "newsgroups"
 classification_task = ["newsgroups"]
 #arrange_name = arrange_name + classification_task[0]
@@ -1117,7 +1122,7 @@ limit_entities = [False]
 bow_path_fn = "simple_numeric_stopwords_bow 30-0.999-all.npz"
 bow_names_fn = "simple_numeric_stopwords_words 30-0.999-all.txt"
 ppmi_path_fn = "simple_numeric_stopwords_ppmi 30-0.999-all.npz"
-
+"""
 """
 data_type = "placetypes"
 classification_task = ["opencyc"]
@@ -1265,9 +1270,9 @@ dissim = 0.0
 dissim_amt = [2]
 breakoff = [False] # This now
 score_limit = [0.9] #23232 val to use for all terms
-amount_to_start = [500]
-cluster_multiplier = [2]#50 #23233  val to use for all terms
-score_type = ["acc"] #accuracy, kappa or nd
+amount_to_start = [500,1000,2000]
+cluster_multiplier = [1,2]#50 #23233  val to use for all terms
+score_type = ["acc", "kappa"] #accuracy, kappa or nd
 use_breakoff_dissim = [False]
 mean_shift = False
 get_all = [False]
