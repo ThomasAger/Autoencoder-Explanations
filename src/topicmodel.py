@@ -132,7 +132,7 @@ tf_fn = "simple_numeric_stopwords_bow 30-0.999-all.npz"
 
 doc_topic_prior = [ 0.001, 0.01, 0.1]
 topic_word_prior = [ 0.1, 0.01, 0.1]
-n_topics = [50,100,200]
+n_topics = [50,100,200,400]
 for c in classify:
     file_name = "simple_numeric_stopwords_bow 30-0.999-all.npz"
     final_csv_name = "final" + c + str(dt_dev)

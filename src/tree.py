@@ -188,7 +188,10 @@ class DecisionTree:
             for splits in range(len(ac_y_test)):
                 model_name_fn = "../data/" + data_type + "/rules/tree_model/" + label_names[l] + " " + filename + ".model"
                 if dt.fileExists(model_name_fn) and not rewrite_files:
-                    clf = joblib.load(model_name_fn)
+                    try:
+                        clf = joblib.load(model_name_fn)
+                    except KeyError:
+                        print(model_name_fn) # If a model is disrupted partway through its processing
                 else:
                     clf = tree.DecisionTreeClassifier(max_depth=max_depth, criterion=criterion, class_weight=balance)
                     clf.fit(ac_x_train[splits], ac_y_train[splits])

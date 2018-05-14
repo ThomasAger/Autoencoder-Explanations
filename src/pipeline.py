@@ -449,7 +449,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                             elif score_type is "kappa":
                                 scores_fn = loc + data_type + "/svm/kappa/" + file_name + ".txt"
                                 file_name = file_name + "kappa"
-                            elif score_type is "accuracy":
+                            elif score_type is "accuracy" or score_type is "acc":
                                 scores_fn = loc + data_type + "/svm/acc/" + file_name + ".txt"
                                 file_name = file_name + "acc"
                             elif score_type is "spearman":
@@ -603,8 +603,20 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                             #file_name = "NMF 200"
                             #ranking_fn = "../data/movies/NMF/all-100-10frob.txt"
 
+                            tree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_dict_fn,
+                                              file_name + " " + classification_task, 10000,
+                                              max_depth=1, balance="balanced", criterion="entropy",
+                                              save_details=False, cv_splits=cv_splits, split_to_use=splits,
+                                              data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
+                                              development=dt_dev, limit_entities=limit_entities,
+                                              limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn,
+                                              clusters_fn=clusters_fn,
+                                              cluster_duplicates=cluster_duplicates,
+                                              save_results_so_far=save_results_so_far,
+                                              multi_label=multi_label)
+
                             tree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_dict_fn, file_name + " " + classification_task, 10000,
-                                      max_depth=max_depth, balance="balanced", criterion="entropy", save_details=True, cv_splits=cv_splits, split_to_use=splits,
+                                      max_depth=max_depth, balance="balanced", criterion="entropy", save_details=False, cv_splits=cv_splits, split_to_use=splits,
                                       data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files, development=dt_dev, limit_entities=limit_entities,
                                               limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn = clusters_fn,
                                               cluster_duplicates = cluster_duplicates, save_results_so_far=save_results_so_far,
@@ -612,7 +624,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
 
 
                             tree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_dict_fn, file_name  + " " + classification_task+ "None", 10000,
-                                                  max_depth=None, balance="balanced", criterion="entropy", save_details=True,
+                                                  max_depth=None, balance="balanced", criterion="entropy", save_details=False,
                                               data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
                                               cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
                                               limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn = clusters_fn,
@@ -878,7 +890,14 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                         print("got to trees, who dis?")
 
                                         tree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_dict_fn, file_name + " " + classification_task, 10000,
-                                                              max_depth=max_depth, balance="balanced", criterion="entropy", save_details=True,
+                                                              max_depth=1, balance="balanced", criterion="entropy", save_details=False,
+                                                          data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
+                                                          cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
+                                                          limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn=clusters_fn,
+                                              cluster_duplicates=cluster_duplicates)
+
+                                        tree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_dict_fn, file_name + " " + classification_task, 10000,
+                                                              max_depth=max_depth, balance="balanced", criterion="entropy", save_details=False,
                                                           data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
                                                           cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
                                                           limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn=clusters_fn,
@@ -1072,20 +1091,20 @@ else:
 bow_path_fn = "class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+new_classification_task + ".npz"
 
 """
-"""
+
 data_type = "newsgroups"
 classification_task = ["newsgroups"]
 #arrange_name = arrange_name + classification_task[0]
 skip_nn = True
 fn_orig = "sns_ppmi3"
 if skip_nn is False:
-    file_name = fn_orig + "mdsnew200svmdual"
+    file_name = fn_orig + "mdsnew50svmdual"
 else:
-    file_name = fn_orig + "mdsnew200svmdual"
+    file_name = fn_orig + "mdsnew50svmdual"
 lowest_amt = 30
 highest_amt = 18836
 
-space_name = "simple_numeric_stopwords_ppmi 2-all_mds200.npy"
+space_name = "simple_numeric_stopwords_ppmi 2-all_mds50.npy"
 
 init_vector_path = loc+data_type+"/nnet/spaces/"+space_name
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/"+space_name
@@ -1093,12 +1112,12 @@ vector_path_replacement =  loc+data_type+"/nnet/spaces/"+space_name
 #init_vector_path = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
 #get_nnet_vectors_path = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
 #vector_path_replacement = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
-deep_size = [200]
+deep_size = [50]
 limit_entities = [False]
 bow_path_fn = "simple_numeric_stopwords_bow 30-0.999-all.npz"
 bow_names_fn = "simple_numeric_stopwords_words 30-0.999-all.txt"
 ppmi_path_fn = "simple_numeric_stopwords_ppmi 30-0.999-all.npz"
-"""
+
 """
 data_type = "placetypes"
 classification_task = ["opencyc"]
@@ -1121,7 +1140,7 @@ get_nnet_vectors_path = loc + data_type + "/nnet/spaces/places"+str(places_size)
 deep_size = [places_size]
 bow_path_fn = "class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+new_classification_task + ".npz"
 """
-
+"""
 data_type = "sentiment"
 classification_task = ["sentiment"]
 #arrange_name = arrange_name + classification_task[0]
@@ -1148,7 +1167,7 @@ get_nnet_vectors_path = loc+data_type+"/nnet/spaces/"+space_name+".npy"
 vector_path_replacement =  loc+data_type+"/nnet/spaces/"+space_name+".npy"
 deep_size = [50]
 bow_path_fn = "class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+new_classification_task + ".npz"
-
+"""
 """
 data_type = "sst"
 classification_task = ["binary"]
@@ -1246,9 +1265,9 @@ dissim = 0.0
 dissim_amt = [2]
 breakoff = [False] # This now
 score_limit = [0.9] #23232 val to use for all terms
-amount_to_start = [500,2000,4000]
-cluster_multiplier = [1,2]#50 #23233  val to use for all terms
-score_type = ["ndcg", "kappa", "accuracy"] #accuracy, kappa or nd
+amount_to_start = [500]
+cluster_multiplier = [2]#50 #23233  val to use for all terms
+score_type = ["acc"] #accuracy, kappa or nd
 use_breakoff_dissim = [False]
 mean_shift = False
 get_all = [False]
@@ -1292,7 +1311,7 @@ score_limit = [0.0]
 """
 hp_opt = True
 
-dt_dev = True
+dt_dev = False
 svm_classify = False
 rewrite_files = False
 max_depth = [3]
