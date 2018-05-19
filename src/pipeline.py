@@ -1078,27 +1078,33 @@ vector_path_replacement = loc+data_type+"/pca/class-all-50-10-alld100"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 bow_path_fn = "class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+new_classification_task + ".npz"
 """
-"""
+
 data_type = "movies"
-classification_task = ["ratings", "keywords", "genres"] #Run keywords as separate process
+classification_task = ["ratings","genres", "keywords"] #Run keywords as separate process
 #arrange_name = arrange_name + classification_task[0]
 skip_nn = True
 if skip_nn is False:
     file_name = "f200ge"
 else:
-    file_name = "f200gePRIMAL"
+    file_name = "mds-nodupe"
 lowest_amt = 100
 highest_amt = 10
-init_vector_path = loc+data_type+"/nnet/spaces/films200-genres.txt"
+
+deep_size = [200]
+
+limit_entities = [False]
+
+init_vector_path = loc+data_type+"/nnet/spaces/mds200-nodupe.npy"
 #init_vector_path = loc+data_type+"/nnet/spaces/films200-"+classification_task+".txt"
 #file_name = "films200-genres100ndcg0.85200 tdev3004FTL0"
-get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films200-genres.txt"
-vector_path_replacement = loc+data_type+"/nnet/spaces/films200-genres.txt"
-if classification_task[0] == "us-ratings":
-    deep_size = [200]
-else:
-    deep_size = [200]
-bow_path_fn = "class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+new_classification_task + ".npz"
+get_nnet_vectors_path = loc+data_type+"/nnet/spaces/mds200-nodupe.npy"
+vector_path_replacement = loc+data_type+"/nnet/spaces/mds200-nodupe.npy"
+
+bow_path_fn = "class-all-100-10-all-nodupe.npz"
+bow_names_fn = "100-10-all.txtmds-nodupeCV1S0 SFT0 allL010010 LR .txt"
+ppmi_path_fn = "class-all-100-10-all-nodupe.npz"
+
+
 
 """
 """
