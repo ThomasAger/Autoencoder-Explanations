@@ -81,6 +81,7 @@ class NeuralNetwork:
             print("Skipping task", "nnet")
             return
         else:
+
             print("Running task", "nnet")
 
         self.class_path = class_path

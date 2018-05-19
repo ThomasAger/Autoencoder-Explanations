@@ -14,21 +14,25 @@ def getSplits(vectors, classes, dev=0.8):
     if len(vectors) != 50000 or len(classes) != 50000:
         print("This is not the standard size of 20NG, expected 50000")
         return False
+
     x_train = vectors[:25000]
     x_test = vectors[25000:]
     y_train = classes[:25000]
     y_test = classes[25000:]
-    if dev > 0:
-        print("Returning development splits", dev)
-        x_test = x_train[int(len(x_train) * 0.8):]
-        y_test = y_train[int(len(y_train) * 0.8):]
-        x_train = x_train[:int(len(x_train) * 0.8)]
-        y_train = y_train[:int(len(y_train) * 0.8)]
+
+    print("Returning development splits", dev)
+
+    x_dev = x_train[int(len(x_train) * 0.8):]
+    y_dev = y_train[int(len(y_train) * 0.8):]
+    x_train = x_train[:int(len(x_train) * 0.8)]
+    y_train = y_train[:int(len(y_train) * 0.8)]
+
     print(len(x_test), len(x_test[0]), "x_test")
     print(len(y_test),  "y_test")
     print(len(x_train), len(x_train[0]), "x_train")
     print(len(y_train),  "y_train")
-    return x_train, y_train, x_test, y_test
+
+    return x_train, y_train, x_test, y_test, x_dev, y_dev
 
 def everythingElse():
     np.random.seed(1337)
@@ -68,8 +72,6 @@ def everythingElse():
             word_sentence.append(id_to_word[vectors[s][w]])
         word_vectors[s] = word_sentence
 
-
-
     import gensim.models.phrases
 
     phrases = gensim.models.Phrases(word_vectors)
@@ -88,7 +90,7 @@ def everythingElse():
     dt.write1dArray(words, "../data/sentiment/bow/names/" + str(lowest_amt) + "-" + str(highest_amt) + "-" + classification + ".txt")
     dt.write1dArray(dfs_list, "../data/sentiment/bow/frequency/global/" + str(lowest_amt) + "-" + str(highest_amt) + "-" + classification + ".txt")
     corpus = [dictionary.doc2bow(text) for text in phrase_vectors]
-    exit()
+
     all_fn = "../data/sentiment/bow/frequency/phrases/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-" + classification
     all_fn_binary = "../data/sentiment/bow/binary/phrases/class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-" + classification
 

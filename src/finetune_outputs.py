@@ -140,8 +140,7 @@ def bagOfClustersPavPPMI(cluster_names_fn, ranking_fn, file_name, do_p=False, da
             classification="genres", lowest_amt=0, highest_amt=2147000000, sparse_freqs_fn=None, bow_names_fn=None):
 
     pavPPMI_fn = "../data/" + data_type + "/finetune/boc/" + file_name + ".txt"
-    new_fn = "../data/" + data_type + "/bow/boc/" + file_name + ".txt"
-    all_fns = [pavPPMI_fn, new_fn]
+    all_fns = [pavPPMI_fn]
     if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
         print("Skipping task", bagOfClustersPavPPMI.__name__)
         return

@@ -81,6 +81,7 @@ def getDissimilarityMatrix(tf):
             ang = pithing * np.arccos(dot_product[ei][ej] / norm_multiplied[ei][ej])
             dm[ei][ej] = ang
         print(ei)
+        dm[ei] = np.around(dm[ei], 4)
     return dm
 import scipy.sparse as sp
 import scipy.sparse.linalg
@@ -192,7 +193,7 @@ def getDsimMatrixDense(tf):
 pithing = 2/pi
 ang = pithing * np.arccos(0.1 / 0.1)
 
-#dt.write2dArray(getDsimMatrixDense(dt.import2dArray("../data/newsgroups/bow/ppmi/simple_numeric_stopwords_ppmi 3-all.npz", return_sparse=True).transpose()), "../data/newsgroups/mds/simple_numeric_stopwords_ppmi 3-all")
+dt.write2dArray(getDissimilarityMatrix(dt.import2dArray("../data/sentiment/bow/ppmi/simple_numeric_stopwords_ppmi 5-all.npz", return_sparse=True)), "../data/sentiment/mds/simple_numeric_stopwords_ppmi 5-all")
 
 
 def main(data_type, clf, min, max, depth, rewrite_files):

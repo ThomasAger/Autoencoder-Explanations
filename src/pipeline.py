@@ -26,7 +26,6 @@ from itertools import product
 import time
 import mean_shift as ms
 #jvm.start(max_heap_size="512m")
-
 def main(data_type, classification_task_a, file_name, init_vector_path, hidden_activation, is_identity_a, amount_of_finetune_a,
          breakoff_a, kappa_a, score_limit_a, rewrite_files, cluster_multiplier_a, threads, dropout_noise_a, learn_rate_a, epochs_a, cross_val, ep,
          output_activation, cs, deep_size, classification, direction_count, lowest_amt, loss, development, add_all_terms_a,
@@ -38,8 +37,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
          finetune_ppmi_a, average_nopav_ppmi_a, boc_average_a, identity_activation_a, ppmi_only_a, boc_only_a, pav_only_a,
          multi_label_a ,use_dropout_in_finetune_a, lock_weights_and_redo_a, logistic_regression, mean_shift, word_vectors_a,
          bow_path_fn, bow_names_fn, ppmi_path_fn):
-
-
+    global_var = True
     prune_val = 2
 
     average_csv_fn = file_name
@@ -846,7 +844,16 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                         if not boc_only and not pav_only and ppmi_only == 0:
                                             print("NNET inc")
                                             #init_vector_path = "../data/newsgroups/bow/ppmi/" + "class-all-30-18836-all"
+                                            """ Used to stop pipeline early
+                                            weights_fn = loc + data_type + "/nnet/weights/" + file_name + "L0.txt"
+                                            bias_fn = loc + data_type + "/nnet/bias/" + file_name + "L0.txt"
+                                            rank_fn = loc + data_type + "/nnet/clusters/" + file_name + ".txt"
 
+                                            all_fns = [weights_fn, bias_fn, rank_fn]
+                                            if dt.allFnsAlreadyExist(all_fns) is False:
+                                                global_var = False
+                                                break
+                                            """
                                             SDA = nnet.NeuralNetwork(noise=0, fine_tune_weights_fn=fine_tune_weights_fn, optimizer_name=optimizer_name,
                                                     past_model_bias_fn=past_model_bias_fn, save_outputs=True,
                                                     randomize_finetune_weights=randomize_finetune_weights, dropout_noise=dropout_noise,
@@ -859,6 +866,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                                get_nnet_vectors_path= get_nnet_vectors_path, limit_entities=True,
                                                  vector_names_fn=vector_names_fn, classification_name=classification_name,
                                                                  identity_activation=identity_activation, lock_weights_and_redo=lock_weights_and_redo)
+
+
                                         ft_vector_path = loc + data_type + "/nnet/spaces/" + file_name + "L0.txt"
                                         ft_directions = loc + data_type + "/svm/directions/" + file_name + ".txt"
                                         #new_file_names[x] = file_name
@@ -1001,7 +1010,8 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                       limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn)
                     """
                                 file_name = orig_fn
-
+                                if global_var == False:
+                                    break
 
                             if len(new_file_names) > 1:
                                 init_vector_path = vector_path
@@ -1091,20 +1101,22 @@ else:
 bow_path_fn = "class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+new_classification_task + ".npz"
 
 """
-
+"""
 data_type = "newsgroups"
 classification_task = ["newsgroups"]
 #arrange_name = arrange_name + classification_task[0]
 skip_nn = True
 fn_orig = "sns_ppmi3"
+deep_size = [50]
+
 if skip_nn is False:
-    file_name = fn_orig + "mdsnew50svmdual"
+    file_name = fn_orig + "pca"+str(deep_size[0])+"svmdual"
 else:
-    file_name = fn_orig + "mdsnew50svmdual"
+    file_name = fn_orig + "pca"+str(deep_size[0])+"svmdual"
 lowest_amt = 30
 highest_amt = 18836
 
-space_name = "simple_numeric_stopwords_ppmi 2-all_mds50.npy"
+space_name = "simple_numeric_stopwords_ppmi 2 S"+str(deep_size[0])+"-all.npy"
 
 init_vector_path = loc+data_type+"/nnet/spaces/"+space_name
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/"+space_name
@@ -1112,12 +1124,12 @@ vector_path_replacement =  loc+data_type+"/nnet/spaces/"+space_name
 #init_vector_path = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
 #get_nnet_vectors_path = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
 #vector_path_replacement = loc+data_type+"/bow/ppmi/class-all-50-0.95-all"
-deep_size = [50]
+
 limit_entities = [False]
 bow_path_fn = "simple_numeric_stopwords_bow 30-0.999-all.npz"
 bow_names_fn = "simple_numeric_stopwords_words 30-0.999-all.txt"
 ppmi_path_fn = "simple_numeric_stopwords_ppmi 30-0.999-all.npz"
-
+"""
 """
 data_type = "placetypes"
 classification_task = ["opencyc"]
@@ -1140,7 +1152,7 @@ get_nnet_vectors_path = loc + data_type + "/nnet/spaces/places"+str(places_size)
 deep_size = [places_size]
 bow_path_fn = "class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+new_classification_task + ".npz"
 """
-"""
+
 data_type = "sentiment"
 classification_task = ["sentiment"]
 #arrange_name = arrange_name + classification_task[0]
@@ -1150,24 +1162,29 @@ lstm_dim = 50
 iLSTM = False
 sA = 1
 
-space_name = "Doc2Vec VS300 WS15 MC1 ST1e-05 NS5 TE400 DM0 WC10"#"wvTrain300MFTraFAdr1337mse0 10000 ML300 BS16 FBTrue DO0.0 RDO0.0 E8 ES300LS50 UAFalse SFFalse iLFalse rTFalse lrFalse sA1.0 wvTr 0.8 0.0 DFalse F16 KS5 PS4 NP all FState"
+deep_size = [50]
+space_name = "simple_numeric_stopwords_ppmi 2 S"+str(deep_size[0])+"-all"#"wvTrain300MFTraFAdr1337mse0 10000 ML300 BS16 FBTrue DO0.0 RDO0.0 E8 ES300LS50 UAFalse SFFalse iLFalse rTFalse lrFalse sA1.0 wvTr 0.8 0.0 DFalse F16 KS5 PS4 NP all FState"
 
 if skip_nn is False:
-    file_name = "FULL"+str(lstm_dim)+"10kNN"#""#
+    file_name = "FULL"+str(deep_size[0])+"10kNN"#""#
 else:
     if not iLSTM:
-        file_name = "doc2vec400"+str(lstm_dim)+"20k"#
+        file_name = "sns_ppmi2PCA"+str(deep_size[0])+"20k"#
     else:
-        file_name = "FULL"+str(sA)+"Cstate"+str(lstm_dim)+"ATS1000" + "10k"#
-lowest_amt = 0
-highest_amt = 100
+        file_name = "sns_ppmi2PCA"+str(sA)+"Cstate"+str(deep_size[0])+"ATS1000" + "10k"#
+lowest_amt = 50
+highest_amt = 0.999
 limit_entities = [False]
 init_vector_path = loc+data_type+"/nnet/spaces/"+space_name+".npy"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/"+space_name+".npy"
 vector_path_replacement =  loc+data_type+"/nnet/spaces/"+space_name+".npy"
-deep_size = [50]
-bow_path_fn = "class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+new_classification_task + ".npz"
-"""
+
+limit_entities = [False]
+bow_path_fn = "simple_numeric_stopwords_bow 50-0.999-all.npz"
+bow_names_fn = "simple_numeric_stopwords_words 50-0.999-all.txt"
+ppmi_path_fn = "simple_numeric_stopwords_ppmi 50-0.999-all.npz"
+
+
 """
 data_type = "sst"
 classification_task = ["binary"]
@@ -1265,9 +1282,9 @@ dissim = 0.0
 dissim_amt = [2]
 breakoff = [False] # This now
 score_limit = [0.9] #23232 val to use for all terms
-amount_to_start = [500]
-cluster_multiplier = [2]#50 #23233  val to use for all terms
-score_type = ["acc"] #accuracy, kappa or nd
+amount_to_start = [ 500,1000, 2000]
+cluster_multiplier = [1, 2]#50 #23233  val to use for all terms
+score_type = [ "kappa", "acc", "ndcg"] #accuracy, kappa or nd
 use_breakoff_dissim = [False]
 mean_shift = False
 get_all = [False]
@@ -1289,7 +1306,7 @@ bag_of_clusters = [True]
 finetune_ppmi = [False]
 average_nopav_ppmi_a = [False]
 boc_average = [ False]
-identity_activation = ["tanh"]
+identity_activation = [ "tanh"]
 
 top_dt_clusters = [False]
 top_dt_clusters = [False]
@@ -1311,7 +1328,7 @@ score_limit = [0.0]
 """
 hp_opt = True
 
-dt_dev = False
+dt_dev = True
 svm_classify = False
 rewrite_files = False
 max_depth = [3]
@@ -1323,7 +1340,7 @@ logistic_regression = True
 
 arrange_name = "cluster ratings BCS" + str(max_depth) + str(dt_dev)
 
-threads=10
+threads=1
 chunk_amt = 0
 chunk_id = 0
 for c in range(chunk_amt):

@@ -486,9 +486,9 @@ def writeArff(features, classes, class_names, file_name, header=True):
         file.close()
 
 
-def write1dArray(array, name):
+def write1dArray(array, name, encoding=None):
     try:
-        file = open(name, "w")
+        file = open(name, "w", encoding=encoding)
         for i in range(len(array)):
             file.write(str(array[i]) + "\n")
         file.close()
@@ -1158,10 +1158,17 @@ def match_entities(entities, t_names, names):
 def arrangeByScore(csv_fns, arra_name):
     csv_array = []
     counter = 0
+    inds_to_del = []
     for csv_name in csv_fns:
         print(counter)
-        csv_array.append(read_csv(csv_name).as_matrix())
+        try:
+            csv_array.append(read_csv(csv_name).as_matrix())
+        except FileNotFoundError:
+            inds_to_del.append(counter)
+            print("Didn't find one")
         counter = counter + 1
+
+    csv_fns = np.delete(csv_fns, inds_to_del, axis=0)
     # Get rows of averages
     row = 0
     for c in range(len(csv_fns)):

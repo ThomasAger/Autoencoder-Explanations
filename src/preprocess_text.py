@@ -2,19 +2,14 @@
 from gensim.corpora import Dictionary
 from gensim.utils import deaccent
 import data as dt
-#import spacy.attrs
-#from spacy.tokenizer import Tokenizer
-#from gensim.models import Phrases
 from gensim.models.phrases import Phraser
 from nltk.corpus import stopwords
 import numpy as np
 from keras.utils import to_categorical
-#import spacy
-import os
 import string
 from sklearn.datasets import fetch_20newsgroups
 import re
-
+from keras.datasets import imdb
 from sklearn.feature_extraction.text import CountVectorizer
 from gensim.matutils import corpus2csc
 import scipy.sparse as sp
@@ -91,8 +86,8 @@ def getVocab(tokenized_corpus):
     vocab = dct.token2id
     return vocab, dct
 
-def doc2bow(tokenized_corpus, dct):
-    dct.filter_extremes(no_below=3) # Most occur in at least 2 documents
+def doc2bow(tokenized_corpus, dct, bowmin):
+    dct.filter_extremes(no_below=bowmin) # Most occur in at least 2 documents
     bow = [dct.doc2bow(text) for text in tokenized_corpus]
     bow = corpus2csc(bow)
     return bow
@@ -173,7 +168,6 @@ def ngrams(tokenized_corpus):  # Increase the gram amount by 1
     return processed_corpus, tokenized_corpus
 
 def getPCA(tf, depth):
-    tf = tf.todense()
     svd = TruncatedSVD(n_components=depth) # use the scipy algorithm "arpack"
     pos = svd.fit_transform(tf)
     return pos
@@ -185,37 +179,57 @@ def averageWV(tokenized_corpus, depth):
 def averageWVPPMI(tokenized_corpus, ppmi):
     print("")
 
-def main(data_type, output_folder, grams,  no_below, no_above):
+# For sentiment etc
+def makeCorpusFromIds(tokenized_ids, vocab):
+    vocab = {k:(v+0) for k,v in vocab.items()}
+    vocab["<UNK>"] = 0
+    vocab["<START>"] = 1
+    vocab["<OOV>"] = 2
+    id_to_word = {value:key for key,value in vocab.items()}
+
+    processed_corpus = np.empty(shape=(len(tokenized_ids)), dtype=np.object)  # Have to recreate original word vectors
+    for s in range(len(tokenized_ids)):
+        word_sentence = []
+        for w in range(len(tokenized_ids[s])):
+            word_sentence.append(id_to_word[tokenized_ids[s][w]])
+        processed_corpus[s] = " ".join(word_sentence)
+
+    return processed_corpus
+
+def main(data_type, output_folder, grams,  no_below, no_above, bowmin):
     if data_type == "newsgroups":
         newsgroups = fetch_20newsgroups(subset='all', shuffle=False, remove=("headers", "footers", "quotes"))
         corpus = newsgroups.data
         classes = newsgroups.target
+        encoding_type = "utf8"
     else:
-        newsgroups = fetch_20newsgroups(subset='all', shuffle=False, remove=("headers", "footers", "quotes"))
-        corpus = newsgroups.data
-        classes = newsgroups.target
+        (x_train, y_train), (x_test, y_test) = imdb.load_data(num_words=0, skip_top=0, index_from=0)
+        corpus = np.concatenate((x_train, x_test), axis=0)
+        classes = np.concatenate((y_train, y_test), axis=0)
+        corpus = makeCorpusFromIds(corpus, imdb.get_word_index())
+        encoding_type = "utf8"
 
     file_name = "simple_numeric"
-    """
     processed_corpus = preprocess(corpus)
     tokenized_corpus = naiveTokenizer(processed_corpus)
-    #vocab, dct = getVocab(tokenized_corpus)
+    vocab, dct = getVocab(tokenized_corpus)
     processed_corpus, tokenized_corpus, remove_ind, classes = removeEmpty(processed_corpus, tokenized_corpus, classes)
-    #bow = doc2bow(tokenized_corpus, dct, 100, 10)
-    #tokenized_ids = tokensToIds(tokenized_corpus, vocab)
+    bow = doc2bow(tokenized_corpus, dct, bowmin)
+    filtered_bow, word_list = filterBow(tokenized_corpus, dct, no_below, no_above)
+    tokenized_ids = tokensToIds(tokenized_corpus, vocab)
     print(output_folder + file_name + "_remove.npy")
     np.save(output_folder + file_name + "_remove.npy", remove_ind)
-    """
-    """
+
     np.save(output_folder + file_name + "_corpus.npy", tokenized_corpus)
     np.save(output_folder + file_name + "_tokenized_corpus.npy", tokenized_ids)
     np.save(output_folder + file_name + "_vocab.npy", vocab)
-    dt.write1dArray(processed_corpus, output_folder + file_name + "_corpus_processed.txt")
+    dt.write1dArray(processed_corpus, output_folder + file_name + "_corpus_processed.txt", encoding=encoding_type)
     np.save(output_folder + file_name + "_classes.npy", classes)
     np.save(output_folder + file_name + "_classes_categorical.npy", to_categorical(classes))
     sp.save_npz(output_folder + file_name + ".npz", bow)
-    dt.write1dArray(word_list, output_folder + file_name + "_words.txt")
-    
+    dt.write1dArray(word_list, output_folder + file_name + "_words.txt", encoding=encoding_type)
+
+    """
     if grams > 0:
         for i in range(2, grams):  # Up to 5-length grams
             processed_corpus, tokenized_corpus = ngrams(tokenized_corpus)
@@ -232,18 +246,17 @@ def main(data_type, output_folder, grams,  no_below, no_above):
 
     file_name += "_stopwords"
 
-    filtered_ppmi_fn = "../data/movies/bow/ppmi/" + file_name + "_ppmi " + str(no_below) + "-" + str(
+    filtered_ppmi_fn = "../data/"+data_type+"/bow/ppmi/" + file_name + "_ppmi " + str(no_below) + "-" + str(
         no_above) + "-all.npz"
-    ppmi_fn = "../data/movies/bow/ppmi/" + file_name + "_ppmi " "3" + "-all.npz"
-    bow_fn = "../data/movies/bow/frequency/phrases/" + file_name + "_bow " "3" + "-all.npz"
-    filtered_bow_fn = "../data/movies/bow/frequency/phrases/" + file_name + "_bow "  + str(
+    ppmi_fn = "../data/"+data_type+"/bow/ppmi/" + file_name + "_ppmi " + str(bowmin) + "-all.npz"
+    bow_fn = "../data/"+data_type+"/bow/frequency/phrases/" + file_name + "_bow " + str(bowmin) + "-all.npz"
+    filtered_bow_fn = "../data/"+data_type+"/bow/frequency/phrases/" + file_name + "_bow "  + str(
         no_below) +  "-" + str(no_above) + "-all.npz"
-    """
 
     tokenized_corpus, processed_corpus = removeStopWords(tokenized_corpus)
     processed_corpus, tokenized_corpus, remove_ind, classes = removeEmpty(processed_corpus, tokenized_corpus, classes)
     vocab, dct = getVocab(tokenized_corpus)
-    bow = doc2bow(tokenized_corpus, dct)
+    bow = doc2bow(tokenized_corpus, dct, bowmin)
     filtered_bow, word_list = filterBow(tokenized_corpus, dct, no_below, no_above)
     tokenized_ids = tokensToIds(tokenized_corpus, vocab)
 
@@ -259,7 +272,7 @@ def main(data_type, output_folder, grams,  no_below, no_above):
     np.save(output_folder + file_name + "_corpus.npy", tokenized_corpus)
     np.save(output_folder + file_name + "_tokenized_corpus.npy", tokenized_ids)
     np.save(output_folder + file_name + "_vocab.npy", vocab)
-    dt.write1dArray(processed_corpus, output_folder + file_name + "_corpus_processed.txt")
+    dt.write1dArray(processed_corpus, output_folder + file_name + "_corpus_processed.txt", encoding=encoding_type)
     np.save(output_folder + file_name + "_classes.npy", classes)
     np.save(output_folder + file_name + "_classes_categorical.npy", to_categorical(classes))
 
@@ -268,8 +281,8 @@ def main(data_type, output_folder, grams,  no_below, no_above):
     sp.save_npz(bow_fn, bow)
     sp.save_npz(filtered_bow_fn, filtered_bow)
 
-    dt.write1dArray(word_list, "../data/newsgroups/bow/names/" + file_name + "_words " +
-                    str(no_below) + "-" + str(no_above) + "-all.txt")
+    dt.write1dArray(word_list, "../data/"+data_type+"/bow/names/" + file_name + "_words " +
+                    str(no_below) + "-" + str(no_above) + "-all.txt", encoding=encoding_type)
     filtered_bow = filtered_bow.transpose()
     ppmi = sparse_ppmi.convertPPMISparse(filtered_bow)
     filtered_ppmi_sparse = sp.csr_matrix(ppmi).transpose()
@@ -278,43 +291,42 @@ def main(data_type, output_folder, grams,  no_below, no_above):
     sp.save_npz(filtered_ppmi_fn, filtered_ppmi_sparse)
 
     testAll(["filtered_freq_bow", "filtered_ppmi_bow"], [filtered_ppmi_sparse.transpose().todense(), filtered_bow.todense()], [to_categorical(classes), to_categorical(classes)],
-            "newsgroups")
-    """
+            data_type)
+
     # Create PCA
-    classes = dt.import2dArray("../data/movies/classify/genres/class-all", "i")
-    bow = sp.csr_matrix(dt.import2dArray("../data/movies/bow/frequency/phrases/class-all-15-5-genres", "i")).transpose()
+    #classes = dt.import2dArray("../data/movies/classify/genres/class-all", "i")
+    #bow = sp.csr_matrix(dt.import2dArray("../data/movies/bow/frequency/phrases/class-all-15-5-genres", "i")).transpose()
     ppmi = sparse_ppmi.convertPPMISparse(bow)
-    ppmi_sparse = sp.csr_matrix(ppmi)
+    ppmi_sparse = sp.csr_matrix(ppmi).transpose()
 
     print(ppmi_fn)
     sp.save_npz(ppmi_fn, ppmi_sparse)
 
-    pca_fn = "../data/movies/nnet/spaces/" + file_name + "_ppmi " + str(
-        no_below) + "-" + str(
-        no_above) + "-all.npy"
-    PCA_ppmi = getPCA(ppmi_sparse, 100)
-
-    print(pca_fn)
-    np.save(pca_fn, PCA_ppmi)
+    pca_size = [50, 100, 200]
+    for p in pca_size:
+        pca_fn = "../data/"+data_type+"/nnet/spaces/" + file_name + "_ppmi " + str(
+            bowmin) + " S" + str(p) +  "-all.npy"
+        PCA_ppmi = getPCA(ppmi_sparse, p)
+        np.save(pca_fn, PCA_ppmi)
     """
     if grams > 0:
         for i in range(2, grams+1):  # Up to 5-length grams
 
-            filtered_ppmi_fn = "../data/newsgroups/bow/ppmi/" + file_name + "_ppmi " + str(
+            filtered_ppmi_fn = "../data/"+data_type+"/bow/ppmi/" + file_name + "_ppmi " + str(
                 grams) + "-gram" + str(no_below) + "-" + str(
                 no_above) + "-all.npz"
-            ppmi_fn = "../data/newsgroups/bow/ppmi/" + file_name + "_ppmi " + str(
+            ppmi_fn = "../data/"+data_type+"/bow/ppmi/" + file_name + "_ppmi " + str(
                 grams) + "-gram2" + "-all.npz"
-            bow_fn = "../data/newsgroups/bow/frequency/phrases/" + file_name + "_bow " + str(
+            bow_fn = "../data/"+data_type+"/bow/frequency/phrases/" + file_name + "_bow " + str(
                 grams) + "-gram2" + "-all.npz"
-            filtered_bow_fn = "../data/newsgroups/bow/frequency/phrases/" + file_name + "_bow " + str(
+            filtered_bow_fn = "../data/"+data_type+"/bow/frequency/phrases/" + file_name + "_bow " + str(
                 grams) + "-gram" + str(
                 no_below) + \
                               "-" + str(no_above) + "-all.npz"
 
             processed_corpus, tokenized_corpus = ngrams(tokenized_corpus)
             vocab, dct = getVocab(tokenized_corpus)
-            bow = doc2bow(tokenized_corpus, dct)
+            bow = doc2bow(tokenized_corpus, dct, bowmin)
             filtered_bow, word_list = filterBow(tokenized_corpus, dct, no_below, no_above)
             tokenized_ids = tokensToIds(tokenized_corpus, vocab)
             np.save(output_folder + file_name + "_corpus " + str(i) + "-gram" + ".npy", tokenized_corpus)
@@ -325,7 +337,7 @@ def main(data_type, output_folder, grams,  no_below, no_above):
             sp.save_npz(bow_fn, bow)
             sp.save_npz(filtered_bow_fn, filtered_bow)
 
-            dt.write1dArray(word_list, "../data/newsgroups/bow/names/" + file_name + "_words "  + str(i) + "-gram"  +
+            dt.write1dArray(word_list, "../data/"+data_type+"/bow/names/" + file_name + "_words "  + str(i) + "-gram"  +
                             str(no_below) + "-" + str(no_above) + "-all.txt")
             filtered_bow = filtered_bow.transpose()
             ppmi = sparse_ppmi.convertPPMISparse(filtered_bow)
@@ -337,7 +349,7 @@ def main(data_type, output_folder, grams,  no_below, no_above):
             ppmi = sparse_ppmi.convertPPMISparse(bow)
             ppmi_sparse = sp.csr_matrix(ppmi).transpose()
             sp.save_npz(ppmi_fn, ppmi_sparse)
-            pca_fn = "../data/newsgroups/nnet/spaces/" + file_name + "_ppmi " + str(grams) + "-gram" + str(
+            pca_fn = "../data/"+data_type+"/nnet/spaces/" + file_name + "_ppmi " + str(grams) + "-gram" + str(
                 no_below) + "-" + str(
                 no_above) + "-all.npy"
 
@@ -347,11 +359,11 @@ def main(data_type, output_folder, grams,  no_below, no_above):
     """
     """
     file_name += "_stopwords"
-    filtered_ppmi_fn = "../data/newsgroups/bow/ppmi/" + file_name + "_ppmi " + str(no_below) + "-" + str(
+    filtered_ppmi_fn = "../data/"+data_type+"/bow/ppmi/" + file_name + "_ppmi " + str(no_below) + "-" + str(
         no_above) + "-all.npz"
-    filtered_bow_fn = "../data/newsgroups/bow/frequency/phrases/" + file_name + "_bow " + str(
+    filtered_bow_fn = "../data/"+data_type+"/bow/frequency/phrases/" + file_name + "_bow " + str(
         no_below) + "-" + str(no_above) + "-all.npz"
-    pca_fn = "../data/newsgroups/nnet/spaces/" + file_name + "_ppmi " +  str(
+    pca_fn = "../data/"+data_type+"/nnet/spaces/" + file_name + "_ppmi " +  str(
         no_below) + "-" + str(
         no_above) + "-all.npy"
     filtered_ppmi_sparse = sp.load_npz(filtered_ppmi_fn)
@@ -360,5 +372,5 @@ def main(data_type, output_folder, grams,  no_below, no_above):
     """
     # Create averaged word vectors
     testAll(["ppmi_pca"], [ PCA_ppmi],
-            [classes], "newsgroups")
-if __name__ == '__main__': main("newsgroups", "../data/raw/newsgroups/", 0, 30, 0.999)
+            [to_categorical(classes)], data_type)
+if __name__ == '__main__': main("sentiment", "../data/raw/sentiment/", 0, 50, 0.999, 2)

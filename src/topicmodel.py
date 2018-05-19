@@ -87,9 +87,18 @@ def main(data_type, class_labels_fn, class_names_fn, ft_names_fn, max_depth, lim
             csv_name = "../data/" + data_type + "/rules/tree_csv/" + file_name + ".csv"
             cv_fns.append(csv_name)
 
+            tree.DecisionTree(topic_model_fn, class_labels_fn, class_names_fn, dimension_names_fn, file_name, 10000,
+                              max_depth=1, balance="balanced", criterion="entropy", save_details=False,
+                              cv_splits=cross_val,
+                              split_to_use=c, data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
+                              development=dt_dev,
+                              limit_entities=limit_entities,
+                              limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn,
+                              clusters_fn=topic_model_fn,
+                              cluster_duplicates=True, save_results_so_far=False)
 
             tree.DecisionTree(topic_model_fn, class_labels_fn, class_names_fn, dimension_names_fn, file_name, 10000,
-                              max_depth=max_depth, balance="balanced", criterion="entropy", save_details=True, cv_splits=cross_val,
+                              max_depth=max_depth, balance="balanced", criterion="entropy", save_details=False, cv_splits=cross_val,
                               split_to_use=c,  data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files, development=dt_dev,
                               limit_entities=limit_entities,
                               limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn=topic_model_fn,
@@ -123,16 +132,16 @@ classify = ["newsgroups"]
 
 max_depth = 3
 limit_entities = False
-dt_dev = True
+dt_dev = False
 vector_names_fn = "../data/" + data_type + "/nnet/spaces/entitynames.txt"
 feature_names_fn = "../data/" + data_type + "/bow/names/"+str(high_amt)+"-"+str(low_amt)+"-all.txt"
-rewrite_files = True
+rewrite_files = False
 cross_val = 1
 tf_fn = "simple_numeric_stopwords_bow 30-0.999-all.npz"
 
-doc_topic_prior = [ 0.001, 0.01, 0.1]
-topic_word_prior = [ 0.1, 0.01, 0.1]
-n_topics = [50,100,200,400]
+doc_topic_prior = [ 0.01]
+topic_word_prior = [ 0.1]
+n_topics = [50]
 for c in classify:
     file_name = "simple_numeric_stopwords_bow 30-0.999-all.npz"
     final_csv_name = "final" + c + str(dt_dev)
