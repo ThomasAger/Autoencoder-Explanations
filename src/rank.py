@@ -6,23 +6,15 @@ from collections import OrderedDict
 # Collect the rankings of movies for the given cluster directions
 def getRankings(cluster_directions, vectors, cluster_names, vector_names):
     rankings = []
-    ranking_names = []
-    sorted_rankings_a = []
     for d in range(len(cluster_directions)):
         cluster_ranking = []
         cluster_ranking_names = []
         for v in range(len(vectors)):
             cluster_ranking.append(np.dot(cluster_directions[d], vectors[v]))
             cluster_ranking_names.append(vector_names[v])
-        sorted_rankings = sorted(cluster_ranking)
-        sorted_rankings.reverse()
-        sorted_ranking_names = dt.sortByReverseArray(cluster_ranking_names, cluster_ranking)
-        ranking_names.append(sorted_ranking_names)
         rankings.append(cluster_ranking)
-        print("Cluster:", cluster_names[d], "Movies:",
-              sorted_ranking_names[0], sorted_rankings[0],   sorted_ranking_names[1], sorted_rankings[1], sorted_ranking_names[2], sorted_rankings[2])
-        sorted_rankings_a.append(sorted_rankings)
-    return rankings, ranking_names#, sorted_rankings_a
+        print("Cluster:", cluster_names[d])
+    return rankings#, ranking_names#, sorted_rankings_a
 
 
 # Create binary vectors for the top % of the rankings, 1 for if it is in that percent and 0 if not.
@@ -72,7 +64,7 @@ def getAllRankings(directions_fn, vectors_fn, cluster_names_fn, vector_names_fn,
     vectors = dt.import2dArray(vectors_fn)
     cluster_names = dt.import1dArray(cluster_names_fn)
     vector_names = dt.import1dArray(vector_names_fn)
-    rankings, ranking_names = getRankings(directions, vectors, cluster_names, vector_names)
+    rankings = getRankings(directions, vectors, cluster_names, vector_names)
     rankings = np.asarray(rankings)
     if discrete:
         labels = createLabels(rankings, percent)
@@ -90,7 +82,7 @@ def getAllRankings(directions_fn, vectors_fn, cluster_names_fn, vector_names_fn,
     dt.write2dArray(rankings, rankings_fn)
     if discrete:
         dt.write2dArray(discrete_labels, discrete_labels_fn)
-    dt.writeTabArray(ranking_names, ranking_names_fn)
+    #dt.writeTabArray(ranking_names, ranking_names_fn)
 
 
 def getAllPhraseRankings(directions_fn=None, vectors_fn=None, property_names_fn=None, vector_names_fn=None, fn="no filename",
@@ -114,7 +106,7 @@ def getAllPhraseRankings(directions_fn=None, vectors_fn=None, property_names_fn=
         directions = dt.sortByReverseArray(directions, scores)[:top_amt]
         property_names = dt.sortByReverseArray(property_names, scores)[:top_amt]
 
-    rankings, ranking_names = getRankings(directions, vectors, property_names, vector_names)
+    rankings = getRankings(directions, vectors, property_names, vector_names)
     if discrete:
         discrete_labels = createDiscreteLabels(rankings, percentage_increment)
         discrete_labels = np.asarray(discrete_labels)

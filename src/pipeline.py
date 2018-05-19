@@ -1070,7 +1070,7 @@ bow_path_fn = "class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+new_classifi
 """
 
 data_type = "movies"
-classification_task = ["genres", "keywords"] #Run keywords as separate process
+classification_task = ["ratings","genres", "keywords"] #Run keywords as separate process
 #arrange_name = arrange_name + classification_task[0]
 skip_nn = True
 if skip_nn is False:
@@ -1084,11 +1084,11 @@ deep_size = [200]
 
 limit_entities = [False]
 
-init_vector_path = loc+data_type+"/nnet/spaces/films"+str(deep_size[0])+"-genres.txt"
+init_vector_path = loc+data_type+"/nnet/spaces/mds200-nodupe.npy"
 #init_vector_path = loc+data_type+"/nnet/spaces/films200-"+classification_task+".txt"
 #file_name = "films200-genres100ndcg0.85200 tdev3004FTL0"
-get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films"+str(deep_size[0])+"-genres.txt"
-vector_path_replacement = loc+data_type+"/nnet/spaces/films"+str(deep_size[0])+"-genres.txt"
+get_nnet_vectors_path = loc+data_type+"/nnet/spaces/mds200-nodupe.npy"
+vector_path_replacement = loc+data_type+"/nnet/spaces/mds200-nodupe.npy"
 
 bow_path_fn = "class-all-100-10-all-nodupe.npz"
 bow_names_fn = "100-10-all.txtmds-nodupeCV1S0 SFT0 allL010010 LR .txt"
@@ -1270,9 +1270,9 @@ dissim = 0.0
 dissim_amt = [2]
 breakoff = [False] # This now
 score_limit = [0.9] #23232 val to use for all terms
-amount_to_start = [500,1000,2000]
-cluster_multiplier = [1,2]#50 #23233  val to use for all terms
-score_type = ["acc", "kappa"] #accuracy, kappa or nd
+amount_to_start = [500, 1000, 2000]
+cluster_multiplier = [1, 2]#50 #23233  val to use for all terms
+score_type = [ "kappa", "acc", "ndcg"] #accuracy, kappa or nd
 use_breakoff_dissim = [False]
 mean_shift = False
 get_all = [False]
@@ -1316,7 +1316,7 @@ score_limit = [0.0]
 """
 hp_opt = True
 
-dt_dev = False
+dt_dev = True
 svm_classify = False
 rewrite_files = False
 max_depth = [3]
