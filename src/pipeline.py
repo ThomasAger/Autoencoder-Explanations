@@ -434,7 +434,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                 rank.getAllPhraseRankings(directions_fn, vector_path, class_names_fn, vector_names_fn, file_name,
                                               data_type=data_type, rewrite_files=rewrite_files)
                                 ndcg.getNDCG(loc + data_type + "/rank/numeric/" + file_name + "ALL.txt", file_name,
-                                         data_type=data_type, lowest_count=lowest_amt, rewrite_files=rewrite_files,
+                                         data_type=data_type, bow_fn=bow_names_fn, ppmi_fn=ppmi_path_fn, lowest_count=lowest_amt, rewrite_files=rewrite_files,
                                              highest_count=highest_count, classification=new_classification_task)
                             half_ndcg_half_kappa = ""
                             if half_ndcg_half_kappa:
@@ -1078,7 +1078,7 @@ vector_path_replacement = loc+data_type+"/pca/class-all-50-10-alld100"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 bow_path_fn = "class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+new_classification_task + ".npz"
 """
-
+"""
 data_type = "movies"
 classification_task = ["ratings","genres", "keywords"] #Run keywords as separate process
 #arrange_name = arrange_name + classification_task[0]
@@ -1103,9 +1103,6 @@ vector_path_replacement = loc+data_type+"/nnet/spaces/mds200-nodupe.npy"
 bow_path_fn = "class-all-100-10-all-nodupe.npz"
 bow_names_fn = "100-10-all.txtmds-nodupeCV1S0 SFT0 allL010010 LR .txt"
 ppmi_path_fn = "class-all-100-10-all-nodupe.npz"
-
-
-
 """
 """
 data_type = "newsgroups"
@@ -1168,7 +1165,7 @@ lstm_dim = 50
 iLSTM = False
 sA = 1
 
-deep_size = [50]
+deep_size = [100]
 space_name = "simple_numeric_stopwords_ppmi 2 S"+str(deep_size[0])+"-all"#"wvTrain300MFTraFAdr1337mse0 10000 ML300 BS16 FBTrue DO0.0 RDO0.0 E8 ES300LS50 UAFalse SFFalse iLFalse rTFalse lrFalse sA1.0 wvTr 0.8 0.0 DFalse F16 KS5 PS4 NP all FState"
 
 if skip_nn is False:
@@ -1290,7 +1287,7 @@ breakoff = [False] # This now
 score_limit = [0.9] #23232 val to use for all terms
 amount_to_start = [ 500,1000, 2000]
 cluster_multiplier = [1, 2]#50 #23233  val to use for all terms
-score_type = [ "kappa", "acc", "ndcg"] #accuracy, kappa or nd
+score_type = [ "ndcg", "kappa", "acc"] #accuracy, kappa or nd
 use_breakoff_dissim = [False]
 mean_shift = False
 get_all = [False]

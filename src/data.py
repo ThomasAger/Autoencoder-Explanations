@@ -285,8 +285,9 @@ def write2dArray(array, name):
             name = name[:-4]
         array = np.asarray(array)
         np.save(name, array)
-    except FileNotFoundError:
+    except:
         print("failed")
+
     print("successful write", name)
 """
 a = import2dArray("D:\Eclipse\MDS/class-all-30-18836-alldm", "f")

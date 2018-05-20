@@ -115,7 +115,7 @@ def main(data_type, class_labels_fn, class_names_fn, ft_names_fn, max_depth, lim
         file_name = og_fn + " " + str(cross_val) + "CV " + str(0) + classify + "Dev" + str(dt_dev)
         csvs.append("../data/" + data_type + "/rules/tree_csv/" + file_name + "AVG.csv")
     dt.arrangeByScore(np.unique(np.asarray(csvs)), final_csv_fn)
-data_type = "movies"
+data_type = "sentiment"
 high_amt = 100
 low_amt = 10
 
@@ -128,23 +128,23 @@ low_amt = 10
 
 
 
-classify = ["genres", "keywords", "ratings"] # Still need to do ratings
+classify = ["sentiment"] # Still need to do ratings
 
 max_depth = 3
 limit_entities = False
-dt_dev = False
+dt_dev = True
 vector_names_fn = "../data/" + data_type + "/nnet/spaces/entitynames.txt"
-feature_names_fn = "../data/" + data_type + "/bow/names/"+str(high_amt)+"-"+str(low_amt)+"-all.txt"
+feature_names_fn = "../data/" + data_type + "/bow/names/simple_numeric_stopwords_words 50-0.999-all.txt"
 rewrite_files = False
 cross_val = 1
-tf_fn = "class-all-100-10-all-nodupe.npz"
+tf_fn = "simple_numeric_stopwords_bow 50-0.999-all.npz"
 
 doc_topic_prior = [ 0.1, 0.01, 0.001]
 topic_word_prior =[0.1, 0.01, 0.001]
 n_topics = [50,100,200,400]
 
 for c in classify:
-    file_name = "class-all-100-10-all-nodupe.npz"
+    file_name = "simple_numeric_stopwords_bow 50-0.999-all.npz"
     final_csv_name = "final" + c + str(dt_dev)
     class_labels_fn = "../data/" + data_type + "/classify/"+c+"/class-all"
     class_names_fn = "../data/" + data_type + "/classify/"+c+"/names.txt"

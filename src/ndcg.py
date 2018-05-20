@@ -178,7 +178,7 @@ def ndcg_from_ranking(y_true, ranking):
     dcg = dcg_from_ranking(y_true, ranking)
     return dcg / best
 import linecache
-def getNDCG(rankings_fn, fn, data_type, lowest_count, rewrite_files=False, highest_count = 0, classification = ""):
+def getNDCG(rankings_fn, fn, data_type, bow_fn, ppmi_fn, lowest_count, rewrite_files=False, highest_count = 0, classification = ""):
 
     # Check if the NDCG scores have already been calculated, if they have then skip.
     ndcg_fn = "../data/" + data_type + "/ndcg/"+fn+".txt"
@@ -191,22 +191,20 @@ def getNDCG(rankings_fn, fn, data_type, lowest_count, rewrite_files=False, highe
         print("Running task", getNDCG.__name__)
 
     # Get the file names for the PPMI values for every word and a list of words ("names")
-    ppmi_fn = "../data/" + data_type + "/bow/ppmi/class-all-"+str(lowest_count)+"-" + str(highest_count)+"-" +classification
-    names = dt.import1dArray("../data/" + data_type + "/bow/names/"+str(lowest_count)+"-" + str(highest_count)+"-" +classification+".txt")
-
+    names = dt.import1dArray("../data/"+data_type+"/bow/names/"+bow_fn)
+    ppmi = dt.import2dArray("../data/"+data_type+"/bow/ppmi/"+ppmi_fn)
     # Process the rankings and the PPMI line-by-line so as to not run out of memory
     ndcg_a = []
     #spearman_a = []
-    with open(rankings_fn) as rankings, open(ppmi_fn) as ppmi:
+    with open(rankings_fn) as rankings:
         r = 0
         for lr in rankings:
                 for lp in ppmi:
                     # Get the plain-number ranking of the rankings, e.g. "1, 4, 3, 50"
                     sorted_indices = np.argsort(list(map(float, lr.strip().split())))[::-1]
                     # Convert PPMI scores to floats
-                    ppmi_scores = list(map(float, lp.strip().split()))
                     # Get the NDCG score for the PPMI score, which is a valuation, compared to the indice of the rank
-                    ndcg = ndcg_from_ranking(ppmi_scores, sorted_indices)
+                    ndcg = ndcg_from_ranking(lp, sorted_indices)
 
                     # Add to array and print
                     ndcg_a.append(ndcg)
