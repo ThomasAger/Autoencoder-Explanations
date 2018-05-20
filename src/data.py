@@ -1134,7 +1134,7 @@ def deleteAllButIndexes(array, indexes):
     array = np.delete(array, del_ind)
     return array
 
-def match_entities(entities, t_names, names):
+def match_entities(t_names, names):
     amount_found = 0
     for n in range(len(names)):
         names[n] = removeEverythingFromString(names[n])
@@ -1149,11 +1149,7 @@ def match_entities(entities, t_names, names):
                 matched_ids.append(ni)
                 amount_found += 1
                 break
-    matched_entities = []
-    for e in matched_ids:
-        matched_entities.append(entities[e])
-    print("Amount found", amount_found)
-    return matched_entities
+    return matched_ids
 
 def arrangeByScore(csv_fns, arra_name):
     csv_array = []
@@ -1227,9 +1223,12 @@ def getWordVectors(vector_save_fn, words_fn, wvn, wv_amt, svm_dir_fn=None):
         print("Already got word vectors", vector_save_fn)
 
 if __name__ == '__main__':
+    """
+
     name = "../data/newsgroups/nnet/spaces/simple_numeric_stopwords_ppmi 2-all_mds50.txt"
     write2dArray(import2dArray(name, "f").transpose(), name)
 
+    """
     """
     data_type = "movies"
     space = "../data/raw/previous work/filmids.txt"
@@ -1244,20 +1243,71 @@ if __name__ == '__main__':
 
     print(len(space))
 
-    mds = "../data/movies/classify/keywords/class-all"
-    mds = import2dArray(mds, "i")
-
+    mds = "../data/movies/nnet/spaces/entitynames.txt"
+    mds = import1dArray(mds, "s")
+    if len(mds) == 15000:
+        mds = np.delete(mds, inds_to_del)
 
     print(len(mds))
-    space, inds = np.unique(space, axis=0, return_index=True)
+    space, inds = np.unique(space, return_index=True)
     print(len(space))
     print(len(inds))
 
 
     mds = mds[inds]
     print(len(mds))
-    write2dArray(mds, "../data/movies/classify/keywords/class-all")
+    write1dArray(mds, "../data/movies/nnet/spaces/entitynames.txt")
     """
+
+    main_names_fn = "../data/movies/nnet/spaces/entitynames.txt"
+    main_names = import1dArray(main_names_fn, "s")
+    rating_names_fn = "../data/movies/classify/ratings/available_entities.txt"
+    rating_names = import1dArray(rating_names_fn, "s")
+    # Get IDS of entities that are duplicates or -1
+    space = "../data/raw/previous work/filmids.txt"
+    space = import1dArray(space, "i")
+    classes_fn = "../data/movies/classify/ratings/class-All"
+    classes = import2dArray(classes_fn, "i")
+
+    inds_to_del = []
+    for i in range(len(space)):
+        if space[i] == -1:
+            inds_to_del.append(i)
+
+    space = np.delete(space, inds_to_del)
+
+    print(len(space))
+    names_del = main_names[inds_to_del]
+    if len(main_names):
+        main_names = np.delete(main_names, inds_to_del)
+
+    print(len(main_names))
+    ns, inds, counts = np.unique(space, return_index=True, return_counts=True)
+    print(len(space))
+    print(len(inds))
+
+    duplicate_inds = np.delete(list(range(len(space))), inds)
+
+    names_to_remove = main_names[duplicate_inds]
+
+    matching_ids = match_entities(rating_names, names_to_remove)
+
+    rating_names = np.delete(rating_names, matching_ids)
+    classes = np.delete(classes, matching_ids)
+
+    write2dArray(classes, classes_fn)
+    write1dArray(rating_names, rating_names_fn)
+
+    # Get names of entities that are duplicates or -1
+
+    # Get ids from the ratings names corresponding to these entities
+
+    # Remove these ids from the classes and names of ratings
+
+    # Remove these ids from the overall entitynames
+
+
+
 
 """
 bow_fn = "../data/movies/bow/ppmi/class-all-100-10-all"

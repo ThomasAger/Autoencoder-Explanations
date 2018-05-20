@@ -128,7 +128,7 @@ low_amt = 10
 
 
 
-classify = ["genres", "keywords", "ratings"] # Still need to do ratings
+classify = ["ratings"] # Still need to do ratings
 
 max_depth = 3
 limit_entities = False
