@@ -1080,7 +1080,7 @@ bow_path_fn = "class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+new_classifi
 """
 """
 data_type = "movies"
-classification_task = ["ratings","genres", "keywords"] #Run keywords as separate process
+classification_task = ["ratings"] #Run keywords as separate process
 #arrange_name = arrange_name + classification_task[0]
 skip_nn = True
 if skip_nn is False:

@@ -48,10 +48,9 @@ def getAllRankings(directions_fn, vectors_fn, cluster_names_fn, vector_names_fn,
 
     #labels_fn = "../data/"+data_type+"/rank/labels/" + fn + ".txt"
     rankings_fn = "../data/"+data_type+"/rank/numeric/" + fn + ".txt"
-    ranking_names_fn = "../data/"+data_type+"/rank/names/" + fn + ".txt"
     #discrete_labels_fn = "../data/"+data_type+"/rank/discrete/" + fn + ".txt"
 
-    all_fns = [rankings_fn, ranking_names_fn]
+    all_fns = [rankings_fn]
     if dt.allFnsAlreadyExist(all_fns) and not rewrite_files:
         for f in all_fns:
             print(f, "Already exists")
