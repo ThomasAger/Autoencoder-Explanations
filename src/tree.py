@@ -75,7 +75,9 @@ class DecisionTree:
         if "ratings" in classes_fn:
             vector_names = dt.import1dArray(vector_names_fn)
             limited_labels = dt.import1dArray(limited_label_fn)
-            vectors = np.asarray(dt.match_entities(vectors, limited_labels, vector_names))
+            matched_ids = dt.match_entities(vector_names, limited_labels)
+            vectors = vectors[matched_ids]
+            print("vectors",len(vectors))
         print("Past limit entities")
 
 
@@ -186,16 +188,19 @@ class DecisionTree:
                 ac_y_test = ac_y_dev
 
             for splits in range(len(ac_y_test)):
-                model_name_fn = "../data/" + data_type + "/rules/tree_model/" + label_names[l] + " " + filename + ".model"
+                model_name_fn = "../data/" + data_type + "/rules/tree_model/" + label_names[
+                    l] + " " + filename + ".model"
+                """
                 if dt.fileExists(model_name_fn) and not rewrite_files:
                     try:
                         clf = joblib.load(model_name_fn)
                     except KeyError:
                         print(model_name_fn) # If a model is disrupted partway through its processing
                 else:
-                    clf = tree.DecisionTreeClassifier(max_depth=max_depth, criterion=criterion, class_weight=balance)
-                    clf.fit(ac_x_train[splits], ac_y_train[splits])
-                    joblib.dump(clf, model_name_fn)
+                """
+                clf = tree.DecisionTreeClassifier(max_depth=max_depth, criterion=criterion, class_weight=balance)
+                clf.fit(ac_x_train[splits], ac_y_train[splits])
+                joblib.dump(clf, model_name_fn)
                 predictions.append(clf.predict(ac_x_test[splits]))
 
             ac_y_test = list(ac_y_test)
