@@ -145,6 +145,8 @@ def calcAngChunk(e1, e2,  norm_1, norm_2):
     norm_dp = norm_1 * norm_2
     return (2 / pi) * np.arccos(dp / norm_dp)
 
+
+
 def getDsimMatrix(tf):
 
     tf_transposed = sp.csc_matrix(tf)

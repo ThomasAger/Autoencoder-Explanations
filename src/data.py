@@ -1198,9 +1198,9 @@ def arrangeByScore(csv_fns, arra_name):
 
 #write1dArray(list(range(20000)), "../data/sentiment/nnet/spaces/entitynames.txt")
 
-#from gensim.models.keyedvectors import KeyedVectors
-#from gensim.test.utils import datapath, get_tmpfile
-#from gensim.scripts.glove2word2vec import glove2word2vec
+from gensim.models.keyedvectors import KeyedVectors
+from gensim.test.utils import datapath, get_tmpfile
+from gensim.scripts.glove2word2vec import glove2word2vec
 def getWordVectors(vector_save_fn, words_fn, wvn, wv_amt, svm_dir_fn=None):
     if os.path.exists(vector_save_fn) is False:
         glove_file = datapath('/home/tom/Downloads/glove.6B/glove.6B.'+str(wv_amt)+'d.txt')
@@ -1230,7 +1230,98 @@ def getWordVectors(vector_save_fn, words_fn, wvn, wv_amt, svm_dir_fn=None):
     else:
         print("Already got word vectors", vector_save_fn)
 
+
+
+def averageWordVectors(id2word_fn, ppmi_fn, size, data_type):
+    bow = np.asarray(sp.load_npz(ppmi_fn).todense())
+    word2id = np.load(id2word_fn).item()
+    if len(bow) != 18846:
+        print("Transposing PPMI")
+        bow = bow.transpose()
+    if len(bow[0]) != len(word2id.keys()):
+        print("vocab and bow dont match", len(bow[0]), len(word2id.keys()))
+        exit()
+    print("Creating dict")
+    id2word = {}
+    for key, value in word2id.items():
+        id2word[value] = key
+    print("Importing word vectors")
+    glove_file = datapath('/home/tom/Downloads/glove.6B/glove.6B.'+str(size)+'d.txt')
+    tmp_file = get_tmpfile("/home/tom/Downloads/glove.6B/test_word2vec.txt")
+    glove2word2vec(glove_file, tmp_file)
+
+    all_vectors = KeyedVectors.load_word2vec_format(tmp_file)
+    print("Creating vectors")
+    vectors = []
+    i = 0
+    for doc in bow:
+        to_average = []
+        for w in range(len(doc)):
+            if doc[w] > 0:
+                try:
+                    to_average.append(np.multiply(all_vectors.get_vector(id2word[w]), doc[w]))
+                except KeyError:
+                    print("keyerror", id2word[w])
+        if len(to_average) == 0:
+            to_average = [np.zeros(shape=size)]
+            print("FAILED", i, "words:", len(to_average), "dim", len(to_average[0]))
+        else:
+            print(i, "words:", len(to_average), "dim", len(to_average[0]))
+        vectors.append(np.average(to_average, axis=0))
+        i+=1
+
+    np.save("../data/" +data_type+"/nnet/spaces/wvPPMI" + str(size) + ".npy", vectors)
+
+
+def averageWordVectorsFreq(id2word_fn, freq_fn, size, data_type):
+    bow = np.asarray(sp.load_npz(freq_fn).todense())
+    word2id = np.load(id2word_fn).item()
+    if len(bow) != 18846:
+        print("Transposing PPMI")
+        bow = bow.transpose()
+    if len(bow[0]) != len(word2id.keys()):
+        print("vocab and bow dont match", len(bow[0]), len(word2id.keys()))
+        exit()
+    print("Creating dict")
+    id2word = {}
+    for key, value in word2id.items():
+        id2word[value] = key
+    print("Importing word vectors")
+    glove_file = datapath('/home/tom/Downloads/glove.6B/glove.6B.' + str(size) + 'd.txt')
+    tmp_file = get_tmpfile("/home/tom/Downloads/glove.6B/test_word2vec.txt")
+    glove2word2vec(glove_file, tmp_file)
+
+    all_vectors = KeyedVectors.load_word2vec_format(tmp_file)
+    print("Creating vectors")
+    vectors = []
+    i = 0
+    for doc in bow:
+        to_average = []
+        for w in range(len(doc)):
+            if doc[w] > 0:
+                try:
+                    to_average.append(all_vectors.get_vector(id2word[w]))
+                except KeyError:
+                    print("keyerror", id2word[w])
+        if len(to_average) == 0:
+            to_average = [np.zeros(shape=size)]
+            print("FAILED", i, "words:", len(to_average), "dim", len(to_average[0]))
+        else:
+            print(i, "words:", len(to_average), "dim", len(to_average[0]))
+        vectors.append(np.average(to_average, axis=0))
+        i += 1
+
+    np.save("../data/" + data_type + "/nnet/spaces/wv" + str(size) + ".npy", vectors)
+
+
+"""
+
+"""
 if __name__ == '__main__':
+    averageWordVectorsFreq("../data/raw/newsgroups/simple_numeric_stopwords_filtered_vocab.npy",
+                       "../data/newsgroups/bow/frequency/phrases/simple_numeric_stopwords_bow 30-0.999-all.npz",
+                       200,
+                       "newsgroups")
     """
 
     name = "../data/newsgroups/nnet/spaces/simple_numeric_stopwords_ppmi 2-all_mds50.txt"
@@ -1266,7 +1357,7 @@ if __name__ == '__main__':
     print(len(mds))
     write1dArray(mds, "../data/movies/nnet/spaces/entitynames.txt")
     """
-
+    """
     main_names_fn = "../data/movies/nnet/spaces/entitynames.txt"
     main_names = import1dArray(main_names_fn, "s")
     rating_names_fn = "../data/movies/classify/ratings/available_entities.txt"
@@ -1313,7 +1404,7 @@ if __name__ == '__main__':
     # Remove these ids from the classes and names of ratings
 
     # Remove these ids from the overall entitynames
-
+    """
 
 
 

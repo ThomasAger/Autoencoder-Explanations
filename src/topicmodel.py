@@ -132,16 +132,16 @@ classify = ["sentiment"] # Still need to do ratings
 
 max_depth = 3
 limit_entities = False
-dt_dev = True
+dt_dev = False
 vector_names_fn = "../data/" + data_type + "/nnet/spaces/entitynames.txt"
 feature_names_fn = "../data/" + data_type + "/bow/names/simple_numeric_stopwords_words 50-0.999-all.txt"
 rewrite_files = False
 cross_val = 1
 tf_fn = "simple_numeric_stopwords_bow 50-0.999-all.npz"
 
-doc_topic_prior = [ 0.1, 0.01, 0.001]
-topic_word_prior =[0.1, 0.01, 0.001]
-n_topics = [50,100,200,400]
+doc_topic_prior = [ 0.1]
+topic_word_prior =[0.1]
+n_topics = [100]
 
 for c in classify:
     file_name = "simple_numeric_stopwords_bow 50-0.999-all.npz"

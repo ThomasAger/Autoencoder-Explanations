@@ -1104,22 +1104,22 @@ bow_path_fn = "class-all-100-10-all-nodupe.npz"
 bow_names_fn = "100-10-all.txtmds-nodupeCV1S0 SFT0 allL010010 LR .txt"
 ppmi_path_fn = "class-all-100-10-all-nodupe.npz"
 """
-"""
+
 data_type = "newsgroups"
 classification_task = ["newsgroups"]
 #arrange_name = arrange_name + classification_task[0]
 skip_nn = True
 fn_orig = "sns_ppmi3"
-deep_size = [50]
+deep_size = [200]
 
 if skip_nn is False:
-    file_name = fn_orig + "pca"+str(deep_size[0])+"svmdual"
+    file_name = fn_orig + "wvPPMI"+str(deep_size[0])
 else:
-    file_name = fn_orig + "pca"+str(deep_size[0])+"svmdual"
+    file_name = fn_orig + "wvPPMI"+str(deep_size[0])
 lowest_amt = 30
 highest_amt = 18836
 
-space_name = "simple_numeric_stopwords_ppmi 2 S"+str(deep_size[0])+"-all.npy"
+space_name = "wvPPMI"+str(deep_size[0])+".npy"
 
 init_vector_path = loc+data_type+"/nnet/spaces/"+space_name
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/"+space_name
@@ -1132,7 +1132,7 @@ limit_entities = [False]
 bow_path_fn = "simple_numeric_stopwords_bow 30-0.999-all.npz"
 bow_names_fn = "simple_numeric_stopwords_words 30-0.999-all.txt"
 ppmi_path_fn = "simple_numeric_stopwords_ppmi 30-0.999-all.npz"
-"""
+
 """
 data_type = "placetypes"
 classification_task = ["opencyc"]
@@ -1155,7 +1155,7 @@ get_nnet_vectors_path = loc + data_type + "/nnet/spaces/places"+str(places_size)
 deep_size = [places_size]
 bow_path_fn = "class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+new_classification_task + ".npz"
 """
-
+"""
 data_type = "sentiment"
 classification_task = ["sentiment"]
 #arrange_name = arrange_name + classification_task[0]
@@ -1165,7 +1165,7 @@ lstm_dim = 50
 iLSTM = False
 sA = 1
 
-deep_size = [100]
+deep_size = [200]
 space_name = "simple_numeric_stopwords_ppmi 2 S"+str(deep_size[0])+"-all"#"wvTrain300MFTraFAdr1337mse0 10000 ML300 BS16 FBTrue DO0.0 RDO0.0 E8 ES300LS50 UAFalse SFFalse iLFalse rTFalse lrFalse sA1.0 wvTr 0.8 0.0 DFalse F16 KS5 PS4 NP all FState"
 
 if skip_nn is False:
@@ -1186,7 +1186,7 @@ limit_entities = [False]
 bow_path_fn = "simple_numeric_stopwords_bow 50-0.999-all.npz"
 bow_names_fn = "simple_numeric_stopwords_words 50-0.999-all.txt"
 ppmi_path_fn = "simple_numeric_stopwords_ppmi 50-0.999-all.npz"
-
+"""
 
 """
 data_type = "sst"
@@ -1343,7 +1343,7 @@ logistic_regression = True
 
 arrange_name = "cluster ratings BCS" + str(max_depth) + str(dt_dev)
 
-threads=1
+threads=3
 chunk_amt = 0
 chunk_id = 0
 for c in range(chunk_amt):
