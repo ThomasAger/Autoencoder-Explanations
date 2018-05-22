@@ -968,7 +968,7 @@ if __name__ == '__main__':
     """
 
     """ ratings conversion to class-all"""
-    """
+
     start_line = "../data/movies/classify/"
     uk = "uk-ratings/"
     us = "us-ratings/"
@@ -1095,7 +1095,7 @@ if __name__ == '__main__':
     main(min, max, class_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn, use_all_files,
                                    sparse_matrix, word_count_amt, classification)
     """
-
+    """
     class_type = "wines"
     classification = "types"
     raw_fn = "../data/raw/previous work/winevectors/"
@@ -1123,7 +1123,7 @@ if __name__ == '__main__':
     min=10
     max=1
     """
-
+    """
     main(min, max, class_type, raw_fn, extension, cut_first_line, additional_name, make_individual, entity_name_fn, use_all_files,
                                    sparse_matrix, word_count_amt, classification)
 
@@ -1160,7 +1160,7 @@ if __name__ == '__main__':
         "../data/"+data_type+"/classify/"+classification+"/available_entities.txt",
                    "../data/"+data_type+"/nnet/spaces/films100.txt", classification)
 
-
+    """
     """
     dt.write2dArray(convertPPMI( sp.csr_matrix(dt.import2dArray("../data/wines/bow/frequency/phrases/class-all-50"))), "../data/wines/bow/ppmi/class-all-50")
     dt.write2dArray(convertPPMI( sp.csr_matrix(dt.import2dArray("../data/movies/bow/frequency/phrases/class-all-100"))), "../data/movies/bow/ppmi/class-all-100")

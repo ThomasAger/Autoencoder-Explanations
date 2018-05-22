@@ -1136,19 +1136,22 @@ def deleteAllButIndexes(array, indexes):
 
 def match_entities(t_names, names):
     amount_found = 0
-    for n in range(len(names)):
-        names[n] = removeEverythingFromString(names[n])
-    for n in range(len(t_names)):
-        t_names[n] = removeEverythingFromString(t_names[n])
     matched_ids = []
+    t_names_d = {}
+    names_d = {}
+
     for n in range(len(t_names)):
-        for ni in range(len(names)):
-            matched_name = t_names[n]
-            all_name = names[ni]
-            if matched_name == all_name:
-                matched_ids.append(ni)
-                amount_found += 1
-                break
+        t_names_d[t_names[n]] = n
+    for n in range(len(names)):
+        names_d[names[n]] = n
+
+    for t in t_names:
+        try:
+            matched_ids.append(names_d[t])
+        except KeyError:
+            asdasdasd=0
+
+
     return matched_ids
 
 def arrangeByScore(csv_fns, arra_name):
@@ -1229,7 +1232,7 @@ if __name__ == '__main__':
     write2dArray(import2dArray(name, "f").transpose(), name)
 
     """
-    """
+
     data_type = "movies"
     space = "../data/raw/previous work/filmids.txt"
     space = import1dArray(space, "i")
@@ -1243,26 +1246,44 @@ if __name__ == '__main__':
 
     print(len(space))
 
-    mds = "../data/movies/nnet/spaces/entitynames.txt"
-    mds = import1dArray(mds, "s")
+    mds_fn = "../data/movies/nnet/spaces/films50.txt"
+    mds = import2dArray(mds_fn, "f")
     if len(mds) == 15000:
-        mds = np.delete(mds, inds_to_del)
+        mds = np.delete(mds, inds_to_del, axis=0)
 
     print(len(mds))
     space, inds = np.unique(space, return_index=True)
     print(len(space))
     print(len(inds))
 
-
     mds = mds[inds]
     print(len(mds))
-    write1dArray(mds, "../data/movies/nnet/spaces/entitynames.txt")
-    """
+    write2dArray(mds, mds_fn)
 
+    """
     main_names_fn = "../data/movies/nnet/spaces/entitynames.txt"
     main_names = import1dArray(main_names_fn, "s")
     rating_names_fn = "../data/movies/classify/ratings/available_entities.txt"
     rating_names = import1dArray(rating_names_fn, "s")
+
+    t_names_d = {}
+    names_d = {}
+
+    for n in range(len(main_names)):
+        t_names_d[main_names[n]] = n
+    for n in range(len(rating_names)):
+        names_d[rating_names[n]] = n
+
+
+    for i in range(len(main_names)):
+        main_names[i] = removeEverythingFromString(main_names[i])
+    for i in range(len(rating_names)):
+        rating_names[i] = removeEverythingFromString(rating_names[i])
+
+    write1dArray(main_names, main_names_fn)
+    write1dArray(rating_names, rating_names_fn)
+
+
     # Get IDS of entities that are duplicates or -1
     space = "../data/raw/previous work/filmids.txt"
     space = import1dArray(space, "i")
@@ -1274,30 +1295,65 @@ if __name__ == '__main__':
         if space[i] == -1:
             inds_to_del.append(i)
 
+    print(len(space))
+    print(len(rating_names))
+    print(len(main_names))
+    print(len(classes))
+
     space = np.delete(space, inds_to_del)
+    names_to_remove = main_names[inds_to_del]
+    orig_to_del = match_entities(names_to_remove, rating_names)
+    rating_names = np.delete(rating_names, orig_to_del)
+    classes = np.delete(classes, orig_to_del, axis=0)
+    main_names = np.delete(main_names, inds_to_del)
 
     print(len(space))
-    names_del = main_names[inds_to_del]
-    if len(main_names):
-        main_names = np.delete(main_names, inds_to_del)
-
+    print(len(rating_names))
     print(len(main_names))
+    print(len(classes))
+
     ns, inds, counts = np.unique(space, return_index=True, return_counts=True)
+
     print(len(space))
     print(len(inds))
 
     duplicate_inds = np.delete(list(range(len(space))), inds)
 
     names_to_remove = main_names[duplicate_inds]
+    print("matching ids")
+    matching_ids = match_entities(names_to_remove, rating_names)
 
-    matching_ids = match_entities(rating_names, names_to_remove)
+    names_remove_d = {}
 
+    for n in range(len(names_to_remove)):
+        names_remove_d[names_to_remove[n]] = n
+
+    print(len(matching_ids))
+    print("done")
     rating_names = np.delete(rating_names, matching_ids)
-    classes = np.delete(classes, matching_ids)
+    classes = np.delete(classes, matching_ids, axis=0)
+    main_names = main_names[inds]
 
+    t_names_d_2 = {}
+    names_d_2 = {}
+
+    for n in range(len(main_names)):
+        t_names_d_2[main_names[n]] = n
+    for n in range(len(rating_names)):
+        names_d_2[rating_names[n]] = n
+
+
+    matched_entities = match_entities(rating_names, main_names)
+    rating_names_not_matched = np.delete(rating_names, matched_entities)
+    print("----------------------------")
+    print(rating_names_not_matched)
+    print(len(matched_entities), len(main_names), len(classes), len(rating_names), len(matching_ids))
+    write1dArray(matched_entities, "../data/movies/classify/ratings/matched_ids.txt")
+    write1dArray(main_names, main_names_fn)
     write2dArray(classes, classes_fn)
     write1dArray(rating_names, rating_names_fn)
 
+    """
     # Get names of entities that are duplicates or -1
 
     # Get ids from the ratings names corresponding to these entities
@@ -1305,7 +1361,6 @@ if __name__ == '__main__':
     # Remove these ids from the classes and names of ratings
 
     # Remove these ids from the overall entitynames
-
 
 
 
