@@ -551,9 +551,6 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                             if skip_nn:
                                 file_name = file_name
 
-                            if dt_dev:
-                                file_name = file_name + " tdev"
-
 
                             csv_name = loc + data_type + "/rules/tree_csv/" + file_name + " " + classification_task + ".csv"
 
@@ -1112,13 +1109,13 @@ fn_orig = "sns_ppmi3"
 deep_size = [200]
 
 if skip_nn is False:
-    file_name = fn_orig + "wvPPMI"+str(deep_size[0])
+    file_name = fn_orig + "wvFIXED" + str(deep_size[0])
 else:
-    file_name = fn_orig + "wvPPMI"+str(deep_size[0])
+    file_name = fn_orig + "wvFIXED" + str(deep_size[0])
 lowest_amt = 30
 highest_amt = 18836
 
-space_name = "wvPPMI"+str(deep_size[0])+".npy"
+space_name = "wvFIXED" + str(deep_size[0]) + ".npy"
 
 init_vector_path = loc+data_type+"/nnet/spaces/"+space_name
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/"+space_name
@@ -1284,9 +1281,9 @@ dissim = 0.0
 dissim_amt = [2]
 breakoff = [False] # This now
 score_limit = [0.9] #23232 val to use for all terms
-amount_to_start = [ 500,1000, 2000]
-cluster_multiplier = [1, 2]#50 #23233  val to use for all terms
-score_type = [ "ndcg", "kappa", "acc"] #accuracy, kappa or nd
+amount_to_start = [500,1000,2000]
+cluster_multiplier = [ 1, 2]#50 #23233  val to use for all terms
+score_type = ["kappa", "acc", "ndcg"] #accuracy, kappa or nd
 use_breakoff_dissim = [False]
 mean_shift = False
 get_all = [False]
@@ -1342,7 +1339,7 @@ logistic_regression = True
 
 arrange_name = "cluster ratings BCS" + str(max_depth) + str(dt_dev)
 
-threads=3
+threads=5
 chunk_amt = 0
 chunk_id = 0
 for c in range(chunk_amt):

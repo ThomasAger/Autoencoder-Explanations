@@ -1235,9 +1235,7 @@ def getWordVectors(vector_save_fn, words_fn, wvn, wv_amt, svm_dir_fn=None):
 def averageWordVectors(id2word_fn, ppmi_fn, size, data_type):
     bow = np.asarray(sp.load_npz(ppmi_fn).todense())
     word2id = np.load(id2word_fn).item()
-    if len(bow) != 18846:
-        print("Transposing PPMI")
-        bow = bow.transpose()
+
     if len(bow[0]) != len(word2id.keys()):
         print("vocab and bow dont match", len(bow[0]), len(word2id.keys()))
         exit()
@@ -1246,8 +1244,8 @@ def averageWordVectors(id2word_fn, ppmi_fn, size, data_type):
     for key, value in word2id.items():
         id2word[value] = key
     print("Importing word vectors")
-    glove_file = datapath('/home/tom/Downloads/glove.6B/glove.6B.'+str(size)+'d.txt')
-    tmp_file = get_tmpfile("/home/tom/Downloads/glove.6B/test_word2vec.txt")
+    glove_file = datapath('D:/Downloads/Work/glove.6B/glove.6B.'+str(size)+'d.txt')
+    tmp_file = get_tmpfile("D:/Downloads/Work/glove.6B/test_word2vec.txt")
     glove2word2vec(glove_file, tmp_file)
 
     all_vectors = KeyedVectors.load_word2vec_format(tmp_file)
@@ -1270,15 +1268,12 @@ def averageWordVectors(id2word_fn, ppmi_fn, size, data_type):
         vectors.append(np.average(to_average, axis=0))
         i+=1
 
-    np.save("../data/" +data_type+"/nnet/spaces/wvPPMI" + str(size) + ".npy", vectors)
+    np.save("../data/" +data_type+"/nnet/spaces/wvPPMIFIXED" + str(size) + ".npy", vectors)
 
 
 def averageWordVectorsFreq(id2word_fn, freq_fn, size, data_type):
-    bow = np.asarray(sp.load_npz(freq_fn).todense())
+    bow = np.asarray(sp.load_npz(freq_fn).todense()).transpose()
     word2id = np.load(id2word_fn).item()
-    if len(bow) != 18846:
-        print("Transposing PPMI")
-        bow = bow.transpose()
     if len(bow[0]) != len(word2id.keys()):
         print("vocab and bow dont match", len(bow[0]), len(word2id.keys()))
         exit()
@@ -1287,8 +1282,8 @@ def averageWordVectorsFreq(id2word_fn, freq_fn, size, data_type):
     for key, value in word2id.items():
         id2word[value] = key
     print("Importing word vectors")
-    glove_file = datapath('/home/tom/Downloads/glove.6B/glove.6B.' + str(size) + 'd.txt')
-    tmp_file = get_tmpfile("/home/tom/Downloads/glove.6B/test_word2vec.txt")
+    glove_file = datapath('D:/Downloads/Work/glove.6B/glove.6B.' + str(size) + 'd.txt')
+    tmp_file = get_tmpfile("D:/Downloads/Work/glove.6B/test_word2vec.txt")
     glove2word2vec(glove_file, tmp_file)
 
     all_vectors = KeyedVectors.load_word2vec_format(tmp_file)
@@ -1311,17 +1306,24 @@ def averageWordVectorsFreq(id2word_fn, freq_fn, size, data_type):
         vectors.append(np.average(to_average, axis=0))
         i += 1
 
-    np.save("../data/" + data_type + "/nnet/spaces/wv" + str(size) + ".npy", vectors)
+    np.save("../data/" + data_type + "/nnet/spaces/wvFIXED" + str(size) + ".npy", vectors)
 
 
 """
 
 """
 if __name__ == '__main__':
-    averageWordVectorsFreq("../data/raw/newsgroups/simple_numeric_stopwords_filtered_vocab.npy",
-                       "../data/newsgroups/bow/frequency/phrases/simple_numeric_stopwords_bow 30-0.999-all.npz",
+    """
+    averageWordVectors("../data/raw/newsgroups/simple_numeric_stopwords_vocab 2.npy",
+                       "../data/newsgroups/bow/ppmi/simple_numeric_stopwords_ppmi 2-all.npz",
                        200,
                        "newsgroups")
+    """
+    averageWordVectorsFreq("../data/raw/newsgroups/simple_numeric_stopwords_vocab 2.npy",
+                           "../data/newsgroups/bow/frequency/phrases/simple_numeric_stopwords_bow 2-all.npz",
+                           200,
+                           "newsgroups")
+
     """
 
     name = "../data/newsgroups/nnet/spaces/simple_numeric_stopwords_ppmi 2-all_mds50.txt"
