@@ -551,9 +551,6 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                             if skip_nn:
                                 file_name = file_name
 
-                            if dt_dev:
-                                file_name = file_name + " tdev"
-
 
                             csv_name = loc + data_type + "/rules/tree_csv/" + file_name + " " + classification_task + ".csv"
 
@@ -1078,47 +1075,47 @@ vector_path_replacement = loc+data_type+"/pca/class-all-50-10-alld100"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 bow_path_fn = "class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+new_classification_task + ".npz"
 """
-
+"""
 data_type = "movies"
-classification_task = [ "genres", "keywords", "ratings"] #Run keywords as separate process
+classification_task = ["genres", "keywords", "ratings"] #Run keywords as separate process
 #arrange_name = arrange_name + classification_task[0]
 skip_nn = True
 deep_size = [50]
 if skip_nn is False:
     file_name = "f200ge"
 else:
-    file_name = "wvFIXED" + str(deep_size[0])
+    file_name = "mds-nodupe" + str(deep_size[0])
 lowest_amt = 100
 highest_amt = 10
 
 limit_entities = [False]
 
-init_vector_path = loc+data_type+"/nnet/spaces/wvFIXED"+str(deep_size[0])+".npy"
+init_vector_path = loc+data_type+"/nnet/spaces/films" + str(deep_size[0])+".txt"
 #init_vector_path = loc+data_type+"/nnet/spaces/films200-"+classification_task+".txt"
 #file_name = "films200-genres100ndcg0.85200 tdev3004FTL0"
-get_nnet_vectors_path =init_vector_path
-vector_path_replacement = init_vector_path
+get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films" + str(deep_size[0])+".txt"
+vector_path_replacement = loc+data_type+"/nnet/spaces/films" + str(deep_size[0])+".txt"
 
 bow_path_fn = "class-all-100-10-all-nodupe.npz"
 bow_names_fn = "100-10-all.txtmds-nodupeCV1S0 SFT0 allL010010 LR .txt"
 ppmi_path_fn = "class-all-100-10-all-nodupe.npz"
-
 """
+
 data_type = "newsgroups"
 classification_task = ["newsgroups"]
 #arrange_name = arrange_name + classification_task[0]
 skip_nn = True
 fn_orig = "sns_ppmi3"
-deep_size = [100]
+deep_size = [200]
 
 if skip_nn is False:
-    file_name = fn_orig + "mds-nodupe"+str(deep_size[0])
+    file_name = fn_orig + "wvFIXED" + str(deep_size[0])
 else:
-    file_name = fn_orig + "mds-nodupe"+str(deep_size[0])
+    file_name = fn_orig + "wvFIXED" + str(deep_size[0])
 lowest_amt = 30
 highest_amt = 18836
 
-space_name = "films"+str(deep_size[0])+".npy"
+space_name = "wvFIXED" + str(deep_size[0]) + ".npy"
 
 init_vector_path = loc+data_type+"/nnet/spaces/"+space_name
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/"+space_name
@@ -1131,7 +1128,7 @@ limit_entities = [False]
 bow_path_fn = "simple_numeric_stopwords_bow 30-0.999-all.npz"
 bow_names_fn = "simple_numeric_stopwords_words 30-0.999-all.txt"
 ppmi_path_fn = "simple_numeric_stopwords_ppmi 30-0.999-all.npz"
-"""
+
 """
 data_type = "placetypes"
 classification_task = ["opencyc"]
@@ -1284,8 +1281,8 @@ dissim = 0.0
 dissim_amt = [2]
 breakoff = [False] # This now
 score_limit = [0.9] #23232 val to use for all terms
-amount_to_start = [500,1000, 2000]
-cluster_multiplier = [1, 2]#50 #23233  val to use for all terms
+amount_to_start = [500,1000,2000]
+cluster_multiplier = [ 1, 2]#50 #23233  val to use for all terms
 score_type = ["kappa", "acc", "ndcg"] #accuracy, kappa or nd
 use_breakoff_dissim = [False]
 mean_shift = False
@@ -1342,7 +1339,7 @@ logistic_regression = True
 
 arrange_name = "cluster ratings BCS" + str(max_depth) + str(dt_dev)
 
-threads=10
+threads=5
 chunk_amt = 0
 chunk_id = 0
 for c in range(chunk_amt):

@@ -78,7 +78,7 @@ def main(data_type, vector_size, window_size, min_count, sampling_threshold, neg
         print(scores)
         dt.write1dArray(scores, score_fn)
 
-vector_size = 300
+vector_size = 200
 window_size = 15
 min_count = 1
 sampling_threshold = 1e-5

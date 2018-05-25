@@ -91,7 +91,8 @@ def doc2bow(tokenized_corpus, dct, bowmin):
     dct.filter_extremes(no_below=bowmin) # Most occur in at least 2 documents
     bow = [dct.doc2bow(text) for text in tokenized_corpus]
     bow = corpus2csc(bow)
-    return bow
+    vocab = dct.token2id
+    return bow, vocab
 
 def filterBow_sklearn(processed_corpus, no_below, no_above): #sklearn is slightly worse here
     tf_vectorizer = CountVectorizer(max_df=no_above, min_df=no_below, stop_words=None)
@@ -216,14 +217,14 @@ def main(data_type, output_folder, grams,  no_below, no_above, bowmin):
     tokenized_corpus = naiveTokenizer(processed_corpus)
     vocab, dct, id2token = getVocab(tokenized_corpus)
     processed_corpus, tokenized_corpus, remove_ind, classes = removeEmpty(processed_corpus, tokenized_corpus, classes)
-    bow = doc2bow(tokenized_corpus, dct, bowmin)
+    bow, bow_vocab = doc2bow(tokenized_corpus, dct, bowmin)
     filtered_bow, word_list, filtered_vocab = filterBow(tokenized_corpus, dct, no_below, no_above)
     tokenized_ids = tokensToIds(tokenized_corpus, vocab)
     print(output_folder + file_name + "_remove.npy")
     np.save(output_folder + file_name + "_remove.npy", remove_ind)
     np.save(output_folder + file_name + "_corpus.npy", tokenized_corpus)
     np.save(output_folder + file_name + "_tokenized_corpus.npy", tokenized_ids)
-    np.save(output_folder + file_name + "_vocab.npy", vocab)
+    np.save(output_folder + file_name + "_vocab " + str(bowmin) + ".npy", bow_vocab)
     np.save(output_folder + file_name + "_filtered_vocab.npy", filtered_vocab)
     dt.write1dArray(processed_corpus, output_folder + file_name + "_corpus_processed.txt", encoding=encoding_type)
     np.save(output_folder + file_name + "_classes.npy", classes)
@@ -258,7 +259,7 @@ def main(data_type, output_folder, grams,  no_below, no_above, bowmin):
     tokenized_corpus, processed_corpus = removeStopWords(tokenized_corpus)
     processed_corpus, tokenized_corpus, remove_ind, classes = removeEmpty(processed_corpus, tokenized_corpus, classes)
     vocab, dct, id2token = getVocab(tokenized_corpus)
-    bow = doc2bow(tokenized_corpus, dct, bowmin)
+    bow, bow_vocab = doc2bow(tokenized_corpus, dct, bowmin)
     filtered_bow, word_list, filtered_vocab = filterBow(tokenized_corpus, dct, no_below, no_above)
     tokenized_ids = tokensToIds(tokenized_corpus, vocab)
 
@@ -266,13 +267,13 @@ def main(data_type, output_folder, grams,  no_below, no_above, bowmin):
     print(output_folder + file_name + "_corpus.npy")
     print(output_folder + file_name + "_tokenized_corpus.npy")
     print(output_folder + file_name + "_id2token.npy")
-    print(output_folder + file_name + "_vocab.npy")
+    print(output_folder + file_name + "_vocab " + str(bowmin) + ".npy")
     print(output_folder + file_name + "_corpus_processed.txt")
     print(output_folder + file_name + "_classes.npy")
     print(output_folder + file_name + "_classes_categorical.npy")
     np.save(output_folder + file_name + "id2token.npy", id2token)
     np.save(output_folder + file_name + "_remove.npy", remove_ind)
-    np.save(output_folder + file_name + "_vocab.npy", vocab)
+    np.save(output_folder + file_name + "_vocab " + str(bowmin) + ".npy", bow_vocab)
     np.save(output_folder + file_name + "_filtered_vocab.npy", filtered_vocab)
     np.save(output_folder + file_name + "_corpus.npy", tokenized_corpus)
     np.save(output_folder + file_name + "_tokenized_corpus.npy", tokenized_ids)
