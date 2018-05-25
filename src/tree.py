@@ -10,7 +10,7 @@ import random
 from sklearn.externals import joblib
 from sklearn.metrics import precision_recall_fscore_support
 import graphviz
-
+import os
 class DecisionTree:
     clf = None
     def __init__(self, features_fn, classes_fn,  class_names_fn, cluster_names_fn, filename,
@@ -73,9 +73,15 @@ class DecisionTree:
         original_vectors = vectors
 
         if "ratings" in classes_fn:
-            vector_names = dt.import1dArray(vector_names_fn)
-            limited_labels = dt.import1dArray(limited_label_fn)
-            matched_ids = dt.match_entities(vector_names, limited_labels)
+            orig_path = "/".join(classes_fn.split("/")[:-1]) + "/"
+            match_ids_fn = orig_path + "matched_ids.txt"
+            if os.path.exists(match_ids_fn):
+                matched_ids = dt.import1dArray(match_ids_fn, "i")
+            else:
+                vector_names = dt.import1dArray(vector_names_fn)
+                limited_labels = dt.import1dArray(limited_label_fn)
+                matched_ids = dt.match_entities(vector_names, limited_labels)
+                dt.write1dArray(matched_ids, match_ids_fn)
             vectors = vectors[matched_ids]
             print("vectors",len(vectors))
         print("Past limit entities")
