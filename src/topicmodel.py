@@ -132,7 +132,7 @@ classify = ["newsgroups"] # Still need to do ratings
 
 max_depth = 3
 limit_entities = False
-dt_dev = True
+dt_dev = False
 vector_names_fn = "../data/" + data_type + "/nnet/spaces/entitynames.txt"
 feature_names_fn = "../data/" + data_type + "/bow/names/simple_numeric_stopwords_words 50-0.999-all.txt"
 rewrite_files = False

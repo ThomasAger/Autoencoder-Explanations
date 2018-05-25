@@ -380,4 +380,4 @@ def main(data_type, output_folder, grams,  no_below, no_above, bowmin):
     # Create averaged word vectors
     testAll(["ppmi_pca"], [ PCA_ppmi],
             [to_categorical(classes)], data_type)
-if __name__ == '__main__': main("newsgroups", "../data/raw/newsgroups/", 0, 30, 0.999, 2)
+if __name__ == '__main__': main("sentiment", "../data/raw/sentiment/", 0, 50, 0.999, 2)

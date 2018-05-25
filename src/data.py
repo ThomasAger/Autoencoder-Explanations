@@ -1323,6 +1323,19 @@ if __name__ == '__main__':
                            "../data/newsgroups/bow/frequency/phrases/simple_numeric_stopwords_bow 2-all.npz",
                            200,
                            "newsgroups")
+    averageWordVectorsFreq("../data/raw/sentiment/simple_numeric_stopwords_vocab 2.npy",
+                           "../data/sentiment/bow/frequency/phrases/simple_numeric_stopwords_bow 2-all.npz",
+                           200,
+                           "sentiment")
+
+    averageWordVectorsFreq("../data/raw/sentiment/simple_numeric_stopwords_vocab 2.npy",
+                           "../data/sentiment/bow/frequency/phrases/simple_numeric_stopwords_bow 2-all.npz",
+                           50,
+                           "sentiment")
+    averageWordVectorsFreq("../data/raw/sentiment/simple_numeric_stopwords_vocab 2.npy",
+                           "../data/sentiment/bow/frequency/phrases/simple_numeric_stopwords_bow 2-all.npz",
+                           100,
+                           "sentiment")
 
     """
 

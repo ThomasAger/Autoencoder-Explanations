@@ -598,10 +598,14 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                             #file_name = "NMF 200"
                             #ranking_fn = "../data/movies/NMF/all-100-10frob.txt"
 
+                            save_details = False
+                            if dt_dev is False:
+                                save_details = True
+
                             tree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_dict_fn,
                                               file_name + " " + classification_task, 10000,
                                               max_depth=1, balance="balanced", criterion="entropy",
-                                              save_details=False, cv_splits=cv_splits, split_to_use=splits,
+                                              save_details=save_details, cv_splits=cv_splits, split_to_use=splits,
                                               data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
                                               development=dt_dev, limit_entities=limit_entities,
                                               limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn,
@@ -611,7 +615,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                               multi_label=multi_label)
 
                             tree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_dict_fn, file_name + " " + classification_task, 10000,
-                                      max_depth=max_depth, balance="balanced", criterion="entropy", save_details=False, cv_splits=cv_splits, split_to_use=splits,
+                                      max_depth=max_depth, balance="balanced", criterion="entropy", save_details=save_details, cv_splits=cv_splits, split_to_use=splits,
                                       data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files, development=dt_dev, limit_entities=limit_entities,
                                               limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn = clusters_fn,
                                               cluster_duplicates = cluster_duplicates, save_results_so_far=save_results_so_far,
@@ -619,7 +623,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
 
 
                             tree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_dict_fn, file_name  + " " + classification_task+ "None", 10000,
-                                                  max_depth=None, balance="balanced", criterion="entropy", save_details=False,
+                                                  max_depth=None, balance="balanced", criterion="entropy", save_details=save_details,
                                               data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
                                               cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
                                               limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn = clusters_fn,
@@ -896,21 +900,21 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                         print("got to trees, who dis?")
 
                                         tree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_dict_fn, file_name + " " + classification_task, 10000,
-                                                              max_depth=1, balance="balanced", criterion="entropy", save_details=False,
+                                                              max_depth=1, balance="balanced", criterion="entropy", save_details=save_details,
                                                           data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
                                                           cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
                                                           limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn=clusters_fn,
                                               cluster_duplicates=cluster_duplicates)
 
                                         tree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_dict_fn, file_name + " " + classification_task, 10000,
-                                                              max_depth=max_depth, balance="balanced", criterion="entropy", save_details=False,
+                                                              max_depth=max_depth, balance="balanced", criterion="entropy", save_details=save_details,
                                                           data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
                                                           cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
                                                           limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn=clusters_fn,
                                               cluster_duplicates=cluster_duplicates)
 
                                         tree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_dict_fn, file_name  + " " + classification_task+ "None", 10000,
-                                                              max_depth=None, balance="balanced", criterion="entropy", save_details=False,
+                                                              max_depth=None, balance="balanced", criterion="entropy", save_details=save_details,
                                                           data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
                                                           cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
                                                           limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn=clusters_fn,
@@ -1100,22 +1104,22 @@ bow_path_fn = "class-all-100-10-all-nodupe.npz"
 bow_names_fn = "100-10-all.txtmds-nodupeCV1S0 SFT0 allL010010 LR .txt"
 ppmi_path_fn = "class-all-100-10-all-nodupe.npz"
 """
-
+"""
 data_type = "newsgroups"
 classification_task = ["newsgroups"]
 #arrange_name = arrange_name + classification_task[0]
 skip_nn = True
 fn_orig = "sns_ppmi3"
-deep_size = [200]
+deep_size = [100]
 
 if skip_nn is False:
-    file_name = fn_orig + "wvFIXED" + str(deep_size[0])
+    file_name = fn_orig + "mdsnew"
 else:
-    file_name = fn_orig + "wvFIXED" + str(deep_size[0])
+    file_name = fn_orig + "mdsnew"
 lowest_amt = 30
 highest_amt = 18836
 
-space_name = "wvFIXED" + str(deep_size[0]) + ".npy"
+space_name = "simple_numeric_stopwords_ppmi 2-all_mds.npy"
 
 init_vector_path = loc+data_type+"/nnet/spaces/"+space_name
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/"+space_name
@@ -1128,7 +1132,7 @@ limit_entities = [False]
 bow_path_fn = "simple_numeric_stopwords_bow 30-0.999-all.npz"
 bow_names_fn = "simple_numeric_stopwords_words 30-0.999-all.txt"
 ppmi_path_fn = "simple_numeric_stopwords_ppmi 30-0.999-all.npz"
-
+"""
 """
 data_type = "placetypes"
 classification_task = ["opencyc"]
@@ -1151,7 +1155,7 @@ get_nnet_vectors_path = loc + data_type + "/nnet/spaces/places"+str(places_size)
 deep_size = [places_size]
 bow_path_fn = "class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+new_classification_task + ".npz"
 """
-"""
+
 data_type = "sentiment"
 classification_task = ["sentiment"]
 #arrange_name = arrange_name + classification_task[0]
@@ -1161,16 +1165,16 @@ lstm_dim = 50
 iLSTM = False
 sA = 1
 
-deep_size = [200]
-space_name = "simple_numeric_stopwords_ppmi 2 S"+str(deep_size[0])+"-all"#"wvTrain300MFTraFAdr1337mse0 10000 ML300 BS16 FBTrue DO0.0 RDO0.0 E8 ES300LS50 UAFalse SFFalse iLFalse rTFalse lrFalse sA1.0 wvTr 0.8 0.0 DFalse F16 KS5 PS4 NP all FState"
+deep_size = [50]
+space_name = "wvFIXED"+str(deep_size[0])#"wvTrain300MFTraFAdr1337mse0 10000 ML300 BS16 FBTrue DO0.0 RDO0.0 E8 ES300LS50 UAFalse SFFalse iLFalse rTFalse lrFalse sA1.0 wvTr 0.8 0.0 DFalse F16 KS5 PS4 NP all FState"
 
 if skip_nn is False:
     file_name = "FULL"+str(deep_size[0])+"10kNN"#""#
 else:
     if not iLSTM:
-        file_name = "sns_ppmi2PCA"+str(deep_size[0])+"20k"#
+        file_name = "wvFIXED"+str(deep_size[0])
     else:
-        file_name = "sns_ppmi2PCA"+str(sA)+"Cstate"+str(deep_size[0])+"ATS1000" + "10k"#
+        file_name = "wvFIXED"+str(deep_size[0])
 lowest_amt = 50
 highest_amt = 0.999
 limit_entities = [False]
@@ -1182,7 +1186,7 @@ limit_entities = [False]
 bow_path_fn = "simple_numeric_stopwords_bow 50-0.999-all.npz"
 bow_names_fn = "simple_numeric_stopwords_words 50-0.999-all.txt"
 ppmi_path_fn = "simple_numeric_stopwords_ppmi 50-0.999-all.npz"
-"""
+
 
 """
 data_type = "sst"

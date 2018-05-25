@@ -44,6 +44,15 @@ def multiClassLinearSVM(x_train, y_train, x_test, y_test):
     acc = accuracy_score(y_test, y_pred)
     return (f1, acc, f12, 0, 0, 0)
 
+def multiClassGaussianSVM(x_train, y_train, x_test, y_test):
+    clf = OneVsRestClassifier(svm.LinearSVC(class_weight="balanced", dual=False))
+    clf.fit(x_train, y_train)
+    y_pred = clf.predict(x_test)
+    f1 = f1_score(y_test, y_pred, average="micro")
+    f12 = f1_score(y_test, y_pred, average="macro")
+    acc = accuracy_score(y_test, y_pred)
+    return (f1, acc, f12, 0, 0, 0)
+
 def linearSVMScore(x_train, y_train, x_test, y_test):
     clf = svm.LinearSVC(class_weight="balanced", dual=False)
     clf.fit(x_train, y_train)
