@@ -3,7 +3,7 @@ from sklearn.neighbors import KDTree
 import os
 from shutil import copyfile
 import numpy as np
-
+import scipy.spatial.distance
 
 def kdTree(entity_names, space):
     inds_to_check = range(0,400,20)
@@ -15,6 +15,23 @@ def kdTree(entity_names, space):
         ind = ind[0][:]
         for j in ind:
             print(entity_names[j])
+
+def biggestEucDifference(space1, space2, entity_names):
+    dists = []
+    for i in range(len(space1)):
+        for j in range(len(space2)):
+            dists.append(scipy.spatial.distance.euclidean(space1[i], space2[j]))
+    dists = np.flipud(np.sort(dists))
+    print("Biggest diff entities")
+    for i in range(len(dists)):
+        print(dists[i], entity_names[i])
+        if i == 500:
+            break
+
+space = dt.import2dArray("../data/movies/nnet/spaces/films200.npy")
+ft_space = dt.import2dArray("../data/movies/nnet/spaces/mds-nodupeCV1S0 SFT0 allL010010 LR kappa KMeans CA400 MC1 MS0.4 ATS1000 DS800FT BOCFi NT[200]tanh300V1.2L0.npy")
+entity_names = dt.import1dArray("../data/movies/nnet/spaces/entitynames.txt")
+biggestEucDifference(space, ft_space, entity_names)
 
 # Top_x is the amount of top entities to show. If 0, shows all
 # Cluster_ids are the clusters you want to show the top entities for. If none, then it shows all
@@ -39,26 +56,26 @@ def getTopEntitiesOnRanking(ranking, entity_names, cluster_names, cluster_length
         top_entities.append(top_cluster_entities)
         top_rankings.append(top_cluster_rankings)
         if output:
-            print("Cluster:", cluster_names[c], "Max/min", max(ranking[c]), min(ranking[c]),  "Entites", top_cluster_entities)
-            print("Cluster:", cluster_names[c], "Max/min", max(ranking[c]), min(ranking[c]), "Entites", top_cluster_rankings)
+            print("Cluster:", cluster_names[c],  "Entites", top_cluster_entities)
+            #print("Cluster:", cluster_names[c],  "Entites", top_cluster_rankings)
     return top_entities, top_rankings
 
-"""
-data_type = "placetypes"
-file_name = "places NONNETCV5S0 SFT0 allL050kappa KMeans CA200 MC1 MS0.4 ATS2000 DS400"
+
+data_type = "movies"
+file_name = "mds-nodupeCV1S0 SFT0 allL010010 LR kappa KMeans CA400 MC1 MS0.4 ATS1000 DS800"
 cluster_names = dt.import2dArray("../data/" + data_type + "/cluster/dict/" + file_name + ".txt","s")
 ranking = dt.import2dArray("../data/" + data_type + "/rank/numeric/" + file_name + ".txt")
 entity_names = dt.import1dArray("../data/" + data_type + "/nnet/spaces/entitynames.txt")
 top_x = 5
 cluster_length = 3
 cluster_ids = None
-"""
-#normal_top_entities = getTopEntitiesOnRanking(ranking, entity_names, cluster_names, cluster_length, top_x, cluster_ids)
-"""
-file_name = "places NONNETCV5S0 SFT0 allL050kappa KMeans CA200 MC1 MS0.4 ATS2000 DS400 foursquareFT BOCFi NTtanh1 NT1300linear"
+
+normal_top_entities = getTopEntitiesOnRanking(ranking, entity_names, cluster_names, cluster_length, top_x, cluster_ids)
+print("---------------------")
+file_name = "mds-nodupeCV1S0 SFT0 allL010010 LR kappa KMeans CA400 MC1 MS0.4 ATS1000 DS800FT BOCFi NT[200]tanh300V1.2"
 ranking = dt.import2dArray("../data/" + data_type + "/nnet/clusters/" + file_name + ".txt")
 finetuned_top_entities = getTopEntitiesOnRanking(ranking, entity_names, cluster_names, cluster_length, top_x, cluster_ids)
-"""
+
 
 def id_from_array(array, name):
     for n in range(len(array)):
@@ -218,21 +235,19 @@ def getSimilarClusters(cluster_dict_1, cluster_dict_2, trim_amt, file_name, data
         lines.append(line)
         print(line)
     dt.write1dArray(lines, "../data/" + data_type + "/investigate/" + file_name + str(trim_amt) + ".txt")
-
+"""
 data_type = "movies"
-file_name = "films200-genresCV1S0 SFT0 allL0100kappa KMeans CA400 MC1 MS0.4 ATS2000 DS800"
+file_name = "mds-nodupeCV1S0 SFT0 allL010010 LR acc KMeans CA400 MC1 MS0.4 ATS500 DS800"
 cluster_names = np.asarray(dt.import2dArray("../data/" + data_type + "/cluster/dict/" + file_name + ".txt","s"))
-second_cluster_name = "films200-genresCV1S0 SFT0 allL0100ndcg KMeans CA400 MC1 MS0.4 ATS2000 DS800"
+second_cluster_name = "mds-nodupeCV1S0 SFT0 allL010010 LR kappa KMeans CA400 MC1 MS0.4 ATS1000 DS800"
 second_cluster_names = np.asarray(dt.import2dArray("../data/" + data_type + "/cluster/dict/" + second_cluster_name + ".txt","s"))
-topic_model_names = np.asarray(dt.import2dArray("../data/" + data_type + "/LDA/names/" + "all-100-10DTP0.1TWP0.001NT400.txt", "s"))
-t_m_n_r = []
-for t in range(len(topic_model_names)):
-    t_m_n_r.append(np.flipud(topic_model_names[t]))
+topic_model_names = np.asarray(dt.import2dArray("../data/" + data_type + "/LDA/names/" + "class-all-100-10-all-nodupe.npzDTP0.001TWP0.1NT100.txt", "s"))
+
 trim_amt = 10
 threshold_for_stopping = 100
 threshold_for_stopping_1 = 20
-getSimilarClusters( t_m_n_r, cluster_names, trim_amt, file_name, data_type, threshold_for_stopping, threshold_for_stopping_1)
-
+getSimilarClusters( topic_model_names, cluster_names, trim_amt, file_name, data_type, threshold_for_stopping, threshold_for_stopping_1)
+"""
 """
 ranking1 = dt.import2dArray("../data/" + data_type + "/rank/numeric/" + file_name + ".txt")
 entity_names = dt.import1dArray("../data/" + data_type + "/nnet/spaces/entitynames.txt")
@@ -258,9 +273,11 @@ file_name = "places100"
 space = dt.import2dArray("../data/"+data_type+"/nnet/spaces/"+ file_name + "-"+classify+".txt", "f")
 entity_names = dt.import1dArray("../data/" + data_type + "/classify/"+classify+"/available_entities.txt", "s")
 """
+"""
 def treeImages(loc, names,class_name):
     for n in names:
         copyfile(loc + class_name + " " + n + "CV0" + ".png",   output_loc + class_name + " " +  n + "CV0" + ".png")
+        """
 """
 file_name = "wines100-" + classify
 space = import2dArray("../data/"+data_type+"/nnet/spaces/"+ file_name + ".txt", "f")

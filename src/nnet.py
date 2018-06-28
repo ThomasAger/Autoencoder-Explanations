@@ -532,9 +532,8 @@ class NeuralNetwork:
         else:
             
         """
-        print("Fine tune weights", self.hidden_layer_size, finetune_size, "linear")
-        model.add(Dense(output_dim=finetune_size, input_dim=self.hidden_layer_size, activation=self.identity_activation,
-                             weights=self.fine_tune_weights))#
+        print("Fine tune weights", self.hidden_layer_size, finetune_size, self.identity_activation)
+        model.add(Dense(output_dim=self.hidden_layer_size, input_dim=self.hidden_layer_size, activation=self.identity_activation))
 
         #model.add(Dropout(self.dropout_noise))
         """
@@ -543,8 +542,9 @@ class NeuralNetwork:
                 print("Class outputs", finetune_size, self.output_size, self.output_activation)
         """
         print("Output", self.output_size, self.finetune_size, self.output_activation, self.layer_init)
-        model.add(Dense(output_dim=self.output_size, input_dim=finetune_size, activation=self.output_activation,
-                  init=self.layer_init))
+        model.add(Dense(output_dim=self.output_size, input_dim=self.finetune_size, activation=self.output_activation,
+                  init=self.layer_init,
+                             weights=self.fine_tune_weights))
         """
         if self.lock_weights_and_redo:
             model.layers[len(model.layers)-1].trainable = False
