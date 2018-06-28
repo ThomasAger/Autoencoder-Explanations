@@ -9,6 +9,7 @@ from keras.utils import to_categorical
 import string
 from sklearn.datasets import fetch_20newsgroups
 import re
+from os.path import expanduser
 from keras.datasets import imdb
 from sklearn.feature_extraction.text import CountVectorizer
 from gensim.matutils import corpus2csc
@@ -17,8 +18,9 @@ import data as dt
 from sklearn.decomposition import TruncatedSVD
 from test_representations import testAll
 import sparse_ppmi
-#import nltk
+from nltk.corpus import reuters
 from collections import defaultdict
+#import nltk
 #nltk.download()
 
 # Has batch processing (haven't figured out how to use it yet)
@@ -117,7 +119,7 @@ def removeEmpty(processed_corpus, tokenized_corpus, classes):
             remove_ind.append(i)
     processed_corpus = np.delete(processed_corpus, remove_ind)
     tokenized_corpus = np.delete(tokenized_corpus, remove_ind)
-    classes = np.delete(classes, remove_ind)
+    classes = np.delete(classes, remove_ind, axis=0)
     return processed_corpus, tokenized_corpus, remove_ind, classes
 
 def preprocess(corpus):
@@ -205,11 +207,15 @@ def main(data_type, output_folder, grams,  no_below, no_above, bowmin):
         corpus = newsgroups.data
         classes = newsgroups.target
         encoding_type = "utf8"
-    else:
-        (x_train, y_train), (x_test, y_test) = imdb.load_data(num_words=0, skip_top=0, index_from=0)
+    elif data_type == "sentiment":
+        (x_train, y_train), (x_test, y_test) = imdb.load_data(num_words=0, skip_top=0, index_from=0, seed=113)
         corpus = np.concatenate((x_train, x_test), axis=0)
         classes = np.concatenate((y_train, y_test), axis=0)
         corpus = makeCorpusFromIds(corpus, imdb.get_word_index())
+        encoding_type = "utf8"
+    else:
+        corpus = dt.import1dArray(output_folder + "duplicate_removed_docs.txt")
+        classes = dt.import2dArray(output_folder + "duplicate_removed_classes.txt", "i")
         encoding_type = "utf8"
 
     file_name = "simple_numeric"
@@ -228,7 +234,8 @@ def main(data_type, output_folder, grams,  no_below, no_above, bowmin):
     np.save(output_folder + file_name + "_filtered_vocab.npy", filtered_vocab)
     dt.write1dArray(processed_corpus, output_folder + file_name + "_corpus_processed.txt", encoding=encoding_type)
     np.save(output_folder + file_name + "_classes.npy", classes)
-    np.save(output_folder + file_name + "_classes_categorical.npy", to_categorical(classes))
+    if data_type != "reuters":
+        np.save(output_folder + file_name + "_classes_categorical.npy", to_categorical(classes))
     sp.save_npz(output_folder + file_name + ".npz", bow)
     dt.write1dArray(word_list, output_folder + file_name + "_words.txt", encoding=encoding_type)
 
@@ -279,7 +286,8 @@ def main(data_type, output_folder, grams,  no_below, no_above, bowmin):
     np.save(output_folder + file_name + "_tokenized_corpus.npy", tokenized_ids)
     dt.write1dArray(processed_corpus, output_folder + file_name + "_corpus_processed.txt", encoding=encoding_type)
     np.save(output_folder + file_name + "_classes.npy", classes)
-    np.save(output_folder + file_name + "_classes_categorical.npy", to_categorical(classes))
+    if data_type != "reuters":
+        np.save(output_folder + file_name + "_classes_categorical.npy", to_categorical(classes))
 
     print("------------------- Saved most, moving to PPMI etc", file_name)
 
@@ -297,8 +305,14 @@ def main(data_type, output_folder, grams,  no_below, no_above, bowmin):
     print(filtered_ppmi_fn)
     sp.save_npz(filtered_ppmi_fn, filtered_ppmi_sparse)
 
-    testAll(["filtered_freq_bow", "filtered_ppmi_bow"], [filtered_ppmi_sparse.transpose().todense(), filtered_bow.todense()], [to_categorical(classes), to_categorical(classes)],
-            data_type)
+    if data_type == "reuters":
+        testAll(["filtered_freq_bow", "filtered_ppmi_bow"],
+                [filtered_ppmi_sparse.transpose().todense(), filtered_bow.todense()],
+                [classes, classes],
+                data_type)
+    else:
+        testAll(["filtered_freq_bow", "filtered_ppmi_bow"], [filtered_ppmi_sparse.transpose().todense(), filtered_bow.todense()], [to_categorical(classes), to_categorical(classes)],
+                data_type)
 
     # Create PCA
     #classes = dt.import2dArray("../data/movies/classify/genres/class-all", "i")
@@ -378,6 +392,12 @@ def main(data_type, output_folder, grams,  no_below, no_above, bowmin):
     filtered_bow = sp.load_npz(filtered_bow_fn)
     """
     # Create averaged word vectors
-    testAll(["ppmi_pca"], [ PCA_ppmi],
-            [to_categorical(classes)], data_type)
-if __name__ == '__main__': main("newsgroups", "../data/raw/newsgroups/", 0, 30, 0.999, 2)
+    if data_type == "reuters":
+        testAll(["ppmi_pca"], [ PCA_ppmi],
+                [classes], data_type)
+    else:
+        testAll(["ppmi_pca"], [ PCA_ppmi],
+                [to_categorical(classes)], data_type)
+
+data_type = "reuters"
+if __name__ == '__main__': main(data_type, "../data/raw/"+data_type+"/", 0, 10, 0.95, 2)

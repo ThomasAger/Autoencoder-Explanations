@@ -35,7 +35,11 @@ class DecisionTree:
         fns_name = "../data/" + data_type + "/rules/names/" + filename + label_names[0] + ".txt"
         features_name = "../data/" + data_type + "/rules/rankings/" + filename + label_names[0] + ".txt"
         dt_clusters_name = "../data/" + data_type + "/rules/clusters/" + filename + label_names[0] + ".txt"
-        all_fns = [acc_fn, f1_fn, prediction_fn, csv_fn]
+        if save_details is False:
+            all_fns = [acc_fn, f1_fn, prediction_fn, csv_fn]
+        else:
+            new_graph_png_fn = '../data/' + data_type + '/rules/tree_images/' + label_names[0] + " " + filename + '.png'
+            all_fns = [acc_fn, f1_fn, prediction_fn, csv_fn]
 
         if max_depth is not None:
             all_fns.append(all_top_names_fn)

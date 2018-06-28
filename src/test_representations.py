@@ -6,7 +6,7 @@ import data as dt
 import csv
 import numpy as np
 from sklearn.decomposition import PCA
-
+import reuters
 def getPCA(tf, depth):
     svd = PCA(n_components=depth, svd_solver="full") # use the scipy algorithm "arpack"
     pos = svd.fit_transform(tf)
@@ -20,6 +20,9 @@ def testAll(name_array, rep_array, class_array, data_type):
             x_train, y_train, x_test, y_test, x_dev, y_dev = newsgroups.getSplits(rep_array[i], class_array[i])
         elif data_type == "sentiment":
             x_train, y_train, x_test, y_test, x_dev, y_dev = sentiment.getSplits(rep_array[i], class_array[i])
+        elif data_type == "reuters":
+            x_train, y_train, x_test, y_test, x_dev, y_dev = reuters.getSplits(rep_array[i], class_array[i])
+
         scores = multiClassLinearSVM(x_train, y_train, x_dev, y_dev)
         f1 = scores[0]
         acc = scores[1]
@@ -36,10 +39,10 @@ if __name__ == '__main__':
     print("Testing", fn)
     testAll([ "mds", "finetune_space", "mds_rankings", "finetune_rankings"],
             [
-             dt.import2dArray("../data/newsgroups/nnet/spaces/simple_numeric_stopwords_ppmi 2-all_mds.txt"),
-            dt.import2dArray("../data/newsgroups/nnet/spaces/sns_ppmi3mdsnewCV1S0 SFT0 allL03018836 LR kappa KMeans CA200 MC1 MS0.4 ATS2000 DS400 tdevFT BOCFi NT[100]tanh300S6040V1.2L0.npy"),
-            dt.import2dArray("../data/newsgroups/rank/numeric/sns_ppmi3mdsnewCV1S0 SFT0 allL03018836 LR acc KMeans CA100 MC1 MS0.4 ATS500 DS200.npy").transpose(),
-            dt.import2dArray("../data/newsgroups/nnet/clusters/sns_ppmi3mdsnewCV1S0 SFT0 allL03018836 LR kappa KMeans CA200 MC1 MS0.4 ATS2000 DS400 tdevFT BOCFi NT[100]tanh300S6040V1.2.npy").transpose()],
+             dt.import2dArray("../data/newsgroups/nnet/spaces/wvFIXED200.npy"),
+            dt.import2dArray("../data/newsgroups/nnet/spaces/sns_ppmi3wvFIXED200CV1S0 SFT0 allL03018836 LR kappa KMeans CA200 MC1 MS0.4 ATS2000 DS400FT BOCFi NT[200]tanh300S6040V1.2L0.npy"),
+            dt.import2dArray("../data/newsgroups/rank/numeric/sns_ppmi3wvFIXED200CV1S0 SFT0 allL03018836 LR kappa KMeans CA400 MC1 MS0.4 ATS500 DS800.npy").transpose(),
+            dt.import2dArray("../data/newsgroups/nnet/clusters/sns_ppmi3wvFIXED200CV1S0 SFT0 allL03018836 LR kappa KMeans CA200 MC1 MS0.4 ATS2000 DS400FT BOCFi NT[200]tanh300S6040V1.2.npy").transpose()],
             [
                 dt.import2dArray("../data/newsgroups/classify/newsgroups/class-all", "i"),
                 dt.import2dArray("../data/newsgroups/classify/newsgroups/class-all", "i"),
