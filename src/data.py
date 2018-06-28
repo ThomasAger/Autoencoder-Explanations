@@ -1268,6 +1268,8 @@ def averageWordVectors(id2word, ppmi_fn, size, data_type):
 
 
 def averageWordVectorsFreq(id2word, freq_fn, size, data_type):
+    glove_file = datapath("D:\Downloads\Work/glove.6B/glove.6B." + str(size) + 'd.txt')
+    tmp_file = get_tmpfile("D:\Downloads\Work/glove.6B/test_word2vec.txt")
     bow = import2dArray(freq_fn, "i")
 
     print("Transposing PPMI")
@@ -1277,8 +1279,6 @@ def averageWordVectorsFreq(id2word, freq_fn, size, data_type):
         exit()
     print("Creating dict")
     print("Importing word vectors")
-    glove_file = datapath("D:/Dropbox/PhD/My Work/Code/Paper 2/data/raw/glove/glove.6B." + str(size) + 'd.txt')
-    tmp_file = get_tmpfile("D:/Dropbox/PhD/My Work/Code/Paper 2/data/raw/glove/test_word2vec.txt")
     glove2word2vec(glove_file, tmp_file)
 
     all_vectors = KeyedVectors.load_word2vec_format(tmp_file)
@@ -1309,25 +1309,23 @@ def averageWordVectorsFreq(id2word, freq_fn, size, data_type):
 """
 if __name__ == '__main__':
 
-    words = import1dArray("../data/movies/bow/names/15-5-genres.txt", "s")
+    words = import1dArray("../data/placetypes/bow/names/5-1-all.txt", "s")
     word_dict = {}
     for i in range(len(words)):
         word_dict[i] = words[i]
 
-    """
     averageWordVectorsFreq(word_dict,
-                       "../data/movies/bow/frequency/phrases/class-all-15-5-genres",
-                       200,
-                       "movies")
-    """
+                           "../data/placetypes/bow/frequency/phrases/class-all-5-1-all",
+                           200,
+                           "placetypes")
     averageWordVectorsFreq(word_dict,
-                           "../data/movies/bow/frequency/phrases/class-all-15-5-genres",
+                           "../data/placetypes/bow/frequency/phrases/class-all-5-1-all",
                            100,
-                           "movies")
+                           "placetypes")
     averageWordVectorsFreq(word_dict,
-                           "../data/movies/bow/frequency/phrases/class-all-15-5-genres",
+                           "../data/placetypes/bow/frequency/phrases/class-all-5-1-all",
                            50,
-                           "movies")
+                           "placetypes")
     """
 
     averageWordVectors(word_dict,
@@ -1348,9 +1346,9 @@ if __name__ == '__main__':
                            100,
                            "sentiment")
 
-    """
     name = "../data/newsgroups/nnet/spaces/simple_numeric_stopwords_ppmi 2-all_mds50.txt"
     write2dArray(import2dArray(name, "f").transpose(), name)
+    """
 
     """
     data_type = "movies"
@@ -1391,6 +1389,7 @@ if __name__ == '__main__':
     write2dArray(mds2, "../data/movies/nnet/spaces/wvFIXED100.npy")
     write2dArray(mds3, "../data/movies/nnet/spaces/wvFIXED50.npy")
 
+    """
     """
     main_names_fn = "../data/movies/nnet/spaces/entitynames.txt"
     main_names = import1dArray(main_names_fn, "s")

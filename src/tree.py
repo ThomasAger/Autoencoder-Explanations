@@ -39,7 +39,7 @@ class DecisionTree:
             all_fns = [acc_fn, f1_fn, prediction_fn, csv_fn]
         else:
             new_graph_png_fn = '../data/' + data_type + '/rules/tree_images/' + label_names[0] + " " + filename + '.png'
-            all_fns = [acc_fn, f1_fn, prediction_fn, csv_fn, new_graph_png_fn]
+            all_fns = [acc_fn, f1_fn, prediction_fn, csv_fn]
 
         if max_depth is not None:
             all_fns.append(all_top_names_fn)

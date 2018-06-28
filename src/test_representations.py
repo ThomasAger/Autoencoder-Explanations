@@ -6,7 +6,7 @@ import data as dt
 import csv
 import numpy as np
 from sklearn.decomposition import PCA
-
+import reuters
 def getPCA(tf, depth):
     svd = PCA(n_components=depth, svd_solver="full") # use the scipy algorithm "arpack"
     pos = svd.fit_transform(tf)
@@ -20,6 +20,9 @@ def testAll(name_array, rep_array, class_array, data_type):
             x_train, y_train, x_test, y_test, x_dev, y_dev = newsgroups.getSplits(rep_array[i], class_array[i])
         elif data_type == "sentiment":
             x_train, y_train, x_test, y_test, x_dev, y_dev = sentiment.getSplits(rep_array[i], class_array[i])
+        elif data_type == "reuters":
+            x_train, y_train, x_test, y_test, x_dev, y_dev = reuters.getSplits(rep_array[i], class_array[i])
+
         scores = multiClassLinearSVM(x_train, y_train, x_dev, y_dev)
         f1 = scores[0]
         acc = scores[1]

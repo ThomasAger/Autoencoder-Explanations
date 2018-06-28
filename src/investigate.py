@@ -218,13 +218,13 @@ def getSimilarClusters(cluster_dict_1, cluster_dict_2, trim_amt, file_name, data
         lines.append(line)
         print(line)
     dt.write1dArray(lines, "../data/" + data_type + "/investigate/" + file_name + str(trim_amt) + ".txt")
-
+"""
 data_type = "movies"
-file_name = "films200-genresCV1S0 SFT0 allL0100kappa KMeans CA400 MC1 MS0.4 ATS2000 DS800"
+file_name = "mds-nodupeCV1S0 SFT0 allL010010 LR acc KMeans CA400 MC1 MS0.4 ATS500 DS800"
 cluster_names = np.asarray(dt.import2dArray("../data/" + data_type + "/cluster/dict/" + file_name + ".txt","s"))
-second_cluster_name = "films200-genresCV1S0 SFT0 allL0100ndcg KMeans CA400 MC1 MS0.4 ATS2000 DS800"
+second_cluster_name = "mds-nodupeCV1S0 SFT0 allL010010 LR kappa KMeans CA400 MC1 MS0.4 ATS1000 DS800"
 second_cluster_names = np.asarray(dt.import2dArray("../data/" + data_type + "/cluster/dict/" + second_cluster_name + ".txt","s"))
-topic_model_names = np.asarray(dt.import2dArray("../data/" + data_type + "/LDA/names/" + "all-100-10DTP0.1TWP0.001NT400.txt", "s"))
+topic_model_names = np.asarray(dt.import2dArray("../data/" + data_type + "/LDA/names/" + "class-all-100-10-all-nodupe.npzDTP0.001TWP0.1NT100.txt", "s"))
 t_m_n_r = []
 for t in range(len(topic_model_names)):
     t_m_n_r.append(np.flipud(topic_model_names[t]))
@@ -232,7 +232,7 @@ trim_amt = 10
 threshold_for_stopping = 100
 threshold_for_stopping_1 = 20
 getSimilarClusters( t_m_n_r, cluster_names, trim_amt, file_name, data_type, threshold_for_stopping, threshold_for_stopping_1)
-
+"""
 """
 ranking1 = dt.import2dArray("../data/" + data_type + "/rank/numeric/" + file_name + ".txt")
 entity_names = dt.import1dArray("../data/" + data_type + "/nnet/spaces/entitynames.txt")
@@ -258,9 +258,11 @@ file_name = "places100"
 space = dt.import2dArray("../data/"+data_type+"/nnet/spaces/"+ file_name + "-"+classify+".txt", "f")
 entity_names = dt.import1dArray("../data/" + data_type + "/classify/"+classify+"/available_entities.txt", "s")
 """
+"""
 def treeImages(loc, names,class_name):
     for n in names:
         copyfile(loc + class_name + " " + n + "CV0" + ".png",   output_loc + class_name + " " +  n + "CV0" + ".png")
+        """
 """
 file_name = "wines100-" + classify
 space = import2dArray("../data/"+data_type+"/nnet/spaces/"+ file_name + ".txt", "f")
@@ -304,4 +306,19 @@ compare_fn = "places NONNETCV1S0 SFT0 allL050ndcg KMeans CA200 MC1 MS0.4 ATS2000
 ranking_fn = "../data/" + data_type+"/rank/numeric/" + compare_fn
 ranking = dt.import2dArray(ranking_fn)
 #topEntities(ranking, entities)
+"""
+"""
+data = dt.import1dArray("../data/selected clusters.txt")
+
+new_data = []
+for d in data:
+    if ":" in d:
+        d = d.split()
+        d[0] = d[0][:-1]
+        print(d[0])
+        new_data.append(" ".join(d[0:4]))
+    else:
+        new_data.append(d)
+
+dt.write1dArray(new_data, "../data/filtered_clusters.txt")
 """

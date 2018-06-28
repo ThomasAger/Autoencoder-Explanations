@@ -623,7 +623,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
 
 
                             tree.DecisionTree(ranking_fn, classification_path, label_names_fn, cluster_dict_fn, file_name  + " " + classification_task+ "None", 10000,
-                                                  max_depth=None, balance="balanced", criterion="entropy", save_details=save_details,
+                                                  max_depth=None, balance="balanced", criterion="entropy", save_details=False,
                                               data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
                                               cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
                                               limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn = clusters_fn,
@@ -914,7 +914,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                               cluster_duplicates=cluster_duplicates)
 
                                         tree.DecisionTree(nnet_ranking_fn, classification_path, label_names_fn, cluster_dict_fn, file_name  + " " + classification_task+ "None", 10000,
-                                                              max_depth=None, balance="balanced", criterion="entropy", save_details=save_details,
+                                                              max_depth=None, balance="balanced", criterion="entropy", save_details=False,
                                                           data_type=data_type, csv_fn=csv_name, rewrite_files=rewrite_files,
                                                           cv_splits=cv_splits, split_to_use=splits, development=dt_dev, limit_entities=limit_entities,
                                                           limited_label_fn=limited_label_fn, vector_names_fn=vector_names_fn, clusters_fn=clusters_fn,
@@ -1110,16 +1110,12 @@ classification_task = ["newsgroups"]
 #arrange_name = arrange_name + classification_task[0]
 skip_nn = True
 fn_orig = "sns_ppmi3"
-deep_size = [100]
-
-if skip_nn is False:
-    file_name = fn_orig + "mdsnew"
-else:
-    file_name = fn_orig + "mdsnew"
+deep_size = [200]
+file_name = fn_orig + "mdsnew" + str(deep_size[0])+ "svmdual"#"wvFIXED" + str(deep_size[0]) #
 lowest_amt = 30
 highest_amt = 18836
 
-space_name = "simple_numeric_stopwords_ppmi 2-all_mds.npy"
+space_name = "simple_numeric_stopwords_ppmi 2 S200-all.npy"#"wvFIXED" + str(deep_size[0]) + ".npy"#
 
 init_vector_path = loc+data_type+"/nnet/spaces/"+space_name
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/"+space_name
@@ -1155,7 +1151,7 @@ get_nnet_vectors_path = loc + data_type + "/nnet/spaces/places"+str(places_size)
 deep_size = [places_size]
 bow_path_fn = "class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+new_classification_task + ".npz"
 """
-
+"""
 data_type = "sentiment"
 classification_task = ["sentiment"]
 #arrange_name = arrange_name + classification_task[0]
@@ -1165,8 +1161,8 @@ lstm_dim = 50
 iLSTM = False
 sA = 1
 
-deep_size = [50]
-space_name = "wvFIXED"+str(deep_size[0])#"wvTrain300MFTraFAdr1337mse0 10000 ML300 BS16 FBTrue DO0.0 RDO0.0 E8 ES300LS50 UAFalse SFFalse iLFalse rTFalse lrFalse sA1.0 wvTr 0.8 0.0 DFalse F16 KS5 PS4 NP all FState"
+deep_size = [200]
+space_name = "wvFIXED"+str(deep_size[0]) +".npy" #"wvTrain300MFTraFAdr1337mse0 10000 ML300 BS16 FBTrue DO0.0 RDO0.0 E8 ES300LS50 UAFalse SFFalse iLFalse rTFalse lrFalse sA1.0 wvTr 0.8 0.0 DFalse F16 KS5 PS4 NP all FState"
 
 if skip_nn is False:
     file_name = "FULL"+str(deep_size[0])+"10kNN"#""#
@@ -1178,14 +1174,36 @@ else:
 lowest_amt = 50
 highest_amt = 0.999
 limit_entities = [False]
-init_vector_path = loc+data_type+"/nnet/spaces/"+space_name+".npy"
-get_nnet_vectors_path = loc+data_type+"/nnet/spaces/"+space_name+".npy"
-vector_path_replacement =  loc+data_type+"/nnet/spaces/"+space_name+".npy"
+init_vector_path = loc+data_type+"/nnet/spaces/"+space_name
+get_nnet_vectors_path = loc+data_type+"/nnet/spaces/"+space_name
+vector_path_replacement =  loc+data_type+"/nnet/spaces/"+space_name
 
 limit_entities = [False]
 bow_path_fn = "simple_numeric_stopwords_bow 50-0.999-all.npz"
 bow_names_fn = "simple_numeric_stopwords_words 50-0.999-all.txt"
 ppmi_path_fn = "simple_numeric_stopwords_ppmi 50-0.999-all.npz"
+"""
+
+
+data_type = "reuters"
+classification_task = ["topics"]
+#arrange_name = arrange_name + classification_task[0]
+skip_nn = True
+
+deep_size = [200]
+space_name = "simple_numeric_stopwords_ppmi 2 S"+str(deep_size[0]) +"-all.npy"
+file_name = "PCA"+str(deep_size[0])
+lowest_amt = 10
+highest_amt = 0.95
+limit_entities = [False]
+init_vector_path = loc+data_type+"/nnet/spaces/"+space_name
+get_nnet_vectors_path = loc+data_type+"/nnet/spaces/"+space_name
+vector_path_replacement =  loc+data_type+"/nnet/spaces/"+space_name
+
+limit_entities = [False]
+bow_path_fn = "simple_numeric_stopwords_bow "+str(lowest_amt)+"-"+str(highest_amt)+"-all.npz"
+bow_names_fn = "simple_numeric_stopwords_words "+str(lowest_amt)+"-"+str(highest_amt)+"-all.txt"
+ppmi_path_fn = "simple_numeric_stopwords_ppmi "+str(lowest_amt)+"-"+str(highest_amt)+"-all.npz"
 
 
 """
@@ -1285,9 +1303,9 @@ dissim = 0.0
 dissim_amt = [2]
 breakoff = [False] # This now
 score_limit = [0.9] #23232 val to use for all terms
-amount_to_start = [500,1000,2000]
-cluster_multiplier = [ 1, 2]#50 #23233  val to use for all terms
-score_type = ["kappa", "acc", "ndcg"] #accuracy, kappa or nd
+amount_to_start = [2000]
+cluster_multiplier = [2]#50 #23233  val to use for all terms
+score_type = ["kappa"] #accuracy, kappa or nd
 use_breakoff_dissim = [False]
 mean_shift = False
 get_all = [False]
@@ -1331,7 +1349,7 @@ score_limit = [0.0]
 """
 hp_opt = True
 
-dt_dev = True
+dt_dev = False
 svm_classify = False
 rewrite_files = False
 max_depth = [3]
