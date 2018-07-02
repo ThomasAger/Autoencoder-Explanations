@@ -1,6 +1,6 @@
 import data as dt
 import numpy as np
-from sklearn.cluster import MeanShift, estimate_bandwidth
+from sklearn.cluster import MeanShift, estimate_bandwidth, KMeans
 from sklearn.preprocessing import normalize
 from sklearn.cluster import AffinityPropagation
 #import hdbscan
@@ -51,7 +51,27 @@ def meanShiftClusters(x, l):
         clusters[i] = np.flipud(clusters[i])
     return cluster_centers, clusters
 
-def saveClusters(directions_fn, scores_fn, names_fn,  filename, amt_of_dirs ,data_type, rewrite_files=False):
+
+def meanShift(data):
+    print("Estimating bandwidth")
+    bandwidth = 23
+    print("Estimated bandwidth")
+    ms = MeanShift(bandwidth=bandwidth,  bin_seeding=False)
+    ms.fit(data)
+    labels = ms.labels_
+    cluster_centers = ms.cluster_centers_
+    print(labels)
+    return labels
+
+def kMeans(data, cluster_amt):
+    ms = KMeans( n_init=10, max_iter=300, verbose=1, n_clusters=cluster_amt, )
+    ms.fit(data)
+    labels = ms.labels_
+    cluster_centers = ms.cluster_centers_
+    print(labels)
+    return labels
+
+def saveClusters(directions_fn, scores_fn, names_fn,  filename, amt_of_dirs ,data_type, cluster_amt, rewrite_files=False, algorithm="meanshift_k"):
 
     dict_fn = "../data/" + data_type + "/cluster/dict/" + filename + ".txt"
     cluster_directions_fn = "../data/" + data_type + "/cluster/clusters/" + filename + ".txt"
@@ -71,7 +91,29 @@ def saveClusters(directions_fn, scores_fn, names_fn,  filename, amt_of_dirs ,dat
 
     p_dir = np.flipud(p_dir[ids])[:amt_of_dirs]
     p_names = np.flipud(p_names[ids])[:amt_of_dirs]
+    if algorithm == "meanshift":
+        labels = meanShift(p_dir)
+    else:
+        labels = kMeans(p_dir, cluster_amt)
+    unique, counts = np.unique(labels, return_counts=True)
 
-    c_dict, labels = gethdbscan(p_dir, p_names)
+    clusters = []
+    dir_clusters = []
+    for i in range(len(unique)):
+        clusters.append([])
+        dir_clusters.append([])
+    for i in range(len(labels)):
+        clusters[labels[i]].append(p_names[i])
+        dir_clusters[labels[i]].append(p_dir[i])
+    cluster_directions = []
+    for l in range(len(dir_clusters)):
+        cluster_directions.append(dt.mean_of_array(dir_clusters[l]))
 
-    dt.write2dArray(c_dict, dict_fn)
+
+    print("------------------------")
+    for c in clusters:
+        print(c)
+    print("------------------------")
+
+    dt.write2dArray(clusters, dict_fn)
+    dt.write2dArray(cluster_directions, cluster_directions_fn)

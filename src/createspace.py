@@ -131,6 +131,14 @@ def getDissimilarityMatrixSparse(tf_transposed):
         print(ei)
     return dm
 
+
+
+def calcAngChunk(e1, e2,  norm_1, norm_2):
+    dp = 0
+    dp = np.dot(e1, e2)
+    norm_dp = norm_1 * norm_2
+    return (2 / pi) * np.arccos(dp / norm_dp)
+
 def calcAngSparse(e1, e2, e2_transposed, norm_1, norm_2):
     dp = 0
     s_dp = e1.dot(e2_transposed)
@@ -139,16 +147,7 @@ def calcAngSparse(e1, e2, e2_transposed, norm_1, norm_2):
     norm_dp = norm_1 * norm_2
     return (2 / pi) * np.arccos(dp / norm_dp)
 
-def calcAngChunk(e1, e2,  norm_1, norm_2):
-    dp = 0
-    dp = np.dot(e1, e2)
-    norm_dp = norm_1 * norm_2
-    return (2 / pi) * np.arccos(dp / norm_dp)
-
-
-
 def getDsimMatrix(tf):
-
     tf_transposed = sp.csc_matrix(tf)
     tf = tf.transpose()
     tf = sp.csr_matrix(tf).astype("float32")
