@@ -201,6 +201,8 @@ def makeCorpusFromIds(tokenized_ids, vocab):
 
     return processed_corpus
 
+
+
 def main(data_type, output_folder, grams,  no_below, no_above, bowmin):
     if data_type == "newsgroups":
         newsgroups = fetch_20newsgroups(subset='all', shuffle=False, remove=("headers", "footers", "quotes"))

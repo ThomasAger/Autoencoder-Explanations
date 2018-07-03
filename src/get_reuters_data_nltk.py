@@ -155,7 +155,13 @@ docs = docs[sorted_inds]
 unique_class_all = unique_class_all[sorted_inds]
 index = index[sorted_inds]
 
+
+
+
+unique_class_all, class_names = dt.removeInfrequent(unique_class_all, list(cat_names.keys()))
+
 dt.write2dArray(unique_class_all, save_path + "duplicate_removed_classes.txt")
+dt.write1dArray(class_names, save_path + "category_names_20freq_removed.txt")
 dt.write1dArray(docs, save_path + "duplicate_removed_docs.txt")
 dt.write1dArray(index, save_path + "unique_doc_index_from_orig.txt")
 dt.write1dArray(names, save_path + "duplicate_removed_available_entities.txt")

@@ -1303,12 +1303,41 @@ def averageWordVectorsFreq(id2word, freq_fn, size, data_type):
 
     np.save("../data/" + data_type + "/nnet/spaces/wvFIXED" + str(size) + ".npy", vectors)
 
+def countClassFrequences(data_type, class_name):
+    class_all = import2dArray("../data/" + data_type + "/classify/" + class_name + "/class-all")
+    class_names = import1dArray("../data/" + data_type + "/classify/" + class_name + "/names.txt")
+    counts = []
+    class_all = np.asarray(class_all).transpose()
+    for i in range(len(class_all)):
+        count = len(np.nonzero(class_all[i])[0])
+        print(class_names[i], count)
+        counts.append(count)
+
+def removeInfrequent(classes, class_names):
+    infrequent_classes = []
+    classes = np.asarray(classes).transpose()
+    for i in range(len(classes)):
+        count = len(np.nonzero(classes[i])[0])
+        print(count)
+        if count < 20:
+            infrequent_classes.append(i)
+    classes = np.delete(classes, infrequent_classes, axis=0)
+    class_names = np.delete(class_names, infrequent_classes, axis=0)
+    print("deleted", len(infrequent_classes), "classes now", len(class_names), "classes")
+    return classes.transpose(), class_names
+
 
 """
 
 """
 if __name__ == '__main__':
-
+    #countClassFrequences("reuters", "topics")
+    class_fn = "../data/movies/classify/keywords/class-all"
+    class_name_fn = "../data/movies/classify/keywords/names.txt"
+    classes = import2dArray(class_fn)
+    class_names = import1dArray(class_name_fn)
+    classes, class_names = removeInfrequent(classes, class_names)
+    """
     words = import1dArray("../data/placetypes/bow/names/5-1-all.txt", "s")
     word_dict = {}
     for i in range(len(words)):
@@ -1326,6 +1355,7 @@ if __name__ == '__main__':
                            "../data/placetypes/bow/frequency/phrases/class-all-5-1-all",
                            50,
                            "placetypes")
+    """
     """
 
     averageWordVectors(word_dict,

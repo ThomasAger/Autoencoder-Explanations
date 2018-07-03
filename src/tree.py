@@ -424,13 +424,7 @@ class DecisionTree:
             try:
                 dt.write_to_csv(csv_fn, file_names, scores)
             except PermissionError:
-                print("CSV FILE WAS OPEN, WRITING TO ANOTHER FILE")
-                print("CSV FILE WAS OPEN, WRITING TO ANOTHER FILE")
-                print("CSV FILE WAS OPEN, WRITING TO ANOTHER FILE")
-                print("CSV FILE WAS OPEN, WRITING TO ANOTHER FILE")
-                print("CSV FILE WAS OPEN, WRITING TO ANOTHER FILE")
-                print("CSV FILE WAS OPEN, WRITING TO ANOTHER FILE")
-                dt.write_to_csv(csv_fn[:len(csv_fn)-4] + str(random.random()) + "FAIL.csv", file_names, scores)
+                print("CSV FILE WAS OPEN, SKIPPING")
             except ValueError:
                 print("File does not exist, recreating csv")
                 key = []

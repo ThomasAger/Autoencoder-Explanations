@@ -1149,7 +1149,7 @@ else:
 vector_path_replacement = loc+data_type+"/nnet/spaces/places"+str(places_size)+".txt"
 get_nnet_vectors_path = loc + data_type + "/nnet/spaces/places"+str(places_size)+".txt"
 deep_size = [places_size]
-bow_path_fn = "class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+new_classification_task + ".npz"
+bow_path_fn = "class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+new_classification_task + ".npz
 """
 """
 data_type = "sentiment"
@@ -1303,9 +1303,9 @@ dissim = 0.0
 dissim_amt = [2]
 breakoff = [False] # This now
 score_limit = [0.9] #23232 val to use for all terms
-amount_to_start = [2000]
-cluster_multiplier = [2]#50 #23233  val to use for all terms
-score_type = ["kappa"] #accuracy, kappa or nd
+amount_to_start = [2000, 1000, 500]
+cluster_multiplier = [1, 2]#50 #23233  val to use for all terms
+score_type = ["kappa", "ndcg", "acc"] #accuracy, kappa or nd
 use_breakoff_dissim = [False]
 mean_shift = False
 get_all = [False]
@@ -1349,7 +1349,7 @@ score_limit = [0.0]
 """
 hp_opt = True
 
-dt_dev = False
+dt_dev = True
 svm_classify = False
 rewrite_files = False
 max_depth = [3]
@@ -1361,7 +1361,7 @@ logistic_regression = True
 
 arrange_name = "cluster ratings BCS" + str(max_depth) + str(dt_dev)
 
-threads=5
+threads=20
 chunk_amt = 0
 chunk_id = 0
 for c in range(chunk_amt):

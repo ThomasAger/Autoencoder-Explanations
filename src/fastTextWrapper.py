@@ -1,1 +1,1 @@
-# May not be necessary, at it seems hierarchical softmax is primarily for speedup with many labels
+cool_beans = {}
