@@ -1193,7 +1193,7 @@ def arrangeByScore(csv_fns, arra_name):
         average_rows.append(row)
     average_rows = np.asarray(average_rows).transpose()
     write_csv( arra_name, col_names, average_rows, csv_fns)
-
+    return 0,0,0
     print("x")
 
 #write1dArray(list(range(20000)), "../data/sentiment/nnet/spaces/entitynames.txt")

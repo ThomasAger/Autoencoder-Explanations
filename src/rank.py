@@ -8,10 +8,8 @@ def getRankings(cluster_directions, vectors, cluster_names, vector_names):
     rankings = []
     for d in range(len(cluster_directions)):
         cluster_ranking = []
-        cluster_ranking_names = []
         for v in range(len(vectors)):
             cluster_ranking.append(np.dot(cluster_directions[d], vectors[v]))
-            cluster_ranking_names.append(vector_names[v])
         rankings.append(cluster_ranking)
         print("Cluster:", cluster_names[d])
     return rankings#, ranking_names#, sorted_rankings_a

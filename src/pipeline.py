@@ -538,7 +538,7 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
                                                      dissim, min_score, data_type, rewrite_files=rewrite_files,
                                                          half_kappa_half_ndcg=half_ndcg_half_kappa, dont_cluster=dont_cluster)
                                 else:
-                                    ms.saveClusters(directions_fn, scores_fn, names_fn, file_name, amount_to_start, data_type, rewrite_files=rewrite_files)
+                                    ms.saveClusters(directions_fn, scores_fn, names_fn, file_name, amount_to_start, data_type, cluster_amt, rewrite_files=rewrite_files, algorithm="kmeans")
 
                             #save_fn = ""
 
@@ -1046,10 +1046,16 @@ def main(data_type, classification_task_a, file_name, init_vector_path, hidden_a
             all_csv_fns.append(fns_to_add)
     else:
         all_csv_fns = original_fn
-    dt.arrangeByScore(
+    top_spaces, top_scores, top_clustering = dt.arrangeByScore(
         np.unique(
             np.asarray(all_csv_fns))
         ,loc + " " + arrange_name + file_name[:50] + " " + classification_task + " " +  str(len(all_csv_fns)) + ".csv")
+    #ft_optimizer
+    #re-run this method using the best parameters from the development data on test data, best parameters
+    #for each space-type (awv, mds, pca, doc2vec, lstm, feedforward?)
+    #for each score-type (kappa, ndcg, acc)
+    #for each clustering method
+    #params for hierarchical should be pre-tuned for each score-type/classiifcation method
     #jvm.stop()
 
 print("Begin top of parameters")
@@ -1079,31 +1085,36 @@ vector_path_replacement = loc+data_type+"/pca/class-all-50-10-alld100"
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films100-genres.txt"
 bow_path_fn = "class-all-"+str(lowest_amt)+"-"+str(highest_amt)+"-"+new_classification_task + ".npz"
 """
-"""
+
 data_type = "movies"
 classification_task = ["genres", "keywords", "ratings"] #Run keywords as separate process
 #arrange_name = arrange_name + classification_task[0]
 skip_nn = True
-deep_size = [50]
+deep_size = [200]
 if skip_nn is False:
     file_name = "f200ge"
 else:
-    file_name = "mds-nodupe" + str(deep_size[0])
+    # Arbitrary logic due to previous naming conventions
+    if deep_size[0] != 200:
+        file_name = "mds-nodupe" + str(deep_size[0])
+    else:
+        file_name = "mds-nodupe"
+
 lowest_amt = 100
 highest_amt = 10
 
 limit_entities = [False]
 
-init_vector_path = loc+data_type+"/nnet/spaces/films" + str(deep_size[0])+".txt"
+init_vector_path = loc+data_type+"/nnet/spaces/films" + str(deep_size[0])+".npy"
 #init_vector_path = loc+data_type+"/nnet/spaces/films200-"+classification_task+".txt"
 #file_name = "films200-genres100ndcg0.85200 tdev3004FTL0"
-get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films" + str(deep_size[0])+".txt"
-vector_path_replacement = loc+data_type+"/nnet/spaces/films" + str(deep_size[0])+".txt"
+get_nnet_vectors_path = loc+data_type+"/nnet/spaces/films" + str(deep_size[0])+".npy"
+vector_path_replacement = loc+data_type+"/nnet/spaces/films" + str(deep_size[0])+".npy"
 
 bow_path_fn = "class-all-100-10-all-nodupe.npz"
 bow_names_fn = "100-10-all.txtmds-nodupeCV1S0 SFT0 allL010010 LR .txt"
 ppmi_path_fn = "class-all-100-10-all-nodupe.npz"
-"""
+
 """
 data_type = "newsgroups"
 classification_task = ["newsgroups"]
@@ -1183,7 +1194,7 @@ bow_path_fn = "simple_numeric_stopwords_bow 50-0.999-all.npz"
 bow_names_fn = "simple_numeric_stopwords_words 50-0.999-all.txt"
 ppmi_path_fn = "simple_numeric_stopwords_ppmi 50-0.999-all.npz"
 """
-
+"""
 
 data_type = "reuters"
 classification_task = ["topics"]
@@ -1205,7 +1216,7 @@ bow_path_fn = "simple_numeric_stopwords_bow "+str(lowest_amt)+"-"+str(highest_am
 bow_names_fn = "simple_numeric_stopwords_words "+str(lowest_amt)+"-"+str(highest_amt)+"-all.txt"
 ppmi_path_fn = "simple_numeric_stopwords_ppmi "+str(lowest_amt)+"-"+str(highest_amt)+"-all.npz"
 
-
+"""
 """
 data_type = "sst"
 classification_task = ["binary"]
@@ -1307,7 +1318,8 @@ amount_to_start = [2000, 1000, 500]
 cluster_multiplier = [1, 2]#50 #23233  val to use for all terms
 score_type = ["kappa", "ndcg", "acc"] #accuracy, kappa or nd
 use_breakoff_dissim = [False]
-mean_shift = False
+mean_shift = True
+k_means = True
 get_all = [False]
 half_ndcg_half_kappa = [False]
 add_all_terms = [False]
