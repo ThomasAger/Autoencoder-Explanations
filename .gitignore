@@ -15,3 +15,5 @@ src/dotproduct.temp
 src/topicmodel.py.rej
 
 venv/bin/
+
+src/\.hypothesis/examples/d64b37e99f7f49f8/

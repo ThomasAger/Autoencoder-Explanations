@@ -1,0 +1,5 @@
+[
+  "test/test_all.py::test_stat2Num",
+  "test/test_all.py::test_floats_are_commutative",
+  "test/test_scores.py::test_manual"
+]

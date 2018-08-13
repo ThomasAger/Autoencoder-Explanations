@@ -1,0 +1,5 @@
+{
+  "pipelines/test_representations.py": true,
+  "test/test_all.py::test_floats_are_commutative": true,
+  "test/test_scores.py::test_manual": true
+}
