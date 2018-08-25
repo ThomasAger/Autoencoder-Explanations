@@ -1,0 +1,17 @@
+diff a/src/tree.py b/src/tree.py	(rejected hunks)
+@@ -169,11 +169,11 @@
+                         break
+             else:
+                 ac_x_train =  [vectors[:11314]]
+-                ac_x_test = [vectors[11314:]]
++                ac_x_test = [vectors[int(11314* 0.8):]]
+                 ac_y_train =  [labels[l][:11314]]
+-                ac_y_test = [labels[l][11314:]]
+-                ac_x_dev =  [ac_x_train[:int(len(ac_x_train) * 0.2)]]
+-                ac_y_dev =  [ac_y_train[:int(len(ac_y_train) *0.2)]]
++                ac_y_test = [labels[l][int(11314* 0.8):]]
++                ac_x_dev =  [vectors[int(11314 *0.8):11314]]
++                ac_y_dev =  [labels[l][int(11314 *0.8):11314]]
+             predictions = []
+ 
+             if development:
