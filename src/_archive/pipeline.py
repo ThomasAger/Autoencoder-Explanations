@@ -1211,7 +1211,6 @@ init_vector_path = loc+data_type+"/nnet/spaces/"+space_name
 get_nnet_vectors_path = loc+data_type+"/nnet/spaces/"+space_name
 vector_path_replacement =  loc+data_type+"/nnet/spaces/"+space_name
 
-limit_entities = [False]
 bow_path_fn = "simple_numeric_stopwords_bow "+str(lowest_amt)+"-"+str(highest_amt)+"-all.npz"
 bow_names_fn = "simple_numeric_stopwords_words "+str(lowest_amt)+"-"+str(highest_amt)+"-all.txt"
 ppmi_path_fn = "simple_numeric_stopwords_ppmi "+str(lowest_amt)+"-"+str(highest_amt)+"-all.npz"

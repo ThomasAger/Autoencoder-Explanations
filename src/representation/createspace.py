@@ -8,7 +8,7 @@ from matplotlib.collections import LineCollection
 from sklearn import manifold
 from sklearn.metrics import euclidean_distances
 from sklearn.decomposition import PCA
-from util import proj_util as dt
+import data as dt
 import numpy as np
 
 from matplotlib import pyplot as plt
@@ -148,10 +148,11 @@ def calcAngSparse(e1, e2, e2_transposed, norm_1, norm_2):
     return (2 / pi) * np.arccos(dp / norm_dp)
 
 def getDsimMatrix(tf):
-    tf_transposed = sp.csc_matrix(tf)
-    tf = tf.transpose()
+    tf = sp.csc_matrix(tf)
+    tf_transposed = tf.transpose()
     tf = sp.csr_matrix(tf).astype("float32")
     docs_len = tf.shape[0]
+    print(tf.shape)
     dm = np.zeros([docs_len, docs_len], dtype="float32")
     norms = np.zeros(docs_len, dtype="float32")
 
@@ -163,39 +164,55 @@ def getDsimMatrix(tf):
     for i in range(docs_len):
         for j in range(i+1):
             dm[i][j] = calcAngSparse(tf[i], tf[j], tf_transposed[:,j], norms[i], norms[j])
-            if j %10000 == 0:
-                print("j", j)
-        print("i", i)
+            print(dm[i][j])
+        print("i", i, "/", docs_len)
     return dm
 
 def calcAng(e1, e2, norm1, norm2):
     return (2 / pi) * np.arccos(np.dot(e1, e2) / (norm1 * norm2))
+import math
 
 def getDsimMatrixDense(tf):
     #tf = np.asarray(tf.astype(np.float32).transpose().toarray())
-    tf = np.asarray(tf.transpose().todense())
+    tf = np.asarray(tf.todense(), dtype=np.float32)
     docs_len = tf.shape[0]
-    dm = np.zeros([docs_len, docs_len], dtype="float32")
-    norms = np.zeros(docs_len, dtype="float32")
-
+    if tf.shape[0] > tf.shape[1]:
+        print(tf.shape, "DOCS:", docs_len)
+        raise ValueError("Probably wrong")
+    dm = np.zeros([docs_len, docs_len], dtype=np.float32)
+    dm2 = np.zeros([docs_len, docs_len], dtype=np.float32)
+    norms = np.zeros(docs_len, dtype=np.float32)
     # Calculate norms
     for ei in range(docs_len):
         norms[ei] = np.linalg.norm(tf[ei])
         if ei % 1000 == 0:
             print("norms", ei)
     for i in range(docs_len):
-        for j in range(docs_len):
+        for j in range(i+1):
+
             dm[i][j] = calcAng(tf[i], tf[j], norms[i], norms[j])
+            if math.isnan(dm[i][j]):
+                dm[i][j] = 0.0
             #if j %1000 == 0:
             #    print("j", j)
         print("i", i)
+
+    # Fill in the values of the mirrored array
+    cr = 0
+    for c in range(docs_len):
+        for r in range(cr+1, docs_len):
+            if math.isnan(dm[cr][r]):
+                dm[cr][r] = 0
+            dm[cr][r] = dm[r][c]
+        cr += 1
+
     return dm
 
 pithing = 2/pi
 ang = pithing * np.arccos(0.1 / 0.1)
-
+"""z
 dt.write2dArray(getDissimilarityMatrix(dt.import2dArray("../data/sentiment/bow/ppmi/simple_numeric_stopwords_ppmi 5-all.npz", return_sparse=True)), "../data/sentiment/mds/simple_numeric_stopwords_ppmi 5-all")
-
+"""
 
 def main(data_type, clf, min, max, depth, rewrite_files):
     dm_fn = "../data/" + data_type + "/mds/class-all-" + str(min) + "-" + str(max) \
@@ -211,28 +228,25 @@ def main(data_type, clf, min, max, depth, rewrite_files):
     shorten_fn = "../data/" + data_type + "/bow/ppmi/class-all-" + str(min) + "-" + str(max) \
                                            + "-" + clf+ "round"
 
-    term_frequency_fn = init_vector_path = "../data/" + data_type + "/bow/ppmi/class-all-"+str(min)+"-"+str(max)+"-all.npz"
+    term_frequency_fn = init_vector_path = "../data/" + data_type + "/bow/ppmi/simple_numeric_stopwords_ppmi 2-all.npz"
     if dt.allFnsAlreadyExist([dm_fn, mds_fn, svd_fn, shorten_fn]):
         print("all files exist")
         exit()
 
     #Get MDS
-
+    """
     tf = dt.import2dArray(term_frequency_fn).transpose()
     pca = sparseSVD(tf, depth)
     dt.write2dArray(pca, pca_fn)
-
-
     """
-    if dt.allFnsAlreadyExist([dm_fn]) and not rewrite_files:
-        dm = dt.import2dArray(dm_fn)
-        print("read dm")
-    else:
-        tf = dt.import2dArray(term_frequency_fn)
-        dm = getDsimMatrix(tf)
-        dt.write2dArray(dm, dm_fn)
-        print("wrote dm")
-    """
+
+    # REMINDER: np.dot is WAY faster!
+    tf = dt.import2dArray(term_frequency_fn, return_sparse=True)
+
+    dm = getDsimMatrixDense(tf)
+    dt.write2dArray(dm, dm_fn)
+    print("wrote dm")
+
     """ Pretty sure none of this works
     if dt.allFnsAlreadyExist([mds_fn]) and not rewrite_files:
         mds = dt.import2dArray(mds_fn)
@@ -247,7 +261,7 @@ def main(data_type, clf, min, max, depth, rewrite_files):
     if dt.allFnsAlreadyExist([shorten_fn]) and not rewrite_files:
         short = dt.import2dArray(shorten_fn)
         short = np.asarray(short).transpose()
-    else:
+    else:   
         print("starting svd")
         short = dt.shorten2dFloats(term_frequency_fn)
         dt.write2dArray(short, shorten_fn)
@@ -271,7 +285,7 @@ def main(data_type, clf, min, max, depth, rewrite_files):
         print("wrote pca")
     """
 
-data_type = "sentiment"
+data_type = "reuters"
 clf = "all"
 
 min=0
